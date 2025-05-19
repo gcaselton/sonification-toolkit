@@ -22,7 +22,7 @@ def filter_by_author(search_result):
         
 def search_for_star(star_name):
 
-    # To do - check if star is present in multiple missions, then offer the user a choice
+   
 
     print('Searching the Universe for ' + star_name + '...')
 
