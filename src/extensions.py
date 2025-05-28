@@ -42,13 +42,13 @@ def sonify(x_data, y_data, sound='synth', y_params=['cutoff'], chordal=True, sys
 def ensure_array(data):
         return data if isinstance(data, np.ndarray) else np.array(data)
 
-def setup_generator(sound):
+def setup_generator(preset):
 
         generator = Synthesizer()
         generator.modify_preset({'filter':'on'})
 
-        if sound == 'windy':
-                generator.load_preset('windy')
+        if preset != 'synth':
+                generator.load_preset(preset)
 
         return generator
 
