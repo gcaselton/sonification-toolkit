@@ -30,40 +30,16 @@ def search_for_star(star_name):
 
     if len(search_result) == 0:
         return None
-
-    missions = {'Kepler', 'TESS', 'K2'}
-
-    available_missions = {
-        mission for mission in missions if any(mission in result for result in search_result.mission)
-    }
-
-    if len(available_missions) > 1:
-
-        valid_choice = False
-
-        while valid_choice == False:
-
-            print('Light curve data from the following missions found: ' + ', '.join(available_missions))
-            mission_choice = input('Please select a mission by entering its name:  ').strip()
-
-            if mission_choice not in available_missions:
-                print('Invalid selection!')
-            else:
-                valid_choice = True
-        
-        # FIX THIS - only selects the first result
-        search_result = search_result[mission_choice in search_result.mission]
-        
-
+    
     # filtered_result = filter_by_author(search_result)
 
     print('Light curve data found!')
-    print(search_result)
+    search_result.table.write("lightcurve_table.csv", format='csv', overwrite=True)
 
     # Download most recent light curve to mitigate noise from thermal effects of launch
     lc = search_result[-1].download()
 
-    return lc
+    return None
 
 def lc_to_arrays(light_curve):
 
@@ -87,7 +63,8 @@ def sonify_star(star_name):
     else:
         cleaned_lc = clean_lc(lc)
         time, flux = lc_to_arrays(cleaned_lc)
-        plt.scatter(time, flux)
+        # plt.scatter(time, flux)
+        cleaned_lc.plot()
         plt.show()
 
         sonify(time, flux)
