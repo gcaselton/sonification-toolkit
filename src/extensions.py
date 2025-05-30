@@ -14,6 +14,8 @@ import sounddevice as sd
 
 def sonify(x_data, y_data, sound='synth', y_params=['cutoff'], chordal=True, system='stereo', length=15):
 
+        # To Do - add parameter/processing for config file
+
         # Covert data to numpy array
         x_data = ensure_array(x_data)
         y_data = ensure_array(y_data)

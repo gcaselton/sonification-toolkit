@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
-from lightkurve import search_lightcurve
+import lightkurve as lk
 import requests
 import os
 import uuid
@@ -18,6 +18,12 @@ class StarQuery(BaseModel):
 class DownloadRequest(BaseModel):
     data_uri: str
 
+class SonificationRequest(BaseModel):
+    data_filepath: str
+    config_filepath: str
+    duration: int
+    system: str
+
 
 @router.post('/search-lightcurves/')
 async def search_lightcurves(query: StarQuery):
@@ -29,7 +35,7 @@ async def search_lightcurves(query: StarQuery):
     """
 
     # Search name in lightkurve
-    search_result = search_lightcurve(query.star_name)
+    search_result = lk.search_lightcurve(query.star_name)
 
     # Return 404 if no results
     if len(search_result) == 0:
@@ -63,7 +69,6 @@ async def download_lightcurve(request: DownloadRequest):
     - **request**: The URI of the chosen light curve
     - Returns: The unique ID of the downloaded light curve.
     """
-    # TO DO: this currently returns 422 error - needs fixing.
 
     uri = request.data_uri
 
@@ -78,8 +83,29 @@ async def download_lightcurve(request: DownloadRequest):
     file_id = f'{uuid.uuid4()}.fits'
     filepath = os.path.join(STORAGE_DIR, file_id)
 
-    # Write to file
+    # Write to file 
     with open(filepath, 'wb') as f:
         f.write(response.content)
     
     return {'file_id': file_id}
+
+
+def extract_time_flux(lc_filepath):
+    """
+    Use the lightkurve package to extract the time and flux values from a light curve.
+
+    - **lc_filepath**: the filepath to the lightcurve .fits file.
+    - Returns: 2 arrays containing time and flux values.
+    """
+
+    lc = lk.read(lc_filepath)
+    time = lc.time.value
+    flux = lc.flux.value
+
+    return time, flux
+
+@router.post('/sonify-lightcurve/')
+async def sonify_lightcurve(request: SonificationRequest):
+
+    time, flux = extract_time_flux(request.data_filepath)
+
