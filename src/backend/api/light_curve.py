@@ -1,8 +1,12 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 import lightkurve as lk
+import matplotlib.pyplot as plt
 import requests
 import os
+import base64
+from io import BytesIO
+import hashlib
 import uuid
 
 router = APIRouter()
@@ -47,58 +51,98 @@ async def search_lightcurves(query: StarQuery):
     for row in search_result.table:
         results_metadata.append({
             "mission": str(row.get("project")),
-            #"obs_id": row.get("obs_id"),
             "exposure": int(row.get("exptime")),
             "pipeline": str(row.get("author")),
             "year": int(row.get("year")),
             "period": str(row.get("mission")),
-            # "productFilename": row.get("productFilename"),
-            # "observation_id": row.get("observation_id"),
             "dataURI": str(row.get("dataURI"))
         })
 
     return {'results': results_metadata}
 
 
-@router.post('/download-lightcurve/')
-async def download_lightcurve(request: DownloadRequest):
+def download_lightcurve(data_uri):
     """
-    Download a chosen light curve (.fits) to the tmp directory, giving it a unique ID.
+    This is a shared function used by both /select-lightcurve/ and /plot-lightcurve/.
+    It will give the lightcurve a unique ID, check if it has already been downloaded, and download it if not.
+    The purpose of this function is to avoid duplicate downloads (for instance, if a user previews the plot and then selects it for download).
+
+    - **data_uri**: The URI of the target lightcurve
+    - Returns: The filepath of the downloaded lightcurve.
+    """
+
+    # Create a unique (but reproducible) hash of the URI
+    hash = hashlib.md5(data_uri.encode()).hexdigest()
+    ext = os.path.splitext(data_uri)[-1]
+
+    filename = f'{hash}{ext}'
+    filepath = os.path.join(STORAGE_DIR, filename)
+
+    if not os.path.exists(filepath):
+
+        # Convert URI to downloadable URL
+        download_url = f'https://mast.stsci.edu/api/v0.1/Download/file?uri={data_uri}'
+
+        # Download and check OK  
+        response = requests.get(download_url)
+        response.raise_for_status()
+
+        # Write to file 
+        with open(filepath, 'wb') as f:
+            f.write(response.content)
+
+    return filepath
+
+@router.post('/plot-lightcurve')
+async def plot_lightcurve(request: DownloadRequest):
+    """
+    Download the target light curve (if not already downloaded) and convert it to a png image.
+    This function saves the plot to the memory buffer, to increase speed and avoid saving multiple images to disk.
+
+    - **request**: The URI of the ligh curve.
+    - Returns: The image as a base64 string.
+    """
+
+    filepath = download_lightcurve(request.data_uri)
+    lc = lk.read(filepath)
+
+    # Plot
+    fig, ax = plt.subplots()
+    lc.plot(ax=ax)
+    buf = BytesIO()
+    plt.savefig(buf, format="png")
+    plt.close(fig)
+    buf.seek(0)
+    img_base64 = base64.b64encode(buf.read()).decode("utf-8")
+
+    return {'image': img_base64}
+
+
+@router.post('/select-lightcurve/')
+async def select_lightcurve(request: DownloadRequest):
+    """
+    Download a chosen light curve to the tmp directory, if it hasn't already been.
     This can then be used later to sonify the light curve.
 
     - **request**: The URI of the chosen light curve
     - Returns: The unique ID of the downloaded light curve.
     """
-
-    uri = request.data_uri
-
-    # Convert URI to downloadable URL
-    download_url = f'https://mast.stsci.edu/api/v0.1/Download/file?uri={uri}'
-
-    # Download and check OK  
-    response = requests.get(download_url)
-    response.raise_for_status()
-
-    # Assign a unique ID to use as the filename
-    file_id = f'{uuid.uuid4()}.fits'
-    filepath = os.path.join(STORAGE_DIR, file_id)
-
-    # Write to file 
-    with open(filepath, 'wb') as f:
-        f.write(response.content)
+    filepath = download_lightcurve(request.data_uri)
     
-    return {'file_id': file_id}
+    return {'filepath': filepath}
 
 
-def extract_time_flux(lc_filepath):
+
+
+def extract_time_flux(filepath):
     """
     Use the lightkurve package to extract the time and flux values from a light curve.
 
-    - **lc_filepath**: the filepath to the lightcurve .fits file.
+    - **filepath**: the filepath to the lightcurve .fits file.
     - Returns: 2 arrays containing time and flux values.
     """
 
-    lc = lk.read(lc_filepath)
+    lc = lk.read(filepath)
     time = lc.time.value
     flux = lc.flux.value
 
