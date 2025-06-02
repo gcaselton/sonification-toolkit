@@ -99,14 +99,15 @@ async def plot_lightcurve(request: DownloadRequest):
     Download the target light curve (if not already downloaded) and convert it to a png image.
     This function saves the plot to the memory buffer, to increase speed and avoid saving multiple images to disk.
 
-    - **request**: The URI of the ligh curve.
+    - **request**: The URI of the light curve.
     - Returns: The image as a base64 string.
     """
 
+    # Download the lightcurve to the tmp directory, and load it as a LightCurve object
     filepath = download_lightcurve(request.data_uri)
     lc = lk.read(filepath)
 
-    # Plot
+    # Plot and send bytes to buffer
     fig, ax = plt.subplots()
     lc.plot(ax=ax)
     buf = BytesIO()
@@ -133,7 +134,6 @@ async def select_lightcurve(request: DownloadRequest):
 
 
 
-
 def extract_time_flux(filepath):
     """
     Use the lightkurve package to extract the time and flux values from a light curve.
@@ -143,7 +143,7 @@ def extract_time_flux(filepath):
     """
 
     lc = lk.read(filepath)
-    time = lc.time.value
+    time = lc.time.value0
     flux = lc.flux.value
 
     return time, flux
