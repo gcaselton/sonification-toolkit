@@ -10,11 +10,15 @@ import numpy as np
 import random
 import matplotlib.pyplot as plt
 import sounddevice as sd
+import os
 
 
-def sonify(x_data, y_data, sound='synth', y_params=['cutoff'], chordal=True, system='stereo', length=15):
 
-        # To Do - add parameter/processing for config file
+def sonify(x_data, y_data, style_file_path, length=15, system='stereo'):
+        pass
+
+
+def quick_sonify(x_data, y_data, sound='synth', y_params=['cutoff'], chordal=True, length=15, system='stereo'):
 
         # Covert data to numpy array
         x_data = ensure_array(x_data)

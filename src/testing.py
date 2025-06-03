@@ -1,5 +1,5 @@
 from star_query import sonify_star
-from extensions import sonify
+from extensions import quick_sonify
 from backend.api.light_curve import extract_time_flux
 import lightkurve as lk
 import numpy as np
@@ -16,7 +16,7 @@ y = [2, 4, 19, 1, 11, 21, 15, 4, 6, 22, 20, 18]
 
 # sonify_star(star_name)
 
-# sonify(x,y)
+# quick_sonify(x,y)
 
 path = os.path.join('src','backend', 'tmp', 'c11595af-3689-4831-93d5-b88875042548.fits')
     
