@@ -2,7 +2,7 @@ import lightkurve as lk
 import matplotlib.pyplot as plt
 import numpy as np
 
-from extensions import sonify
+from extensions import quick_sonify
 
 def filter_by_author(search_result):
 
@@ -67,7 +67,7 @@ def sonify_star(star_name):
         cleaned_lc.plot()
         plt.show()
 
-        sonify(time, flux)
+        quick_sonify(time, flux)
 
     
 
