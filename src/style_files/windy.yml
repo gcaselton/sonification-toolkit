@@ -1,0 +1,14 @@
+name: "windy"
+
+sound: "windy"
+
+parameters:
+  cutoff:
+    min: 0.25
+    max: 0.85
+  pitch:
+    min: 0
+    max: 12
+
+
+
