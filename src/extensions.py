@@ -11,19 +11,10 @@ import random
 import matplotlib.pyplot as plt
 import sounddevice as sd
 
-# sound_systems = {
-#     1 : 'mono',
-#     2 : 'stereo',
-#     6 : '5.1',
-#     8 : '7.1'
-# }
-
-# def get_sound_system():
-#     device_info = sd.query_devices(sd.default.device['output'])
-#     return sound_systems[device_info['max_output_channels']]
-
 
 def sonify(x_data, y_data, sound='synth', y_params=['cutoff'], chordal=True, system='stereo', length=15):
+
+        # To Do - add parameter/processing for config file
 
         # Covert data to numpy array
         x_data = ensure_array(x_data)
@@ -42,13 +33,13 @@ def sonify(x_data, y_data, sound='synth', y_params=['cutoff'], chordal=True, sys
 def ensure_array(data):
         return data if isinstance(data, np.ndarray) else np.array(data)
 
-def setup_generator(sound):
+def setup_generator(preset):
 
         generator = Synthesizer()
         generator.modify_preset({'filter':'on'})
 
-        if sound == 'windy':
-                generator.load_preset('windy')
+        if preset != 'synth':
+                generator.load_preset(preset)
 
         return generator
 
