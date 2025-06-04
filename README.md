@@ -9,7 +9,7 @@ An application to play sounds of astronomical objects using the Strauss package.
 - Node v20.9.0
 - npm v10.2.2
 - FastAPI v0.0.7
-- Python v3.9.0
+- Python v3.11.0
 
 ## Application structure
 
@@ -34,3 +34,30 @@ The backend uses fastapi and the frontend uses React + Vite
 
 ## Instructions to run the app
 
+Open a terminal from the location you cloned the repo
+
+### Run fastapi
+
+Go into the backend directory
+
+`cd .\src\backend\`
+
+Run fastapi
+
+`fastapi dev .\main.py`
+
+The fastapi should be running at http://127.0.0.1:8000
+
+You can find the documentation of the APIs available at http://127.0.0.1:8000/docs
+
+### Run the React app
+
+Go into the frontend directory
+
+`cd .\src\frontend\`
+
+Run the React app
+
+`npm run dev`
+
+The frontend application should be running at http://localhost:5173/
