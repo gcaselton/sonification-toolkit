@@ -28,8 +28,20 @@ const LightcurvesContext = createContext({
 
 export default function Lightcurves() {
   const [lightcurves, setLightcurves] = useState([])
+  const url = "http://localhost:8000/search-lightcurves"
+  const data = {
+    "star_name": "HD 12345"
+  }
+  const config = {
+    method: 'POST',
+    headers: {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(data)
+  }
   const fetchLightcurves = async () => {
-    const response = await fetch("http://localhost:8000/search-lightcurves")
+    const response = await fetch(url, config)
     const lc = await response.json()
     setLightcurves(lc.data)
   }
