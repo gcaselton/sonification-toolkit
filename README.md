@@ -42,6 +42,10 @@ Go into the backend directory
 
 `cd .\src\backend\`
 
+Install the required python packages
+
+`pip install -r requirements.txt`
+
 Run fastapi
 
 `fastapi dev .\main.py`
@@ -55,6 +59,10 @@ You can find the documentation of the APIs available at http://127.0.0.1:8000/do
 Go into the frontend directory
 
 `cd .\src\frontend\`
+
+Install the required node packages
+
+`npm install`
 
 Run the React app
 
