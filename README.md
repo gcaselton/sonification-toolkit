@@ -36,15 +36,15 @@ The backend uses fastapi and the frontend uses React + Vite
 
 Open a terminal from the location you cloned the repo
 
+Install the required python packages
+
+`pip install -r requirements.txt`
+
 ### Run fastapi
 
 Go into the backend directory
 
 `cd .\src\backend\`
-
-Install the required python packages
-
-`pip install -r requirements.txt`
 
 Run fastapi
 
