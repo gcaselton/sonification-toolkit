@@ -2,9 +2,9 @@ name: "default"
 
 description: >-
   Default style for sonifying light curves. It combines the default
-  STRAUSS synth sound with a cutoff filter, and uses a random chord to play.
+  STRAUSS synth sound with a cutoff filter, and chooses a random chord to play.
 
-sound: "default"
+sound: "synth"
 
 parameters:
   cutoff:

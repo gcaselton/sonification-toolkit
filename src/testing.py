@@ -16,10 +16,10 @@ y = [2, 4, 19, 1, 11, 21, 15, 4, 6, 22, 20, 18]
 
 # sonify_star(star_name)
 
-# quick_sonify(x,y)
+quick_sonify(x,y)
 
-path = os.path.join('src','backend', 'tmp', 'c11595af-3689-4831-93d5-b88875042548.fits')
+# path = os.path.join('src','backend', 'tmp', 'c11595af-3689-4831-93d5-b88875042548.fits')
     
-time, flux = extract_time_flux(path)
+# time, flux = extract_time_flux(path)
 
-print(time, flux)
+# print(time, flux)

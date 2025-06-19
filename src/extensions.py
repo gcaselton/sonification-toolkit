@@ -1,8 +1,7 @@
 from strauss.sonification import Sonification
-from strauss.sources import Objects
-from strauss.sources import param_lim_dict
+from strauss.sources import Objects, param_lim_dict
 from strauss.score import Score
-from strauss.generator import Synthesizer
+from strauss.generator import Synthesizer, Sampler
 from strauss.notes import notesharps
 
 import lightkurve as lk
@@ -10,15 +9,45 @@ import numpy as np
 import random
 import matplotlib.pyplot as plt
 import sounddevice as sd
+from pathlib import Path
 import os
+import yaml
+
+DEFAULT_TYPE = 'light_curves'
+DEFAULT_STYLE_FILE = os.path.join("src","style_files",DEFAULT_TYPE,"default.yml")
+
+def read_style_file(filepath):
+
+    with open(filepath, mode='r') as fdata:
+        try:
+            style_dict = yaml.safe_load(fdata)
+        except yaml.YAMLError as err:
+            print(err)
+    
+    return style_dict
+
+default_style_dict = read_style_file(DEFAULT_STYLE_FILE)
+
+print(read_style_file(DEFAULT_STYLE_FILE))
+
+def sonify(data_filepath, sonify_type, style_filepath, length=15, system='stereo'):
+
+        # Read YAML file
+        style = read_style_file(style_filepath)
+        
+        # Set up Sonification elements
+        score, generator = setup_style(sonify_type, style, length)
+        sources = setup_data(data_filepath, sonify_type, style)
+
+        # Render sonification
+        sonification = Sonification(score, sources, generator, system)
+        sonification.render()
+
+        return sonification
 
 
 
-def sonify(x_data, y_data, style_file_path, length=15, system='stereo'):
-        pass
-
-
-def quick_sonify(x_data, y_data, sound='synth', y_params=['cutoff'], chordal=True, length=15, system='stereo'):
+def quick_sonify(x_data, y_data, sound='default', y_params=['cutoff'], chordal=True, length=15, system='stereo'):
 
         # Covert data to numpy array
         x_data = ensure_array(x_data)
@@ -37,15 +66,61 @@ def quick_sonify(x_data, y_data, sound='synth', y_params=['cutoff'], chordal=Tru
 def ensure_array(data):
         return data if isinstance(data, np.ndarray) else np.array(data)
 
-def setup_generator(preset):
 
-        generator = Synthesizer()
-        generator.modify_preset({'filter':'on'})
+def find_sound(sound_name):
+    synth_path = Path("src","sound_assets","synth")
+    samples_path = Path("src","sound_assets","samples")
 
-        if preset != 'synth':
-                generator.load_preset(preset)
+    # Search for any file starting with 'sound_name'
+    synth_matches = list(synth_path.glob(f"{sound_name}.*"))
+    samples_matches = list(samples_path.glob(f"{sound_name}.*"))
 
-        return generator
+    if synth_matches:
+        return "synth", synth_matches[0]
+    elif samples_matches:
+        return "samples", samples_matches[0]
+    else:
+        return None, None
+
+def setup_style(sonify_type, style, length):
+
+        default_path = Path('src', 'style_files', sonify_type, 'default.yml')
+        default_style = read_style_file(default_path)
+
+        sound = style.get('sound', default_style['sound'])
+        folder, path = find_sound(sound)
+
+        if not folder:
+              print('Sound not found in sound_assets directory, reverting to default')
+              folder, path = find_sound(default_style['sound'])
+
+        generator = Synthesizer() if folder == 'synth' else Sampler()
+        generator.load_preset(path)
+
+        params = style.get('parameters', default_style['parameters'])
+
+        if 'cutoff' in params:
+                generator.modify_preset({'filter':'on'})
+
+        chord_mode = style.get('chord_mode', default_style['chord_mode'])
+
+        notes = [[]]
+
+        if chord_mode.lower() == 'on':
+              chord = style.get('chord', default_style['chord'])
+
+              if chord.lower() == 'random':
+                    notes = random_chord()
+              else:
+                    # To do - parse chord and voice it
+                    pass
+        else:
+              # To do - handle notes/scales
+              pass
+        
+        score = Score(notes,length)
+
+        return score, generator
 
 def setup_score(chordal, length):
 
@@ -53,7 +128,7 @@ def setup_score(chordal, length):
         
         return Score(notes, length)
 
-def setup_sources(x_data, y_data, y_params):
+def setup_data(x_data, y_data, y_params):
         
         data = {'pitch': [0,1,2,3],
                 'time_evo': [x_data]*4}
