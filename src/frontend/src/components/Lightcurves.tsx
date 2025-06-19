@@ -19,7 +19,12 @@ import {
 
 interface Lightcurve {
   id: string;
-  item: string;
+  mission: string;
+  exposure: number;
+  pipeline: string;
+  year: number;
+  period: string;
+  dataURI: string;
 }
 
 const LightcurvesContext = createContext({
@@ -43,7 +48,7 @@ export default function Lightcurves() {
   const fetchLightcurves = async () => {
     const response = await fetch(url, config)
     const lc = await response.json()
-    setLightcurves(lc.data)
+    setLightcurves(lc.results)
   }
   useEffect(() => {
     fetchLightcurves()
@@ -54,7 +59,7 @@ export default function Lightcurves() {
       <Container maxW="container.xl" pt="100px">
         <Stack gap={5}>
           {lightcurves.map((lc: Lightcurve) => (
-            <b key={lc.id}>{lc.item}</b>
+            <b key={lc.id}>{lc.mission} {lc.exposure} {lc.pipeline} {lc.year} {lc.period}</b>
           ))}
         </Stack>
       </Container>
