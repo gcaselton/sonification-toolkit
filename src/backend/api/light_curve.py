@@ -143,7 +143,7 @@ def extract_time_flux(filepath):
     """
 
     lc = lk.read(filepath)
-    time = lc.time.value0
+    time = lc.time.value
     flux = lc.flux.value
 
     return time, flux
