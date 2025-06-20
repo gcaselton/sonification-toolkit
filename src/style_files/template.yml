@@ -1,0 +1,10 @@
+name: "*"
+
+description: "*"
+
+sound:
+
+parameters:
+  cutoff:
+  pitch:
+  azimuth:

@@ -4,6 +4,8 @@ from strauss.score import Score
 from strauss.generator import Synthesizer, Sampler
 from strauss.notes import notesharps
 
+from backend.constants import *
+
 import lightkurve as lk
 import numpy as np
 import random
@@ -15,6 +17,25 @@ import yaml
 
 DEFAULT_TYPE = 'light_curves'
 DEFAULT_STYLE_FILE = os.path.join("src","style_files",DEFAULT_TYPE,"default.yml")
+
+
+def sound_names():
+
+      synths = [f.stem for f in SYNTHS_DIR.iterdir() if f.is_file()]
+      samples = [f.stem for f in SAMPLES_DIR.iterdir() if f.is_file()]
+
+      all_sounds = synths + samples
+      
+      return all_sounds
+      
+
+VALID_STYLE = {
+      'name': '*',
+      'description': '*',
+      'sound': sound_names(),
+      'parameters': param_lim_dict,
+      'chord_mode': ['on', 'off']
+}
 
 def read_style_file(filepath):
 
@@ -68,7 +89,7 @@ def ensure_array(data):
 
 
 def find_sound(sound_name):
-    synth_path = Path("src","sound_assets","synth")
+    synth_path = Path("src","sound_assets","synths")
     samples_path = Path("src","sound_assets","samples")
 
     # Search for any file starting with 'sound_name'
@@ -76,12 +97,46 @@ def find_sound(sound_name):
     samples_matches = list(samples_path.glob(f"{sound_name}.*"))
 
     if synth_matches:
-        return "synth", synth_matches[0]
+        return "synths", synth_matches[0]
     elif samples_matches:
         return "samples", samples_matches[0]
     else:
         return None, None
 
+                  
+def validate_dict(provided, target):
+
+        for key, value in provided.items():
+            if key not in target:
+                  print(f'{key} is not a valid key')
+                  return False
+            
+            valid_value = target[key]
+
+            if type(value) is not type(valid_value):
+                  print(f'Expected type {type(valid_value)} for {value} but got {type(value)} instead')
+                  return False
+
+            if valid_value == '*':
+                  continue
+
+            if isinstance(value, dict):
+                  new_target = target[key]
+                  if not validate_dict(value, new_target):
+                        return False
+                  
+            if isinstance(value, str) and value not in valid_value:
+                  print(f'{value} not a valid value for {key}')
+                  return False
+            
+            # To do - validate parameters and ranges
+                  
+                                    
+        return True
+        
+        
+        
+        
 def setup_style(sonify_type, style, length):
 
         default_path = Path('src', 'style_files', sonify_type, 'default.yml')
@@ -94,7 +149,7 @@ def setup_style(sonify_type, style, length):
               print('Sound not found in sound_assets directory, reverting to default')
               folder, path = find_sound(default_style['sound'])
 
-        generator = Synthesizer() if folder == 'synth' else Sampler()
+        generator = Synthesizer() if folder == 'synths' else Sampler()
         generator.load_preset(path)
 
         params = style.get('parameters', default_style['parameters'])
