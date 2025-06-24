@@ -96,64 +96,56 @@ def find_sound(sound_name):
     synth_matches = list(synth_path.glob(f"{sound_name}.*"))
     samples_matches = list(samples_path.glob(f"{sound_name}.*"))
 
-    if synth_matches:
+    if synth_matches and samples_matches:
+          raise ValueError(f'The name "{sound_name}" is present in both /synths and /samples directories.')
+    elif synth_matches:
         return "synths", synth_matches[0]
     elif samples_matches:
         return "samples", samples_matches[0]
     else:
-        return None, None
+        raise ValueError(f'"{sound_name}" not found in the sound_assets directory.')
 
                   
-def validate_dict(provided, target):
 
-        for key, value in provided.items():
-            if key not in target:
-                  print(f'{key} is not a valid key')
-                  return False
-            
-            valid_value = target[key]
+def validate_type(value, valid_types):
+      
+      if not isinstance(value, valid_types):
+            raise TypeError(f'"{value}" should be of type {valid_types}, but instead is {type(value)}.')
+      else:
+            return value
+      
+def validate_params(params):
+      
+        if isinstance(params, str):
+              if ',' in params:
+                    params = params.split(',')
+        
+        if isinstance(params, ):
+              pass
 
-            if type(value) is not type(valid_value):
-                  print(f'Expected type {type(valid_value)} for {value} but got {type(value)} instead')
-                  return False
 
-            if valid_value == '*':
-                  continue
-
-            if isinstance(value, dict):
-                  new_target = target[key]
-                  if not validate_dict(value, new_target):
-                        return False
-                  
-            if isinstance(value, str) and value not in valid_value:
-                  print(f'{value} not a valid value for {key}')
-                  return False
-            
-            # To do - validate parameters and ranges
-                  
-                                    
-        return True
-        
-        
-        
-        
 def setup_style(sonify_type, style, length):
-
+        
         default_path = Path('src', 'style_files', sonify_type, 'default.yml')
         default_style = read_style_file(default_path)
 
+        # Read and validate sound to set up STRAUSS Generator 
+
+        # Load default sound if not specified by user
         sound = style.get('sound', default_style['sound'])
+        sound = validate_type(sound, str)
+
         folder, path = find_sound(sound)
-
-        if not folder:
-              print('Sound not found in sound_assets directory, reverting to default')
-              folder, path = find_sound(default_style['sound'])
-
+        
         generator = Synthesizer() if folder == 'synths' else Sampler()
         generator.load_preset(path)
 
+        # Read and validate parameters
+
+        # Again use default if none specified
         params = style.get('parameters', default_style['parameters'])
 
+        # TO DO - move the parameter validation into the 'setup_data' func
         if 'cutoff' in params:
                 generator.modify_preset({'filter':'on'})
 

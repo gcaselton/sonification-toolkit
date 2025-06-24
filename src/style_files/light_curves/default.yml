@@ -11,6 +11,7 @@ parameters:
     min: 0.25
     max: 0.85
 
+
 chord_mode: "on"
 
 chord: "random"
