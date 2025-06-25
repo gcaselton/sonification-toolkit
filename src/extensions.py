@@ -7,6 +7,7 @@ from strauss.notes import notesharps
 from backend.constants import *
 
 import lightkurve as lk
+import pychord as chrd
 import numpy as np
 import random
 import matplotlib.pyplot as plt
@@ -57,8 +58,7 @@ def sonify(data_filepath, sonify_type, style_filepath, length=15, system='stereo
         style = read_style_file(style_filepath)
         
         # Set up Sonification elements
-        score, generator = setup_style(sonify_type, style, length)
-        sources = setup_data(data_filepath, sonify_type, style)
+        score, sources, generator = setup_sonification(data_filepath, sonify_type, style, length)
 
         # Render sonification
         sonification = Sonification(score, sources, generator, system)
@@ -104,7 +104,6 @@ def find_sound(sound_name):
         return "samples", samples_matches[0]
     else:
         raise ValueError(f'"{sound_name}" not found in the sound_assets directory.')
-
                   
 
 def validate_type(value, valid_types):
@@ -113,18 +112,63 @@ def validate_type(value, valid_types):
             raise TypeError(f'"{value}" should be of type {valid_types}, but instead is {type(value)}.')
       else:
             return value
-      
-def validate_params(params):
-      
-        if isinstance(params, str):
-              if ',' in params:
-                    params = params.split(',')
-        
-        if isinstance(params, ):
-              pass
 
+def validate_value(key, value, valid_values):
+      
+      if value not in valid_values:
+            raise ValueError(f'"{value}" is not a valid value for {key}.')
+      else:
+            return value
+      
+def convert_to_float(string):
+      
+      # NOTE - make this work
 
-def setup_style(sonify_type, style, length):
+      if string.endswith('%'):
+            string = string[:-1]
+      elif string.contains('.'):
+            try:
+                  value = float(string)
+            except ValueError:
+                  raise ValueError('Limit must be a number')
+            if 0 <= value <= 1:
+                  return value
+            else:
+                  raise ValueError('Limit should be between 0-1')
+
+      try:
+                value = int(string)
+      except ValueError:
+                raise ValueError('Limit must be a number')
+      if 0 <= value <= 100:
+                  return value
+      else:
+                  raise ValueError('Limit should be between 0-100%')
+
+      
+def validate_param_lims(param, lims, valid_lims):
+      
+      if len(lims) != 2:
+            raise ValueError(f'Expected 2 limits (lower and upper) for {param}, but got {len(lims)}.')
+      
+#       for lim in lims:
+#         #     if isinstance(lim, str):
+#         #           convert_to_float(lim)
+
+      valid_types = [int, float]
+      
+      lower = validate_type(lims[0], valid_types)
+      upper = validate_type(lims[1], valid_types)
+
+      if lower > upper:
+             raise ValueError(f'The lower limit should be below the upper limit for {param}.')
+      
+      if lower < valid_lims[0] or upper > valid_lims[1]:
+             raise ValueError(f'The limits for {param} must be between the limits stated in the schema.')
+      
+      return tuple(lower, upper)
+
+def setup_sonification(data_filepath, sonify_type, style, length):
         
         default_path = Path('src', 'style_files', sonify_type, 'default.yml')
         default_style = read_style_file(default_path)
@@ -132,7 +176,7 @@ def setup_style(sonify_type, style, length):
         # Read and validate sound to set up STRAUSS Generator 
 
         # Load default sound if not specified by user
-        sound = style.get('sound', default_style['sound'])
+        sound = style.get('sound') or default_style['sound']
         sound = validate_type(sound, str)
 
         folder, path = find_sound(sound)
@@ -143,64 +187,87 @@ def setup_style(sonify_type, style, length):
         # Read and validate parameters
 
         # Again use default if none specified
-        params = style.get('parameters', default_style['parameters'])
+        params = style.get('parameters') or default_style['parameters']
+        params = validate_type(params, dict)
 
-        # TO DO - move the parameter validation into the 'setup_data' func
         if 'cutoff' in params:
                 generator.modify_preset({'filter':'on'})
 
-        chord_mode = style.get('chord_mode', default_style['chord_mode'])
+        # New dictionary to store validated params as the keys and a tuple containing limits as the values
+        params_lims = {}
+
+        # For each parameter, validate the param and limits provided 
+        for param in params:
+              
+              param = validate_value('parameters', param, param_lim_dict.keys())
+
+              lims = params.get(param) or default_style['parameters'][param]
+              lims = validate_type(lims, list)
+              lims = validate_param_lims(param, lims, param_lim_dict[param])
+
+              params_lims[param] = lims
+
+
+        chord_mode = style.get('chord_mode') or default_style['chord_mode']
+        chord_mode = validate_type(chord_mode, str)
+        chord_mode = validate_value('chord_mode', chord_mode, VALID_STYLE['chord_mode'])
+
+        sources = setup_data(data_filepath, sonify_type, params_lims, chord_mode)
 
         notes = [[]]
 
-        if chord_mode.lower() == 'on':
-              chord = style.get('chord', default_style['chord'])
+        # Handle chord
+        if chord_mode == 'on':
+              
+              chord = style.get('chord') or default_style['chord']
 
               if chord.lower() == 'random':
                     notes = random_chord()
               else:
-                    # To do - parse chord and voice it
-                    pass
+                    notes = voice_chord(chord)
         else:
               # To do - handle notes/scales
               pass
         
         score = Score(notes,length)
 
-        return score, generator
+        return score, sources, generator
 
-def setup_score(chordal, length):
+def voice_chord(chord_name):
+      # NOTE - Make this function parse and voice chords
+      pass
 
-        notes = random_chord() if chordal else [[random.choice(notesharps) + '3']]
-        
-        return Score(notes, length)
 
-def setup_data(x_data, y_data, y_params):
-        
-        data = {'pitch': [0,1,2,3],
-                'time_evo': [x_data]*4}
-        
-        # Set up map limits and parameter limits
-        m_lims = {'time_evo': ('0%','100%')}
-        p_lims = {}
-        
-        for param in y_params:
-                data[param] = [y_data]*4
+def setup_data(data_filepath, sonify_type, params, chord_mode):
+
+        if sonify_type == 'light_curves':
+              
+              lc = lk.read(data_filepath)
+              time = lc.time.values
+              flux = lc.flux.values
+
+              pitches = [0,1,2,3] if chord_mode == 'on' else [0]
+
+              data = {
+                     'pitch': pitches,
+                     'time_evo': [time]*len(pitches)
+              }
+
+               # Set up map limits and parameter limits
+              m_lims = {'time_evo': ('0%','100%')}
+              p_lims = {}
+              
+              for param in params:
+                data[param] = [flux]*len(pitches)
                 m_lims[param] = ('0%','100%')
-                p_lims[param] = param_lim_dict[param]
+                p_lims[param] = params[param]
 
-        # set up source
-        sources = Objects(data.keys())
-        sources.fromdict(data)
-        sources.apply_mapping_functions(map_lims=m_lims, param_lims=p_lims)
-
+              # set up sources
+              sources = Objects(data.keys())
+              sources.fromdict(data)
+              sources.apply_mapping_functions(map_lims=m_lims, param_lims=p_lims)
+                
         return sources
-
-nice_limits = {
-        'cutoff': (0.1,0.9),
-        'pitch_shift': (0,24),
-        'volume': (0,1)
-}
 
 def random_chord():
 
