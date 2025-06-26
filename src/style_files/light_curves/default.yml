@@ -4,7 +4,7 @@ description: >-
   Default style for sonifying light curves. It combines the default
   STRAUSS synth sound with a cutoff filter, and chooses a random chord to play.
 
-sound: "synth"
+sound: "default_synth"
 
 parameters:
   cutoff: [0.25, 0.85]

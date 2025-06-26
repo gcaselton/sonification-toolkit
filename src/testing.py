@@ -1,5 +1,5 @@
 from star_query import sonify_star
-from extensions import quick_sonify
+from backend.extensions import quick_sonify
 from backend.api.light_curve import extract_time_flux
 import lightkurve as lk
 import numpy as np
