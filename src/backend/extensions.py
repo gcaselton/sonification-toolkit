@@ -4,10 +4,11 @@ from strauss.score import Score
 from strauss.generator import Synthesizer, Sampler
 from strauss.notes import notesharps
 
-from backend.constants import *
+from constants import *
+from pychord import Chord
+from pychord.utils import transpose_note
 
 import lightkurve as lk
-import pychord as chrd
 import numpy as np
 import random
 import matplotlib.pyplot as plt
@@ -44,7 +45,7 @@ def read_style_file(filepath):
         try:
             style_dict = yaml.safe_load(fdata)
         except yaml.YAMLError as err:
-            print(err)
+              raise err('Error reading YAML file, please check the filepath and ensure correct YAML syntax.')
     
     return style_dict
 
@@ -69,6 +70,8 @@ def sonify(data_filepath, sonify_type, style_filepath, length=15, system='stereo
 
 
 def quick_sonify(x_data, y_data, sound='default', y_params=['cutoff'], chordal=True, length=15, system='stereo'):
+
+      # NOTE - re-structure this function to use the new sonify function
 
         # Covert data to numpy array
         x_data = ensure_array(x_data)
@@ -207,26 +210,25 @@ def setup_sonification(data_filepath, sonify_type, style, length):
 
               params_lims[param] = lims
 
-
         chord_mode = style.get('chord_mode') or default_style['chord_mode']
         chord_mode = validate_type(chord_mode, str)
         chord_mode = validate_value('chord_mode', chord_mode, VALID_STYLE['chord_mode'])
 
+        # Set up the data
         sources = setup_data(data_filepath, sonify_type, params_lims, chord_mode)
-
-        notes = [[]]
 
         # Handle chord
         if chord_mode == 'on':
               
               chord = style.get('chord') or default_style['chord']
+              chord = validate_type(chord, str)
 
               if chord.lower() == 'random':
                     notes = random_chord()
               else:
                     notes = voice_chord(chord)
         else:
-              # To do - handle notes/scales
+              # NOTE To do - handle individual notes/scales
               pass
         
         score = Score(notes,length)
@@ -234,8 +236,41 @@ def setup_sonification(data_filepath, sonify_type, style, length):
         return score, sources, generator
 
 def voice_chord(chord_name):
-      # NOTE - Make this function parse and voice chords
-      pass
+
+      # This will raise a ValueError if chord_name is invalid.
+      chord = Chord(chord_name)
+      notes = chord.components()
+      root = chord.root
+      
+      fifth = transpose_note(root, 7)
+
+      # Chord needs a fifth to be voiced pleasantly
+      if not fifth in notes:
+            raise ValueError('Chord must have a perfect fifth')
+      else:
+            root_and_fifth = [root, fifth]
+            remaining_notes = [note for note in notes if note not in root_and_fifth]
+      
+      # Voice the chord depending on which notes it has
+      if len(remaining_notes) == 1:
+            third_note = remaining_notes[0]
+            fourth_note = root
+      elif len(remaining_notes) == 2:
+            third_note = remaining_notes[0]
+            fourth_note = remaining_notes[1]
+      elif len(remaining_notes) == 3:
+            # NOTE - Need to allow for 5+ notes in a chord e.g. Cmaj9
+            fifth = remaining_notes[0]
+            third_note = remaining_notes[1]
+            fourth_note = remaining_notes[2]
+      elif len(remaining_notes) == 0:
+            third_note = root
+            fourth_note = fifth
+      else:
+            raise ValueError(f'{chord_name} is too complex, maximum of 5 notes allowed.')
+      
+      return[[root + '2', fifth + '3', third_note + '4', fourth_note + '5']]
+            
 
 
 def setup_data(data_filepath, sonify_type, params, chord_mode):
@@ -272,17 +307,16 @@ def setup_data(data_filepath, sonify_type, params, chord_mode):
 def random_chord():
 
         root_note = random.choice(notesharps)
-        fifth = add_interval(root_note, 7)
+        fifth = transpose_note(root_note, 7)
 
         interval_pairs = [[11,2],[4,2],[4,11],[10,5]]
         chosen_pair = random.choice(interval_pairs)
         random.shuffle(chosen_pair)
 
-        third_note = add_interval(root_note, chosen_pair[0])
-        fourth_note = add_interval(root_note, chosen_pair[1])
+        third_note = transpose_note(root_note, chosen_pair[0])
+        fourth_note = transpose_note(root_note, chosen_pair[1])
 
         return [[root_note + '2', fifth + '3', third_note + '4', fourth_note + '5']]
 
-def add_interval(root, interval):
-        return notesharps[(notesharps.index(root) + interval) % len(notesharps)]
+
         

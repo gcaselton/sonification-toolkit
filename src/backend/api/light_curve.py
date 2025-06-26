@@ -1,5 +1,7 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
+from extensions import sonify
+
 import lightkurve as lk
 import matplotlib.pyplot as plt
 import requests
@@ -24,7 +26,7 @@ class DownloadRequest(BaseModel):
 
 class SonificationRequest(BaseModel):
     data_filepath: str
-    config_filepath: str
+    style_filepath: str
     duration: int
     system: str
 
@@ -132,24 +134,18 @@ async def select_lightcurve(request: DownloadRequest):
     
     return {'filepath': filepath}
 
-
-
-def extract_time_flux(filepath):
-    """
-    Use the lightkurve package to extract the time and flux values from a light curve.
-
-    - **filepath**: the filepath to the lightcurve .fits file.
-    - Returns: 2 arrays containing time and flux values.
-    """
-
-    lc = lk.read(filepath)
-    time = lc.time.value
-    flux = lc.flux.value
-
-    return time, flux
-
 @router.post('/sonify-lightcurve/')
 async def sonify_lightcurve(request: SonificationRequest):
 
-    time, flux = extract_time_flux(request.data_filepath)
+    data = request.data_filepath
+    style = request.style_filepath
+    length = request.duration
+    system = request.system
+
+    try:
+        soni = sonify(data, 'light_curve', style, length, system)
+        soni.hear()
+    except Exception as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    
 
