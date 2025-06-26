@@ -1,9 +1,11 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from extensions import sonify
+from pathlib import Path
 
 import lightkurve as lk
 import matplotlib.pyplot as plt
+import yaml
 import requests
 import os
 import base64
@@ -26,7 +28,7 @@ class DownloadRequest(BaseModel):
 
 class SonificationRequest(BaseModel):
     data_filepath: str
-    style_filepath: str
+    style_file_str: str
     duration: int
     system: str
 
@@ -137,13 +139,14 @@ async def select_lightcurve(request: DownloadRequest):
 @router.post('/sonify-lightcurve/')
 async def sonify_lightcurve(request: SonificationRequest):
 
-    data = request.data_filepath
-    style = request.style_filepath
+    data = Path(request.data_filepath)
+    style_string = request.style_file_str
     length = request.duration
     system = request.system
 
     try:
-        soni = sonify(data, 'light_curve', style, length, system)
+        style = yaml.safe_load(style_string)
+        soni = sonify(data, 'light_curves', style, length, system)
         soni.hear()
     except Exception as e:
         raise HTTPException(status_code=404, detail=str(e))
