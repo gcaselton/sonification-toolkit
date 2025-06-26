@@ -4,9 +4,9 @@ from strauss.score import Score
 from strauss.generator import Synthesizer, Sampler
 from strauss.notes import notesharps
 
-from constants import *
 from pychord import Chord
 from pychord.utils import transpose_note
+from backend.paths import *
 
 import lightkurve as lk
 import numpy as np
@@ -16,10 +16,6 @@ import sounddevice as sd
 from pathlib import Path
 import os
 import yaml
-
-DEFAULT_TYPE = 'light_curves'
-DEFAULT_STYLE_FILE = os.path.join("src","style_files",DEFAULT_TYPE,"default.yml")
-
 
 def sound_names():
 
@@ -40,26 +36,20 @@ VALID_STYLE = {
 }
 
 def read_style_file(filepath):
-
-    with open(filepath, mode='r') as fdata:
+    
+    filepath = Path(filepath)
+    with filepath.open(mode='r') as fdata:
         try:
             style_dict = yaml.safe_load(fdata)
         except yaml.YAMLError as err:
-              raise err('Error reading YAML file, please check the filepath and ensure correct YAML syntax.')
+              raise ValueError("Error reading YAML file, please check the filepath and ensure correct YAML syntax.") from err
     
     return style_dict
 
-default_style_dict = read_style_file(DEFAULT_STYLE_FILE)
-
-print(read_style_file(DEFAULT_STYLE_FILE))
-
-def sonify(data_filepath, sonify_type, style_filepath, length=15, system='stereo'):
-
-        # Read YAML file
-        style = read_style_file(style_filepath)
+def sonify(data_filepath, sonify_type, style_dict, length=15, system='stereo'):
         
         # Set up Sonification elements
-        score, sources, generator = setup_sonification(data_filepath, sonify_type, style, length)
+        score, sources, generator = setup_sonification(data_filepath, sonify_type, style_dict, length)
 
         # Render sonification
         sonification = Sonification(score, sources, generator, system)
@@ -92,12 +82,10 @@ def ensure_array(data):
 
 
 def find_sound(sound_name):
-    synth_path = Path("src","sound_assets","synths")
-    samples_path = Path("src","sound_assets","samples")
 
     # Search for any file starting with 'sound_name'
-    synth_matches = list(synth_path.glob(f"{sound_name}.*"))
-    samples_matches = list(samples_path.glob(f"{sound_name}.*"))
+    synth_matches = list(SYNTHS_DIR.glob(f"{sound_name}.*"))
+    samples_matches = list(SAMPLES_DIR.glob(f"{sound_name}.*"))
 
     if synth_matches and samples_matches:
           raise ValueError(f'The name "{sound_name}" is present in both /synths and /samples directories.')
@@ -158,7 +146,7 @@ def validate_param_lims(param, lims, valid_lims):
 #         #     if isinstance(lim, str):
 #         #           convert_to_float(lim)
 
-      valid_types = [int, float]
+      valid_types = (int, float)
       
       lower = validate_type(lims[0], valid_types)
       upper = validate_type(lims[1], valid_types)
@@ -169,11 +157,11 @@ def validate_param_lims(param, lims, valid_lims):
       if lower < valid_lims[0] or upper > valid_lims[1]:
              raise ValueError(f'The limits for {param} must be between the limits stated in the schema.')
       
-      return tuple(lower, upper)
+      return (lower, upper)
 
 def setup_sonification(data_filepath, sonify_type, style, length):
         
-        default_path = Path('src', 'style_files', sonify_type, 'default.yml')
+        default_path = Path(STYLE_FILES_DIR, sonify_type, 'default.yml')
         default_style = read_style_file(default_path)
 
         # Read and validate sound to set up STRAUSS Generator 
@@ -185,7 +173,9 @@ def setup_sonification(data_filepath, sonify_type, style, length):
         folder, path = find_sound(sound)
         
         generator = Synthesizer() if folder == 'synths' else Sampler()
-        generator.load_preset(path)
+
+        path_stem = str(path.with_suffix(""))
+        generator.load_preset(path_stem)
 
         # Read and validate parameters
 
@@ -278,8 +268,8 @@ def setup_data(data_filepath, sonify_type, params, chord_mode):
         if sonify_type == 'light_curves':
               
               lc = lk.read(data_filepath)
-              time = lc.time.values
-              flux = lc.flux.values
+              time = lc.time.value
+              flux = lc.flux.value
 
               pitches = [0,1,2,3] if chord_mode == 'on' else [0]
 
