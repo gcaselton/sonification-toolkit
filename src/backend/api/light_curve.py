@@ -146,7 +146,7 @@ async def sonify_lightcurve(request: SonificationRequest):
 
     try:
         style = yaml.safe_load(style_string)
-        soni = sonify(data, 'light_curves', style, length, system)
+        soni = sonify(data, 'light_curve', style, length, system)
         soni.hear()
     except Exception as e:
         raise HTTPException(status_code=404, detail=str(e))
