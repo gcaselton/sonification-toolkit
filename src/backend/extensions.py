@@ -88,26 +88,26 @@ def find_sound(sound_name):
     samples_matches = list(SAMPLES_DIR.glob(f"{sound_name}.*"))
 
     if synth_matches and samples_matches:
-          raise ValueError(f'The name "{sound_name}" is present in both /synths and /samples directories.')
+          raise ValueError(f'The name {sound_name} is present in both /synths and /samples directories.')
     elif synth_matches:
         return "synths", synth_matches[0]
     elif samples_matches:
         return "samples", samples_matches[0]
     else:
-        raise ValueError(f'"{sound_name}" not found in the sound_assets directory.')
+        raise ValueError(f'{sound_name} not found in the sound_assets directory.')
                   
 
 def validate_type(value, valid_types):
       
       if not isinstance(value, valid_types):
-            raise TypeError(f'"{value}" should be of type {valid_types}, but instead is {type(value)}.')
+            raise TypeError(f'{value} should be of type {valid_types}, but instead is {type(value)}.')
       else:
             return value
 
 def validate_value(key, value, valid_values):
       
       if value not in valid_values:
-            raise ValueError(f'"{value}" is not a valid value for {key}.')
+            raise ValueError(f'{value} is not a valid value for {key}.')
       else:
             return value
       
@@ -161,8 +161,8 @@ def validate_param_lims(param, lims, valid_lims):
 
 def setup_sonification(data_filepath, sonify_type, style, length):
         
-        default_path = Path(STYLE_FILES_DIR, sonify_type, 'default.yml')
-        default_style = read_style_file(default_path)
+        default_style_path = Path(STYLE_FILES_DIR, sonify_type, 'default.yml')
+        default_style = read_style_file(default_style_path)
 
         # Read and validate sound to set up STRAUSS Generator 
 
@@ -184,7 +184,7 @@ def setup_sonification(data_filepath, sonify_type, style, length):
         params = validate_type(params, dict)
 
         if 'cutoff' in params:
-                generator.modify_preset({'filter':'on'})
+                generator.modify_preset({'filter':'on'})       
 
         # New dictionary to store validated params as the keys and a tuple containing limits as the values
         params_lims = {}
@@ -202,28 +202,60 @@ def setup_sonification(data_filepath, sonify_type, style, length):
 
         chord_mode = style.get('chord_mode') or default_style['chord_mode']
         chord_mode = validate_type(chord_mode, str)
-        chord_mode = validate_value('chord_mode', chord_mode, VALID_STYLE['chord_mode'])
+        chord_mode = validate_value('chord_mode', chord_mode, ['on', 'off'])
 
         # Set up the data
         sources = setup_data(data_filepath, sonify_type, params_lims, chord_mode)
 
-        # Handle chord
-        if chord_mode == 'on':
+      #   # Handle chord
+      #   if chord_mode == 'on':
               
-              chord = style.get('chord') or default_style['chord']
-              chord = validate_type(chord, str)
+      #         chord = style.get('chord') or default_style['chord']
+      #         chord = validate_type(chord, str)
 
-              if chord.lower() == 'random':
-                    notes = random_chord()
-              else:
-                    notes = voice_chord(chord)
-        else:
-              # NOTE To do - handle individual notes/scales
-              pass
-        
+      #         if chord.lower() == 'random':
+      #               notes = random_chord()
+      #         else:
+      #               notes = voice_chord(chord)
+      #   else:
+      #         # NOTE To do - handle individual notes/scales
+      #         pass
+        notes = [['A2', 'C3', 'E3', 'G5']]
         score = Score(notes,length)
 
         return score, sources, generator
+            
+
+def setup_data(data_filepath, sonify_type, params, chord_mode):
+
+        if sonify_type == 'light_curve':
+              
+              lc = lk.read(data_filepath)
+              time = lc.time.value
+              flux = lc.flux.value
+
+             # pitches = [0,1,2,3] if chord_mode == 'on' else [0]
+
+              data = {
+                     'pitch': [0,1,2,3],
+                     'time_evo': [time]*4
+              }
+
+               # Set up map limits and parameter limits
+              p_lims = {}
+              
+              for param in params:
+                data[param] = [flux]*4
+                p_lims[param] = params[param]
+
+
+              # set up sources
+              sources = Objects(data.keys())
+              sources.fromdict(data)
+              sources.apply_mapping_functions(param_lims=p_lims)
+                
+        return sources
+
 
 def voice_chord(chord_name):
 
@@ -243,6 +275,7 @@ def voice_chord(chord_name):
       
       # Voice the chord depending on which notes it has
       if len(remaining_notes) == 1:
+            # Likely a major or minor triad
             third_note = remaining_notes[0]
             fourth_note = root
       elif len(remaining_notes) == 2:
@@ -260,39 +293,6 @@ def voice_chord(chord_name):
             raise ValueError(f'{chord_name} is too complex, maximum of 5 notes allowed.')
       
       return[[root + '2', fifth + '3', third_note + '4', fourth_note + '5']]
-            
-
-
-def setup_data(data_filepath, sonify_type, params, chord_mode):
-
-        if sonify_type == 'light_curves':
-              
-              lc = lk.read(data_filepath)
-              time = lc.time.value
-              flux = lc.flux.value
-
-              pitches = [0,1,2,3] if chord_mode == 'on' else [0]
-
-              data = {
-                     'pitch': pitches,
-                     'time_evo': [time]*len(pitches)
-              }
-
-               # Set up map limits and parameter limits
-              m_lims = {'time_evo': ('0%','100%')}
-              p_lims = {}
-              
-              for param in params:
-                data[param] = [flux]*len(pitches)
-                m_lims[param] = ('0%','100%')
-                p_lims[param] = params[param]
-
-              # set up sources
-              sources = Objects(data.keys())
-              sources.fromdict(data)
-              sources.apply_mapping_functions(map_lims=m_lims, param_lims=p_lims)
-                
-        return sources
 
 def random_chord():
 
