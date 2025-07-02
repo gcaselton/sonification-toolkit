@@ -7,11 +7,11 @@ description: >-
 sound: "default_synth"
 
 parameters:
-  pitch_shift: [0, 12]
+  cutoff: [0, 1]
 
 chord_mode: "on"
 
-chord: "Cmaj7"
+chord: "random"
 
 
 
