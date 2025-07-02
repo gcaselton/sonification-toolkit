@@ -6,7 +6,7 @@ from strauss.notes import notesharps
 
 from pychord import Chord
 from pychord.utils import transpose_note
-from backend.paths import *
+from paths import *
 
 import lightkurve as lk
 import numpy as np
@@ -46,7 +46,7 @@ def read_style_file(filepath):
     
     return style_dict
 
-def sonify(data_filepath, sonify_type, style_dict, length=15, system='stereo'):
+def sonify(data_filepath, style_dict, sonify_type, length=15, system='stereo'):
         
         # Set up Sonification elements
         score, sources, generator = setup_sonification(data_filepath, sonify_type, style_dict, length)
@@ -78,7 +78,7 @@ def quick_sonify(x_data, y_data, sound='default', y_params=['cutoff'], chordal=T
         soni.hear()
 
 def ensure_array(data):
-        return data if isinstance(data, np.ndarray) else np.array(data)
+      return data if isinstance(data, np.ndarray) else np.array(data)
 
 
 def find_sound(sound_name):
@@ -160,101 +160,108 @@ def validate_param_lims(param, lims, valid_lims):
       return (lower, upper)
 
 def setup_sonification(data_filepath, sonify_type, style, length):
+      
+      default_style_path = Path(STYLE_FILES_DIR, sonify_type, 'default.yml')
+      default_style = read_style_file(default_style_path)
+
+      # Read and validate sound to set up STRAUSS Generator 
+
+      # Load default sound if not specified by user
+      sound = style.get('sound') or default_style['sound']
+      sound = validate_type(sound, str)
+
+      folder, path = find_sound(sound)
         
-        default_style_path = Path(STYLE_FILES_DIR, sonify_type, 'default.yml')
-        default_style = read_style_file(default_style_path)
+      generator = Synthesizer() if folder == 'synths' else Sampler()
 
-        # Read and validate sound to set up STRAUSS Generator 
+      path_stem = str(path.with_suffix(""))
+      generator.load_preset(path_stem)
 
-        # Load default sound if not specified by user
-        sound = style.get('sound') or default_style['sound']
-        sound = validate_type(sound, str)
+      # Read and validate parameters
 
-        folder, path = find_sound(sound)
-        
-        generator = Synthesizer() if folder == 'synths' else Sampler()
+      # Again use default if none specified
+      params = style.get('parameters') or default_style['parameters']
+      params = validate_type(params, dict)
 
-        path_stem = str(path.with_suffix(""))
-        generator.load_preset(path_stem)
+      if 'cutoff' in params:
+            generator.modify_preset({'filter':'on'})       
 
-        # Read and validate parameters
+      # New dictionary to store validated params as the keys and a tuple containing limits as the values
+      params_lims = {}
 
-        # Again use default if none specified
-        params = style.get('parameters') or default_style['parameters']
-        params = validate_type(params, dict)
-
-        if 'cutoff' in params:
-                generator.modify_preset({'filter':'on'})       
-
-        # New dictionary to store validated params as the keys and a tuple containing limits as the values
-        params_lims = {}
-
-        # For each parameter, validate the param and limits provided 
-        for param in params:
+      # For each parameter, validate the param and limits provided 
+      for param in params:
               
-              param = validate_value('parameters', param, param_lim_dict.keys())
+            param = validate_value('parameters', param, param_lim_dict.keys())
 
-              lims = params.get(param) or default_style['parameters'][param]
-              lims = validate_type(lims, list)
-              lims = validate_param_lims(param, lims, param_lim_dict[param])
+            lims = params.get(param) or default_style['parameters'][param]
+            lims = validate_type(lims, list)
+            lims = validate_param_lims(param, lims, param_lim_dict[param])
 
-              params_lims[param] = lims
+            params_lims[param] = lims
 
-        chord_mode = style.get('chord_mode') or default_style['chord_mode']
-        chord_mode = validate_type(chord_mode, str)
-        chord_mode = validate_value('chord_mode', chord_mode, ['on', 'off'])
+      chord_mode = style.get('chord_mode') or default_style['chord_mode']
+      chord_mode = validate_type(chord_mode, str)
+      chord_mode = validate_value('chord_mode', chord_mode, ['on', 'off'])
 
-        # Set up the data
-        sources = setup_data(data_filepath, sonify_type, params_lims, chord_mode)
+      # Set up the data
+      sources = setup_data(data_filepath, sonify_type, params_lims, chord_mode)
 
-      #   # Handle chord
-      #   if chord_mode == 'on':
+      # Handle chord
+      if chord_mode == 'on':
               
-      #         chord = style.get('chord') or default_style['chord']
-      #         chord = validate_type(chord, str)
+            chord = style.get('chord') or default_style['chord']
+            chord = validate_type(chord, str)
 
-      #         if chord.lower() == 'random':
-      #               notes = random_chord()
-      #         else:
-      #               notes = voice_chord(chord)
-      #   else:
-      #         # NOTE To do - handle individual notes/scales
-      #         pass
-        notes = [['A2', 'C3', 'E3', 'G5']]
-        score = Score(notes,length)
+            if chord.lower() == 'random':
+                  notes = random_chord()
+            else:
+                  notes = voice_chord(chord)
+      else:
+            # NOTE To do - handle individual notes/scales
+            pass
+      
+      score = Score(notes,length)
 
-        return score, sources, generator
+      return score, sources, generator
+
+def normalise(array):
+      return (array - array.min()) / (array.max() - array.min())
             
 
 def setup_data(data_filepath, sonify_type, params, chord_mode):
 
-        if sonify_type == 'light_curve':
+      if sonify_type == 'light_curve':
               
-              lc = lk.read(data_filepath)
-              time = lc.time.value
-              flux = lc.flux.value
+            lc = lk.read(data_filepath)
+            lc = lc.remove_nans()
 
-             # pitches = [0,1,2,3] if chord_mode == 'on' else [0]
+            time = np.asarray(lc.time.value)
+            flux = np.asarray(lc.flux)
 
-              data = {
-                     'pitch': [0,1,2,3],
-                     'time_evo': [time]*4
-              }
+            flux = normalise(flux)
 
-               # Set up map limits and parameter limits
-              p_lims = {}
+            voices = [0,1,2,3] if chord_mode == 'on' else [0]
+
+            data = {
+                  'pitch': voices,
+                  'time_evo': [time]*len(voices),
+            }
+
+            # Set up map limits and parameter limits
+            m_lims = {'time_evo': ('0%', '100%')} 
+            p_lims = {}
               
-              for param in params:
-                data[param] = [flux]*4
-                p_lims[param] = params[param]
+            for param in params:
+                  data[param] = [flux]*len(voices)
+                  p_lims[param] = params[param]
 
-
-              # set up sources
-              sources = Objects(data.keys())
-              sources.fromdict(data)
-              sources.apply_mapping_functions(param_lims=p_lims)
-                
-        return sources
+            # set up sources
+            sources = Objects(data.keys())
+            sources.fromdict(data)
+            sources.apply_mapping_functions(map_lims=m_lims, param_lims=p_lims)
+          
+      return sources
 
 
 def voice_chord(chord_name):
@@ -295,18 +302,19 @@ def voice_chord(chord_name):
       return[[root + '2', fifth + '3', third_note + '4', fourth_note + '5']]
 
 def random_chord():
+      
+      root_note = random.choice(notesharps)
+      fifth = transpose_note(root_note, 7)
+      
+      interval_pairs = [[11,2],[4,2],[4,11],[10,5]]
+      
+      chosen_pair = random.choice(interval_pairs)
+      random.shuffle(chosen_pair)
+      
+      third_note = transpose_note(root_note, chosen_pair[0])
+      fourth_note = transpose_note(root_note, chosen_pair[1])
 
-        root_note = random.choice(notesharps)
-        fifth = transpose_note(root_note, 7)
-
-        interval_pairs = [[11,2],[4,2],[4,11],[10,5]]
-        chosen_pair = random.choice(interval_pairs)
-        random.shuffle(chosen_pair)
-
-        third_note = transpose_note(root_note, chosen_pair[0])
-        fourth_note = transpose_note(root_note, chosen_pair[1])
-
-        return [[root_note + '2', fifth + '3', third_note + '4', fourth_note + '5']]
+      return [[root_note + '2', fifth + '3', third_note + '4', fourth_note + '5']]
 
 
         
