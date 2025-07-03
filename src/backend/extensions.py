@@ -27,13 +27,18 @@ def sound_names():
       return all_sounds
       
 
-VALID_STYLE = {
-      'name': '*',
-      'description': '*',
-      'sound': sound_names(),
-      'parameters': param_lim_dict,
-      'chord_mode': ['on', 'off']
+TYPES_SCHEMA = {
+      'name': '',
+      'description': '',
+      'sound': '',
+      'parameters': {},
+      'chord_mode': '',
+      'chord': '',
+      'scale': ''
 }
+
+def populate_schema():
+      TYPES_SCHEMA['parameters'].update({param: [] for param in param_lim_dict})
 
 def read_style_file(filepath):
     
@@ -141,10 +146,6 @@ def validate_param_lims(param, lims, valid_lims):
       
       if len(lims) != 2:
             raise ValueError(f'Expected 2 limits (lower and upper) for {param}, but got {len(lims)}.')
-      
-#       for lim in lims:
-#         #     if isinstance(lim, str):
-#         #           convert_to_float(lim)
 
       valid_types = (int, float)
       
@@ -159,49 +160,67 @@ def validate_param_lims(param, lims, valid_lims):
       
       return (lower, upper)
 
+def validate_style(style, default_style):
+
+      validated_style = {}
+
+      # This will check that the user-provided style is a valid type, and revert to default values if elements are missing
+      for key in TYPES_SCHEMA:
+            value = style.get(key) or default_style.get(key)
+            if value:
+                  value = validate_type(value, type(TYPES_SCHEMA[key]))
+            
+            validated_style[key] = value
+
+      return validated_style
+
+
 def setup_sonification(data_filepath, sonify_type, style, length):
+
+      populate_schema()
       
       default_style_path = Path(STYLE_FILES_DIR, sonify_type, 'default.yml')
       default_style = read_style_file(default_style_path)
 
-      # Read and validate sound to set up STRAUSS Generator 
+      # Read and validate style
+      style = validate_style(style, default_style)
 
-      # Load default sound if not specified by user
-      sound = style.get('sound') or default_style['sound']
-      sound = validate_type(sound, str)
-
-      folder, path = find_sound(sound)
-        
+      # Read and find sound to create Generator
+      folder, path = find_sound(style['sound'].lower())
       generator = Synthesizer() if folder == 'synths' else Sampler()
-
       path_stem = str(path.with_suffix(""))
       generator.load_preset(path_stem)
 
+
+      scale = style['scale']
+
       # Read and validate parameters
-
-      # Again use default if none specified
-      params = style.get('parameters') or default_style['parameters']
-      params = validate_type(params, dict)
-
-      if 'cutoff' in params:
-            generator.modify_preset({'filter':'on'})       
+      params = style['parameters']
 
       # New dictionary to store validated params as the keys and a tuple containing limits as the values
       params_lims = {}
 
       # For each parameter, validate the param and limits provided 
       for param in params:
-              
-            param = validate_value('parameters', param, param_lim_dict.keys())
 
-            lims = params.get(param) or default_style['parameters'][param]
+            if param == 'cutoff':
+                  generator.modify_preset({'filter': 'on'})
+            
+            if param == 'pitch' and not scale:
+                  param = 'pitch_shift'
+
+            param = validate_value('parameters', param, param_lim_dict.keys())
+            default_lims = default_style['parameters'][param] if param in default_style['parameters'] else list(param_lim_dict[param])
+
+            lims = params.get(param) or default_lims
             lims = validate_type(lims, list)
             lims = validate_param_lims(param, lims, param_lim_dict[param])
 
             params_lims[param] = lims
 
-      chord_mode = style.get('chord_mode') or default_style['chord_mode']
-      chord_mode = validate_type(chord_mode, str)
+      # NOTE - TO do - finish this and test it
+
+      chord_mode = style['chord_mode'].lower()
       chord_mode = validate_value('chord_mode', chord_mode, ['on', 'off'])
 
       # Set up the data

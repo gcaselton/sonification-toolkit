@@ -1,4 +1,5 @@
-from extensions import sonify, read_style_file
+from extensions import sonify, read_style_file, validate_style
+from paths import STYLE_FILES_DIR
 
 from strauss.sonification import Sonification
 from strauss.sources import Objects
@@ -53,33 +54,20 @@ y += 0.15
 s_type = 'light_curve'
 
 data_path = Path('src', 'backend', 'tmp', '2070bf69d1291ba08e67a3191f511107.fits')
-style_path = Path('src', 'style_files', s_type, 'default.yml')
+style_path = Path('src', 'style_files', 'my_style.yml')
+default_style_path = Path(STYLE_FILES_DIR, s_type, 'default.yml')
+default_style = read_style_file(default_style_path)
 style = read_style_file(style_path)
-s = sonify(data_path, style, s_type)
-s.hear()
+# s = sonify(data_path, style, s_type)
+# s.hear()
 
+print(validate_style(style, default_style))
 # generator = Synthesizer()
 # generator.modify_preset({'filter':'on'})
 
 # length = 15
 # notes = [["C2","G2","C3","G3"]]
 # score =  Score(notes, length)
-
-# lc = lk.search_lightcurve('v1129 cen').download()
-
-# lc = lk.read(data_path)
-# lc.plot()
-# plt.show()
-
-# lc = lc.remove_nans()
-
-# time = np.asarray(lc.time.value)
-# flux = np.asarray(lc.flux)
-
-# print(x)
-# print(y)
-# print(time)
-# print(flux)
 
 # data = {'pitch':[0,1,2,3],
 #         'time_evo':[my_x]*4,
