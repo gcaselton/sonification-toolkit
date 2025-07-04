@@ -1,8 +1,9 @@
 from strauss.sonification import Sonification
-from strauss.sources import Objects, param_lim_dict
+from strauss.sources import Objects, Events, param_lim_dict
 from strauss.score import Score
 from strauss.generator import Synthesizer, Sampler
 from strauss.notes import notesharps
+from musical_scales import scale as scales
 
 from pychord import Chord
 from pychord.utils import transpose_note
@@ -51,7 +52,9 @@ def read_style_file(filepath):
     
     return style_dict
 
-def sonify(data_filepath, style_dict, sonify_type, length=15, system='stereo'):
+def sonify(data_filepath, style_filepath, sonify_type, length=15, system='stereo'):
+        
+        style_dict = read_style_file(style_filepath)
         
         # Set up Sonification elements
         score, sources, generator = setup_sonification(data_filepath, sonify_type, style_dict, length)
@@ -191,7 +194,6 @@ def setup_sonification(data_filepath, sonify_type, style, length):
       path_stem = str(path.with_suffix(""))
       generator.load_preset(path_stem)
 
-
       scale = style['scale']
 
       # Read and validate parameters
@@ -223,22 +225,27 @@ def setup_sonification(data_filepath, sonify_type, style, length):
       chord_mode = style['chord_mode'].lower()
       chord_mode = validate_value('chord_mode', chord_mode, ['on', 'off'])
 
+      chord = style['chord']
+
       # Set up the data
-      sources = setup_data(data_filepath, sonify_type, params_lims, chord_mode)
+      sources = setup_data(data_filepath, sonify_type, params_lims, chord_mode, scale)
 
-      # Handle chord
+      # Handle chord or scale
       if chord_mode == 'on':
-              
-            chord = style.get('chord') or default_style['chord']
-            chord = validate_type(chord, str)
 
-            if chord.lower() == 'random':
+            if chord.lower() == 'random' or not chord:
                   notes = random_chord()
             else:
                   notes = voice_chord(chord)
+
+      elif chord_mode == 'off' and scale:
+
+            # root, quality = scale.split(' ', 1)
+            # notes = [scales(root, quality, 3)]
+            notes = [['A3', 'B3', 'C#3', 'D3', 'E3', 'F#3']]
+
       else:
-            # NOTE To do - handle individual notes/scales
-            pass
+            notes = [['C3']]
       
       score = Score(notes,length)
 
@@ -248,40 +255,58 @@ def normalise(array):
       return (array - array.min()) / (array.max() - array.min())
             
 
-def setup_data(data_filepath, sonify_type, params, chord_mode):
+def setup_data(data_filepath, sonify_type, params, chord_mode, scale):
 
       if sonify_type == 'light_curve':
               
             lc = lk.read(data_filepath)
             lc = lc.remove_nans()
 
-            time = np.asarray(lc.time.value)
-            flux = np.asarray(lc.flux)
+            x = np.asarray(lc.time.value)
+            y = np.asarray(lc.flux)
 
-            flux = normalise(flux)
+            y = normalise(y)
 
-            voices = [0,1,2,3] if chord_mode == 'on' else [0]
+            if chord_mode == 'on':
+                  pitches = [0,1,2,3]
+                  factor = 4
+                  time_param = 'time_evo'
+                  upper_lim = '100%'
+            elif scale:
+                  pitches = y
+                  factor = 1
+                  time_param = 'time'
+                  upper_lim = '101%'
+            else:
+                  pitches = [0]
+                  factor = 1
+                  time_param = 'time_evo'
+                  upper_lim = '100%'
 
             data = {
-                  'pitch': voices,
-                  'time_evo': [time]*len(voices),
+                  'pitch': pitches,
+                  time_param: [x]*factor,
             }
 
             # Set up map limits and parameter limits
-            m_lims = {'time_evo': ('0%', '100%')} 
+
+            # Setting lim to 101% allows the final note to play out if a scale has been specified
+            m_lims = {time_param: ('0%', upper_lim)} 
             p_lims = {}
               
             for param in params:
-                  data[param] = [flux]*len(voices)
+                  data[param] = [y]*factor
                   p_lims[param] = params[param]
 
-            # set up sources
-            sources = Objects(data.keys())
+            # Set up sources
+            #NOTE to fix - 'Pitch' not an evolvable parameter
+
+            # We want discrete notes (Events) if a scale has been specified
+            sources = Events(data.keys()) if scale else Objects(data.keys())
             sources.fromdict(data)
             sources.apply_mapping_functions(map_lims=m_lims, param_lims=p_lims)
           
       return sources
-
 
 def voice_chord(chord_name):
 
