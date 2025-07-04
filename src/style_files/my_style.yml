@@ -5,6 +5,10 @@ description: 'This style file is meant to test the robustness of the style-readi
 sound: 'default_synth'
 
 parameters:
-  cutoff: [0,1]
+  pitch: [0,1]
 
 chord_mode: 'off'
+
+# chord: 'C7sus4'
+
+scale: 'C major'
