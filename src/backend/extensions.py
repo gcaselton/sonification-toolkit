@@ -18,14 +18,7 @@ from pathlib import Path
 import os
 import yaml
 
-def sound_names():
 
-      synths = [f.stem for f in SYNTHS_DIR.iterdir() if f.is_file()]
-      samples = [f.stem for f in SAMPLES_DIR.iterdir() if f.is_file()]
-
-      all_sounds = synths + samples
-      
-      return all_sounds
       
 
 TYPES_SCHEMA = {
@@ -96,13 +89,13 @@ def find_sound(sound_name):
     samples_matches = list(SAMPLES_DIR.glob(f"{sound_name}.*"))
 
     if synth_matches and samples_matches:
-          raise ValueError(f'The name {sound_name} is present in both /synths and /samples directories.')
+          raise ValueError(f'The name "{sound_name}" is present in both /synths and /samples directories.')
     elif synth_matches:
         return "synths", synth_matches[0]
     elif samples_matches:
         return "samples", samples_matches[0]
     else:
-        raise ValueError(f'{sound_name} not found in the sound_assets directory.')
+        raise ValueError(f'"{sound_name}" not found in the sound_assets directory.')
                   
 
 def validate_type(value, valid_types):
