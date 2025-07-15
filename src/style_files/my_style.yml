@@ -1,0 +1,14 @@
+name: 'Test'
+
+description: 'This style file is meant to test the robustness of the style-reading code.'
+
+sound: 'default_synth'
+
+parameters:
+  pitch: [0,1]
+
+chord_mode: 'off'
+
+# chord: 'C7sus4'
+
+scale: 'C major'
