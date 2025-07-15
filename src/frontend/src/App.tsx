@@ -7,7 +7,6 @@ function App() {
 
   return (
     <ChakraProvider value={defaultSystem}>
-      <Header />
       <Lightcurves />  {/* new */}
     </ChakraProvider>
   )
