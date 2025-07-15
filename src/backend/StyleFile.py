@@ -14,7 +14,6 @@ class StyleFile(BaseModel):
         if v not in valid:
             raise ValueError(f"'{v}' is not a valid sound. Choose from: {valid}")
         return v
-    
 
 
 def sound_names():
