@@ -1,24 +1,15 @@
 import React, { useEffect, useState, createContext, ChangeEvent } from "react";
+import { useNavigate } from 'react-router-dom';
 import {
-  Avatar,
   Box,
   Button,
   Card,
-  Container,
-  Flex,
+  Image, 
   Input,
-  DialogBody,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogRoot,
-  DialogTitle,
-  DialogTrigger,
+  Dialog,
   Stack,
   VStack,
   Table,
-  Text,
-  DialogActionTrigger,
 } from "@chakra-ui/react";
 
 interface Lightcurve {
@@ -42,9 +33,12 @@ const LightcurvesContext = createContext({
 //const { openSidebar, openModal } = useAppContext();
 
 export default function Lightcurves() {
+  const navigate = useNavigate();
   const [selectedStar, setSelectedStar] = useState("HD 12345");
   const [lightcurves, setLightcurves] = useState([])
-  const url = "http://localhost:8000/search-lightcurves"
+  const [plots, setPlots] = useState([])
+  const url_search = "http://localhost:8000/search-lightcurves"
+  const url_plot = "http://localhost:8000/plot-lightcurve"
   const data = {
     "star_name": selectedStar
   }
@@ -57,7 +51,7 @@ export default function Lightcurves() {
     body: JSON.stringify(data)
   }
   const fetchLightcurves = async () => {
-    const response = await fetch(url, config)
+    const response = await fetch(url_search, config)
     const lc = await response.json()
     setLightcurves(lc.results)
   }
@@ -65,9 +59,45 @@ export default function Lightcurves() {
     fetchLightcurves()
   }, [])
 
+  /*const fetchPlots = async () => {
+    for (const lightcurve of lightcurves) {
+      const image = await plotLightcurve(lightcurve.dataURI);
+      lightcurve.image = image; // Add the image to the lightcurve object
+    }
+    const response = await fetch(url_plot, config)
+    const plots = await response.json()
+    setPlots(plots.results)
+  }*/
+
+  const plotLightcurve = async (dataURI: string) => {
+
+    const response = await fetch(url_plot, {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ 'data_uri': dataURI })
+    });
+    const plotData = await response.json();
+    const image = plotData.image; // Assuming the response contains an image in base64 format
+    // Handle the plot data as needed
+    console.log("Data URI:", dataURI);
+    console.log("Image:", image);
+    console.log("src:", "data:image/png;base64,"+ image);
+    return image; // Assuming the response contains an image in base64 format
+  }
+
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     fetchLightcurves();
+  };
+
+  const handleClick = (dataURI: string) => {
+    // Handle the sonification logic here
+    // For example, you can navigate to a sonification page or trigger a sonification function
+    console.log("Sonify button clicked for star:", selectedStar);
+    navigate('/sonification', { state: dataURI });
   };
 
   return (
@@ -116,6 +146,7 @@ export default function Lightcurves() {
             <Table.ColumnHeader>Year</Table.ColumnHeader>
             <Table.ColumnHeader>Period</Table.ColumnHeader>
             <Table.ColumnHeader>Graph</Table.ColumnHeader>
+            <Table.ColumnHeader>Sonify</Table.ColumnHeader>
           </Table.Row>
         </Table.Header>
         <Table.Body>
@@ -126,7 +157,25 @@ export default function Lightcurves() {
               <Table.Cell>{item.pipeline}</Table.Cell>
               <Table.Cell>{item.year}</Table.Cell>
               <Table.Cell>{item.period}</Table.Cell>
-              <Table.Cell><Button>Graph</Button></Table.Cell>
+              <Table.Cell>
+                <Dialog.Root>
+                  <Dialog.Trigger />
+                  <Dialog.Backdrop />
+                  <Dialog.Positioner>
+                    <Dialog.Content>
+                      <Dialog.CloseTrigger />
+                      <Dialog.Header>
+                        <Dialog.Title />
+                        Lightcurve Graph for {item.period}, {item.pipeline}, {item.year}
+                      </Dialog.Header>
+                      <Dialog.Body />
+                      <Image src={`data:image/png;base64,${plotLightcurve(item.dataURI)}`} />                      
+                      <Dialog.Footer />
+                    </Dialog.Content>
+                  </Dialog.Positioner>
+                </Dialog.Root>
+              </Table.Cell>
+              <Table.Cell><Button onClick={() => handleClick(item.dataURI)}>Sonify</Button></Table.Cell>
             </Table.Row>
           ))}
         </Table.Body>
