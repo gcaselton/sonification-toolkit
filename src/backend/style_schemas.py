@@ -5,10 +5,6 @@ from strauss.sources import param_lim_dict
 from pychord import Chord
 from musical_scales import scale as parse_scale
 
-DEFAULT_DESCS = {
-     'light_curve': 'Default style for sonifying light curves. It combines the default STRAUSS synth sound with a cutoff filter, and chooses a random chord to play.'
-}
-
 class BaseStyle(BaseModel):
     name: Optional[str] = None
     description: Optional[str] = None
@@ -83,25 +79,32 @@ class BaseStyle(BaseModel):
         return value
     
     @model_validator(mode="after")
-    def check_conflicts(self):
+    def check_scale_conflicts(self):
 
-        # NOTE - to do: this
-        pass
-    
+        if self.scale:
+            if 'pitch' not in self.parameters:
+                raise ValueError('"pitch" must be a parameter to use a musical scale.')
+            if self.data_mode != 'discrete':
+                raise ValueError('Data mode must be "discrete" to use a musical scale.')
 
-    
+        return self
+
 # create child classes for different style/sonification types?
 
-# NOTE To do -fill this in with defaults 4 light curves
-def default_style(sonification_type: str) -> BaseStyle:
+def get_default_style(sonification_type: str) -> BaseStyle:
     defaults = {
-        "light_curve": {
-            "name": "Light Curve Default",
-            "description": "Style for light curve sonification.",
+        'light_curve': {
+            'name': 'Light Curve Default',
+            'description': 'Default style for sonifying light curves. It combines the default STRAUSS synth sound with a cutoff filter, and chooses a random chord to play.',
+            'sound': 'default_synth',
+            'data_mode': 'continuous',
+            'parameters': {'cutoff': [0,1]},
+            'chord_mode': 'on',
+            'chord': 'random'
         },
-        "orbit": {
-            "name": "Orbit Default",
-            "description": "Style for orbit sonification.",
+        'orbit': {
+            'name': 'Orbit Default',
+            'description': 'Style for orbit sonification etc',
         },
     }
 
