@@ -4,6 +4,7 @@ from strauss.score import Score
 from strauss.generator import Synthesizer, Sampler
 from strauss.notes import notesharps
 from musical_scales import scale as scales
+from style_schemas import BaseStyle, get_default_style
 
 from pychord import Chord
 from pychord.utils import transpose_note
@@ -46,17 +47,25 @@ def read_style_file(filepath):
     return style_dict
 
 def sonify(data_filepath, style_filepath, sonify_type, length=15, system='stereo'):
-        
-        style_dict = read_style_file(style_filepath)
-        
-        # Set up Sonification elements
-        score, sources, generator = setup_sonification(data_filepath, sonify_type, style_dict, length)
 
-        # Render sonification
-        sonification = Sonification(score, sources, generator, system)
-        sonification.render()
+      # Load user and default styles
+      user_style = read_style_file(style_filepath)
+      default_style = get_default_style(sonify_type)
 
-        return sonification
+      # Merge and attempt to validate
+      try:
+            validated_style = default_style.model_copy(update=user_style)
+      except Exception as e:
+            raise ValueError(f'Invalid style: {e}')
+        
+      # Set up Sonification elements
+      score, sources, generator = setup_sonification(data_filepath, sonify_type, validated_style, length)
+
+      # Render sonification
+      sonification = Sonification(score, sources, generator, system)
+      sonification.render()
+
+      return sonification
 
 
 
@@ -96,84 +105,11 @@ def find_sound(sound_name):
         return "samples", samples_matches[0]
     else:
         raise ValueError(f'"{sound_name}" not found in the sound_assets directory.')
-                  
-
-def validate_type(value, valid_types):
-      
-      if not isinstance(value, valid_types):
-            raise TypeError(f'{value} should be of type {valid_types}, but instead is {type(value)}.')
-      else:
-            return value
-
-def validate_value(key, value, valid_values):
-      
-      if value not in valid_values:
-            raise ValueError(f'{value} is not a valid value for {key}.')
-      else:
-            return value
-      
-def convert_to_float(string):
-      
-      # NOTE - make this work
-
-      if string.endswith('%'):
-            string = string[:-1]
-      elif string.contains('.'):
-            try:
-                  value = float(string)
-            except ValueError:
-                  raise ValueError('Limit must be a number')
-            if 0 <= value <= 1:
-                  return value
-            else:
-                  raise ValueError('Limit should be between 0-1')
-
-      try:
-                value = int(string)
-      except ValueError:
-                raise ValueError('Limit must be a number')
-      if 0 <= value <= 100:
-                  return value
-      else:
-                  raise ValueError('Limit should be between 0-100%')
-
-      
-def validate_param_lims(param, lims, valid_lims):
-      
-      if len(lims) != 2:
-            raise ValueError(f'Expected 2 limits (lower and upper) for {param}, but got {len(lims)}.')
-
-      valid_types = (int, float)
-      
-      lower = validate_type(lims[0], valid_types)
-      upper = validate_type(lims[1], valid_types)
-
-      if lower > upper:
-             raise ValueError(f'The lower limit should be below the upper limit for {param}.')
-      
-      if lower < valid_lims[0] or upper > valid_lims[1]:
-             raise ValueError(f'The limits for {param} must be between the limits stated in the schema.')
-      
-      return (lower, upper)
-
-def validate_style(style, default_style):
-
-      validated_style = {}
-
-      # This will check that the user-provided style is a valid type, and revert to default values if elements are missing
-      for key in TYPES_SCHEMA:
-            value = style.get(key) or default_style.get(key)
-            if value:
-                  value = validate_type(value, type(TYPES_SCHEMA[key]))
-            
-            validated_style[key] = value
-
-      return validated_style
 
 
 def setup_sonification(data_filepath, sonify_type, style, length):
 
-      populate_schema()
+      # NOTE To do: Setup Strauss with the newly validated style Model.
       
       default_style_path = Path(STYLE_FILES_DIR, sonify_type, 'default.yml')
       default_style = read_style_file(default_style_path)

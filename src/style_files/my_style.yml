@@ -4,6 +4,8 @@ description: 'This style file is meant to test the robustness of the style-readi
 
 sound: 'default_synth'
 
+data_mode: 'continuous'
+
 parameters:
   pitch: [0,1]
 
