@@ -54,7 +54,7 @@ class BaseStyle(BaseModel):
     @classmethod
     def validate_chord(cls, value: Optional[str]):
 
-        if value is None:
+        if value is None or value.lower() == 'random':
             return value
         
         try:
