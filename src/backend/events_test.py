@@ -27,12 +27,11 @@ my_y = np.asarray(y_axis)
 my_y = (my_y - my_y.min()) / (my_y.max() - my_y.min())
 
 
-
 # seed the randoms...
 np.random.seed(0)
 
 # construct arrays of size N for x and y...
-N = 300
+N = 100
 x = np.linspace(0,1,N)
 y = np.zeros(N)
 
@@ -55,16 +54,22 @@ length = 15
 notes = [["C3","D3","E3","G3","B3","C4","D4","E4","G4","B4","C5","D5","E5","G5","B5"]]
 score =  Score(notes, length)
 
-data = {'pitch': my_y,
-        'time': my_x}
+data = {'pitch': y,
+        'time': x}
 
 lims = {'time': ('0%','101%'),
         'pitch': ('0%','100%')}
 
+p_lims = {}
+
 # set up source
 sources = Events(data.keys())
 sources.fromdict(data)
-sources.apply_mapping_functions(map_lims=lims)
+
+print(data)
+print(lims)
+print(p_lims)
+sources.apply_mapping_functions(map_lims=lims, param_lims=p_lims)
 
 soni = Sonification(score, sources, generator, 'stereo')
 soni.render()

@@ -5,6 +5,22 @@ from strauss.sources import param_lim_dict
 from pychord import Chord
 from musical_scales import scale as parse_scale
 
+defaults = {
+        'light_curve': {
+            'name': 'Light Curve Default',
+            'description': 'Default style for sonifying light curves. It combines the default STRAUSS synth sound with a cutoff filter, and chooses a random chord to play.',
+            'sound': 'default_synth',
+            'data_mode': 'continuous',
+            'parameters': {'cutoff': [0,1]},
+            'chord_mode': 'on',
+            'chord': 'random'
+        },
+        'orbit': {
+            'name': 'Orbit Default',
+            'description': 'Style for orbit sonification etc',
+        }
+    }
+
 class BaseStyle(BaseModel):
     name: Optional[str] = None
     description: Optional[str] = None
@@ -31,6 +47,9 @@ class BaseStyle(BaseModel):
     @field_validator('parameters')
     @classmethod
     def validate_parameters(cls, value: Optional[Dict[str, Optional[List[float]]]]):
+
+        if value is None:
+            return value
 
         for key, limits in value.items():
             if key not in param_lim_dict.keys():
@@ -90,27 +109,6 @@ class BaseStyle(BaseModel):
         return self
 
 # create child classes for different style/sonification types?
-
-def get_default_style(sonification_type: str) -> BaseStyle:
-    defaults = {
-        'light_curve': {
-            'name': 'Light Curve Default',
-            'description': 'Default style for sonifying light curves. It combines the default STRAUSS synth sound with a cutoff filter, and chooses a random chord to play.',
-            'sound': 'default_synth',
-            'data_mode': 'continuous',
-            'parameters': {'cutoff': [0,1]},
-            'chord_mode': 'on',
-            'chord': 'random'
-        },
-        'orbit': {
-            'name': 'Orbit Default',
-            'description': 'Style for orbit sonification etc',
-        },
-    }
-
-    default_values = defaults.get(sonification_type.lower(), {})
-    return BaseStyle(**default_values)
-
 
 def sound_names():
 
