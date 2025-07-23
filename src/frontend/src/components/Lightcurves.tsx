@@ -97,7 +97,7 @@ export default function Lightcurves() {
     // Handle the sonification logic here
     // For example, you can navigate to a sonification page or trigger a sonification function
     console.log("Sonify button clicked for star:", selectedStar);
-    navigate('/sonification', { state: dataURI });
+    navigate('/sound', { state: dataURI });
   };
 
   return (

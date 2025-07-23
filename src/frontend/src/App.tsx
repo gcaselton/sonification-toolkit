@@ -4,7 +4,7 @@ import ReactDOM from "react-dom/client";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Header from "./components/Header";
 import Lightcurves from './components/Lightcurves';
-import Sonification from './components/Sonification';
+import Sound from './components/Sound';
 import Sidebar from './components/Sidebar';
 
 function App() {
@@ -14,7 +14,7 @@ function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Lightcurves />} />
-          <Route path="/sonification" element={<Sonification />} />
+          <Route path="/sound" element={<Sound />} />
         </Routes>
       </BrowserRouter>
     </ChakraProvider>
