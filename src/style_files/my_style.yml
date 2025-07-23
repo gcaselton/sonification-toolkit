@@ -4,13 +4,13 @@ description: 'This style file is meant to test the robustness of the style-readi
 
 sound: 'default_synth'
 
-data_mode: 'continuous'
+data_mode: 'discrete'
 
 parameters:
-  pitch: [0,1]
+  cutoff: [0,1]
 
-chord_mode: 'off'
+chord_mode: 'on'
 
-# chord: 'C7sus4'
+#chord: 'Am7'
 
-scale: 'C major'
+#scale: 'C major'
