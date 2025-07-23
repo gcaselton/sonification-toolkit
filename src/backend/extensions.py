@@ -122,8 +122,6 @@ def setup_strauss(data_filepath, style: BaseStyle, sonify_type, length):
             notes = [[str(note) for note in notes]]
       else:
             notes = [['C3']]
-
-      print(notes)
       
       score = Score(notes,length)
 
@@ -162,6 +160,8 @@ def light_curve_sources(data_filepath, params, chord_mode, data_mode, scale):
       x = np.asarray(lc.time.value)
       y = np.asarray(lc.flux)
 
+      pitches = [0,1,2,3] if chord_mode == 'on' else [0]
+
       if 'pitch' in params:
 
             if scale:
@@ -188,7 +188,8 @@ def light_curve_sources(data_filepath, params, chord_mode, data_mode, scale):
             p_lims[p] = tuple(params[p])
 
       # We want discrete notes (Events) if data mode is discrete
-      sources = Events(data.keys()) if data_mode == 'discrete' else Objects(data.keys())
+      # sources = Events(data.keys()) if data_mode == 'discrete' else Objects(data.keys())
+      sources = Objects(data.keys())
       sources.fromdict(data)
       sources.apply_mapping_functions(map_lims=m_lims, param_lims=p_lims)
 

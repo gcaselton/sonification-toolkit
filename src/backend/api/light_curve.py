@@ -28,7 +28,7 @@ class DownloadRequest(BaseModel):
 
 class SonificationRequest(BaseModel):
     data_filepath: str
-    style_file_str: str
+    style_filepath: str
     duration: int
     system: str
 
@@ -140,14 +140,19 @@ async def select_lightcurve(request: DownloadRequest):
 async def sonify_lightcurve(request: SonificationRequest):
 
     data = Path(request.data_filepath)
-    style_string = request.style_file_str
+    style = request.style_filepath
     length = request.duration
     system = request.system
 
     try:
-        style = yaml.safe_load(style_string)
-        soni = sonify(data, 'light_curve', style, length, system)
-        soni.hear()
+        soni = sonify(data, style,'light_curve', length, system)
+
+        name = 'create ID here'
+        ext = '.wav'
+        filename = f'{name}{ext}'
+        filepath = os.path.join(STORAGE_DIR, filename)
+        soni.save(filepath)
+
     except Exception as e:
         raise HTTPException(status_code=404, detail=str(e))
     

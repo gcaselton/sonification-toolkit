@@ -103,8 +103,8 @@ class BaseStyle(BaseModel):
         if self.scale:
             if 'pitch' not in self.parameters:
                 raise ValueError('"pitch" must be a parameter to use a musical scale.')
-            if self.data_mode != 'discrete':
-                raise ValueError('Data mode must be "discrete" to use a musical scale.')
+            # if self.data_mode != 'discrete':
+            #     raise ValueError('Data mode must be "discrete" to use a musical scale.')
         else:
             if 'pitch' in self.parameters and self.data_mode == 'discrete':
                 self.scale = 'chromatic'
