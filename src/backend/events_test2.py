@@ -11,18 +11,6 @@ import matplotlib.pyplot as plt
 import os
 from pathlib import Path
 
-# x_axis = [0,1,2,3,4,5,6,7,8,9,10,11]
-# y_axis = [2, 4, 19, 1, 11, 21, 15, 4, 6, 22, 20, 18]
-
-# x_axis = np.arange(100)
-# y_axis = np.random.uniform(0, 100, 100)
-
-# my_x = np.asarray(x_axis)
-# my_y = np.asarray(y_axis)
-
-# my_y = (my_y - my_y.min()) / (my_y.max() - my_y.min())
-
-
 # seed the randoms...
 np.random.seed(0)
 
@@ -49,10 +37,7 @@ generator = Synthesizer()
 generator.modify_preset({'filter': 'on'})
 
 length = 15
-scale = [["C3","D3","E3","G3","B3","C4","D4","E4","G4","B4","C5","D5","E5","G5","B5"]]
 chord = [['C3', 'G3', 'E4', 'B4']]
-root = [['C3']]
-
 score =  Score(chord, length)
 
 data = {'pitch': [0,1,2,3],
