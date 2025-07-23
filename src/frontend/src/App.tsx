@@ -6,6 +6,7 @@ import Header from "./components/Header";
 import Lightcurves from './components/Lightcurves';
 import Sound from './components/Sound';
 import Sidebar from './components/Sidebar';
+import Sonify from './components/Sonify';
 
 function App() {
 
@@ -15,6 +16,7 @@ function App() {
         <Routes>
           <Route path="/" element={<Lightcurves />} />
           <Route path="/sound" element={<Sound />} />
+          <Route path="/sonify" element={<Sonify />} />
         </Routes>
       </BrowserRouter>
     </ChakraProvider>

@@ -1,5 +1,5 @@
 import React, { useEffect, useState, createContext, ChangeEvent, useRef } from "react";
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 import {
   Box,
@@ -13,18 +13,9 @@ import {
   Switch,  
 } from "@chakra-ui/react";
 
-interface Settings {
-    Sound: string;
-    FilterCutoff: boolean;
-    Pitch: boolean;
-    Volume: boolean;
-    LeftRightPan: boolean;
-    UpDownPan: boolean;
-    Vibrato: boolean;
-}
-
 export default function Sound() {
 
+    const navigate = useNavigate();
     // Musical types of sonification
     const variants = ["Sci-Fi", "Windy", "Musical", "Custom"] as const;
     // Sound parameters for sonification
@@ -114,82 +105,96 @@ export default function Sound() {
         UpDownPan: false,
         Vibrato: false,
     };*/
-    const [settings, setSettings] = useState([])
+    //const [settings, setSettings] = useState([])
     const location = useLocation();
     const dataURI = location.state;
     console.log("Data URI from Lightcurves:", dataURI);
-    const selectLightCurve = async (lightcurve: string) => {
-        const select_lightcurve_url = "http://localhost:8000/select-lightcurve";
-        const response = await fetch(select_lightcurve_url, {
+    const saveSoundSettings = async () => {
+        const save_sound_settings_url = "http://localhost:8000/save-sound-settings/";
+        const response = await fetch(save_sound_settings_url, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ "data_uri": lightcurve }),
+            body: JSON.stringify({ 
+                "sound": sound,
+                "filterCutOff": filterCutoff,
+                "pitch": pitch,
+                "volume": volume,
+                "leftRightPan": leftRightPan,
+                "chordMode": chordMode,
+                "rootNote": rootNote,
+                "scale": scale,
+                "quality": quality 
+            }),
         });
         const data = await response.json();
-        return data.filepath;
+        return data.filename;
     }
 
-    const handleSubmit = async () => {
-        console.log("Updated Settings:", settings);
+    const handleSubmit  = async () => {
+        saveSoundSettings().then((filename) => {
+            console.log("Saved sound settings to:", filename);
+            // Navigate to the Sonify page with the settings
+            navigate('/sonify', { state: { filename } });
+        });
     };
 
     const handleChangeFilterCutoff = (details: { checked: boolean | "indeterminate" }) => {
         setFilterCutoff(details.checked);
-        setSettings((prev) => ({ ...prev, FilterCutoff: details.checked === true }));
+        //setSettings((prev) => ({ ...prev, FilterCutoff: details.checked === true }));
         console.log("Filter Cutoff:", details.checked);
     };
 
     const handleChangePitch = (details: { checked: boolean | "indeterminate" }) => {
         setPitch(details.checked === true);
-        setSettings((prev) => ({ ...prev, Pitch: details.checked === true }));
+        //setSettings((prev) => ({ ...prev, Pitch: details.checked === true }));
         console.log("Pitch:", details.checked);
     };
 
     const handleChangeVolume = (details: { checked: boolean | "indeterminate" }) => {
         setVolume(details.checked === true);
-        setSettings((prev) => ({ ...prev, Volume: details.checked === true }));
+        //setSettings((prev) => ({ ...prev, Volume: details.checked === true }));
         console.log("Volume:", details.checked);
     };
 
     const handleChangeLeftRightPan = (details: { checked: boolean | "indeterminate" }) => {
         setLeftRightPan(details.checked === true);
-        setSettings((prev) => ({ ...prev, LeftRightPan: details.checked === true }));
+        //setSettings((prev) => ({ ...prev, LeftRightPan: details.checked === true }));
         console.log("Left/Right Pan:", details.checked);
     };
 
     const handleSelectSound = (event: React.FormEvent<HTMLDivElement>) => {
         const target = event.target as HTMLSelectElement;
         setSound(target.value);
-        setSettings((prev) => ({ ...prev, Sound: target.value }));
+        //setSettings((prev) => ({ ...prev, Sound: target.value }));
         console.log("Selected Sound:", target.value);
     };
 
     const handleChordMode = (details: { checked: boolean | "indeterminate" }) => {
         setChordMode(details.checked === true);
-        setSettings((prev) => ({ ...prev, ChordMode: details.checked === true }));
+        //setSettings((prev) => ({ ...prev, ChordMode: details.checked === true }));
         console.log("Chord Mode:", details.checked);
     };
 
     const handleSelectRootNote = (event: React.FormEvent<HTMLDivElement>) => {
         const target = event.target as HTMLSelectElement;
         setRootNote(target.value);
-        setSettings((prev) => ({ ...prev, RootNote: target.value }));
+        //setSettings((prev) => ({ ...prev, RootNote: target.value }));
         console.log("Selected Root Note:", target.value);
     };
 
     const handleSelectScale = (event: React.FormEvent<HTMLDivElement>) => {
         const target = event.target as HTMLSelectElement;
         setScale(target.value);
-        setSettings((prev) => ({ ...prev, Scale: target.value }));
+        //setSettings((prev) => ({ ...prev, Scale: target.value }));
         console.log("Selected Scale:", target.value);
     };
 
     const handleSelectQuality = (event: React.FormEvent<HTMLDivElement>) => {
         const target = event.target as HTMLSelectElement;
         setQuality(target.value);
-        setSettings((prev) => ({ ...prev, Quality: target.value }));
+        //setSettings((prev) => ({ ...prev, Quality: target.value }));
         console.log("Selected Quality:", target.value);
     };
 
@@ -326,7 +331,7 @@ export default function Sound() {
                                     ))}
                                 </Select.Content>
                         </Select.Root>
-                        <Button type="button" colorScheme="blue" width="100%" onClick={handleSubmit}>
+                        <Button onClick={() => handleSubmit()} colorScheme="blue" width="100%">
                             Submit
                         </Button>
                     </form>
