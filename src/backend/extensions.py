@@ -162,60 +162,34 @@ def light_curve_sources(data_filepath, params, chord_mode, data_mode, scale):
       x = np.asarray(lc.time.value)
       y = np.asarray(lc.flux)
 
-      data = {}
-
-      pitches = [0,1,2,3] if chord_mode == 'on' else [0]
-
       if 'pitch' in params:
 
-            if data_mode == 'continuous':
+            if scale:
+                  return scale_events(x, y, params)
+            else:
                   # Change pitch for pitch_shift if we want Objects type
                   lims = params.pop('pitch')
                   params['pitch_shift'] = lims
-            else:
-                  if scale:
-                        return scale_events(x, y, params)
-        # NOTE: finish this                      
-            data['pitch'] = y
-
-
-      map_p_lims = True
 
       if data_mode == 'discrete':
             time, upper_lim = 'time', '101%'
-
-            if 'pitch' in params:
-                  pitches, polyphony = y, 1
-                  map_p_lims = False
       else:
             time, upper_lim = 'time_evo', '100%'
-
-     
-      #NOTE to fix: for discrete pitches, pitch should == y instead of voices
      
      # Clean this up - time needs to be x for discrete pitches
       data = {'pitch': pitches, 
-              time: [x]*polyphony}
+              time: [x]*len(pitches)}
       m_lims = {time: ('0%', upper_lim)}
       p_lims = {}
 
       for p in params:
-
+            data[p] = [y]*len(pitches)
             m_lims[p] = ('0%', '100%')
+            p_lims[p] = tuple(params[p])
 
-            if map_p_lims:
-                  p_lims[p] = tuple(params[p])
-
-            if p == 'pitch':
-                  continue
-
-            data[p] = [y]*polyphony
-            
-            
       # We want discrete notes (Events) if data mode is discrete
       sources = Events(data.keys()) if data_mode == 'discrete' else Objects(data.keys())
       sources.fromdict(data)
-
       sources.apply_mapping_functions(map_lims=m_lims, param_lims=p_lims)
 
       return sources
