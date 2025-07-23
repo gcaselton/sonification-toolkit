@@ -12,6 +12,7 @@ import base64
 from io import BytesIO
 import hashlib
 import uuid
+import json
 
 router = APIRouter()
 
@@ -32,6 +33,16 @@ class SonificationRequest(BaseModel):
     duration: int
     system: str
 
+class SoundSettings(BaseModel):
+    sound: str
+    filterCutOff: bool
+    pitch: bool
+    volume: bool
+    leftRightPan: bool
+    chordMode: bool
+    rootNote: str
+    scale: str
+    quality: str
 
 @router.post('/search-lightcurves/')
 async def search_lightcurves(query: StarQuery):
@@ -151,4 +162,19 @@ async def sonify_lightcurve(request: SonificationRequest):
     except Exception as e:
         raise HTTPException(status_code=404, detail=str(e))
     
+@router.post('/save-sound-settings/')
+async def save_sound_settings(settings: SoundSettings):
+    """
+    Save sound settings for the sonification.
 
+    - **settings**: The sound settings to be saved.
+    - Returns: A filename of the saved settings.
+    """
+    # Save settings to a yaml file and return the filename
+    yaml_text = yaml.dump(settings.__dict__, default_flow_style=False)
+    filename = f'sound_settings_{uuid.uuid4()}.yaml'
+    f = open(os.path.join(STORAGE_DIR, filename), "x")
+    f.write(yaml_text)
+    f.close()
+    # Return the filename for reference
+    return {'filename': filename}
