@@ -50,15 +50,18 @@ y += 0.15
 
 generator = Synthesizer()
 
+generator.modify_preset({'filter': 'on'})
+
 length = 15
-notes = [["C3","D3","E3","G3","B3","C4","D4","E4","G4","B4","C5","D5","E5","G5","B5"]]
-score =  Score(notes, length)
+scale = [["C3","D3","E3","G3","B3","C4","D4","E4","G4","B4","C5","D5","E5","G5","B5"]]
+chord = [['C3', 'G3', 'E4', 'B4']]
+single = [['C3']]
+score =  Score(single, length)
 
-data = {'pitch': y,
-        'time': x}
-
-lims = {'time': ('0%','101%'),
-        'pitch': ('0%','100%')}
+data = {'pitch': 1,
+        'time': x,
+        'volume': y**0.7
+        }
 
 p_lims = {}
 
@@ -66,10 +69,7 @@ p_lims = {}
 sources = Events(data.keys())
 sources.fromdict(data)
 
-print(data)
-print(lims)
-print(p_lims)
-sources.apply_mapping_functions(map_lims=lims, param_lims=p_lims)
+sources.apply_mapping_functions()
 
 soni = Sonification(score, sources, generator, 'stereo')
 soni.render()
