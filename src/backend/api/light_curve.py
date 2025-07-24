@@ -181,8 +181,9 @@ async def save_sound_settings(settings: SoundSettings):
     # Save settings to a yaml file and return the filename
     yaml_text = yaml.dump(settings.__dict__, default_flow_style=False)
     filename = f'sound_settings_{uuid.uuid4()}.yaml'
-    f = open(os.path.join(TMP_DIR, filename), "x")
+    filepath = os.path.join(TMP_DIR, filename)
+    f = open(filepath, "x")
     f.write(yaml_text)
     f.close()
     # Return the filename for reference
-    return {'filename': filename}
+    return {'filepath': filepath}
