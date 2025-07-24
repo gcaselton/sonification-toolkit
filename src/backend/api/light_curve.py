@@ -4,7 +4,7 @@ from pydantic import BaseModel
 from extensions import sonify
 from pathlib import Path
 from paths import TMP_DIR
-from main import LOG
+import logging
 
 import lightkurve as lk
 import matplotlib.pyplot as plt
@@ -18,6 +18,8 @@ import uuid
 import json
 
 router = APIRouter()
+
+LOG = logging.getLogger(__name__)
 
 # Define BaseModels for expected request types
 class StarQuery(BaseModel):
