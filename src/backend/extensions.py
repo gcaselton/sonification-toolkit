@@ -39,7 +39,7 @@ def sonify(data_filepath, style_filepath, sonify_type, length=15, system='stereo
       # Merge the user and default styles, overwriting defaults with user's where present
       merged = {**default_style, **user_style}
 
-      # Validate the merged result
+      # Validate the merged result NOTE problem is here
       validated_style = BaseStyle.model_validate(merged)
         
       # Set up Sonification elements

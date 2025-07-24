@@ -152,14 +152,10 @@ async def select_lightcurve(request: DownloadRequest):
 @router.post('/sonify-lightcurve/')
 async def sonify_lightcurve(request: SonificationRequest):
 
-    LOG.info('4')
-
     data = Path(request.data_filepath)
     style = Path(request.style_filepath)
     length = request.duration
     system = request.system
-
-    LOG.info('4.5')
 
     try:
         soni = sonify(data, style,'light_curve', length, system)
@@ -191,8 +187,6 @@ async def save_sound_settings(settings: SoundSettings):
     # Save settings to a yaml file and return the filename
     style = format_settings(settings)
 
-    LOG.info('3')
-
     yaml_text = yaml.dump(style, default_flow_style=False)
     filename = f'style_{uuid.uuid4()}.yaml'
     filepath = os.path.join(TMP_DIR, filename)
@@ -200,23 +194,20 @@ async def save_sound_settings(settings: SoundSettings):
     f.write(yaml_text)
     f.close()
 
-    LOG.info('3.5')
     # Return the filename for reference
     return {'filepath': filepath}
 
 def format_settings(settings: SoundSettings):
 
     parameters = {
-        "filterCutOff": [0, 1] if settings.filterCutOff else None,
+        "cutoff": [0, 1] if settings.filterCutOff else None,
         "pitch": [0, 1] if settings.pitch else None,
         "volume": [0, 1] if settings.volume else None,
-        "leftRightPan": [0, 1] if settings.leftRightPan else None
+        "azimuth": [0, 1] if settings.leftRightPan else None
     }
-    LOG.info('1')
+
     # Remove any None entries in parameters
     parameters = {k: v for k, v in parameters.items() if v is not None}
-    LOG.info('2')
-
 
     music = (
         f"{settings.rootNote}{settings.quality}" 
@@ -224,6 +215,8 @@ def format_settings(settings: SoundSettings):
         else f"{settings.rootNote} {settings.scale}"
         )
 
+    # NOTE to fix - must either be chord OR scale
+    # Also - need to deal with the case that no params are specified 
     style = {
         "sound": settings.sound,
         "parameters": parameters if parameters else None,
