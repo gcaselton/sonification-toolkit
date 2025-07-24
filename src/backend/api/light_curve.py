@@ -152,12 +152,14 @@ async def select_lightcurve(request: DownloadRequest):
 @router.post('/sonify-lightcurve/')
 async def sonify_lightcurve(request: SonificationRequest):
 
+    LOG.info('4')
+
     data = Path(request.data_filepath)
     style = Path(request.style_filepath)
     length = request.duration
     system = request.system
 
-    LOG.info('4')
+    LOG.info('4.5')
 
     try:
         soni = sonify(data, style,'light_curve', length, system)
@@ -197,6 +199,8 @@ async def save_sound_settings(settings: SoundSettings):
     f = open(filepath, "x")
     f.write(yaml_text)
     f.close()
+
+    LOG.info('3.5')
     # Return the filename for reference
     return {'filepath': filepath}
 
