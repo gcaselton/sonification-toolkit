@@ -149,7 +149,7 @@ async def select_lightcurve(request: DownloadRequest):
 async def sonify_lightcurve(request: SonificationRequest):
 
     data = Path(request.data_filepath)
-    style = request.style_filepath
+    style = Path(request.style_filepath)
     length = request.duration
     system = request.system
 
@@ -179,10 +179,41 @@ async def save_sound_settings(settings: SoundSettings):
     - Returns: A filename of the saved settings.
     """
     # Save settings to a yaml file and return the filename
-    yaml_text = yaml.dump(settings.__dict__, default_flow_style=False)
-    filename = f'sound_settings_{uuid.uuid4()}.yaml'
-    f = open(os.path.join(TMP_DIR, filename), "x")
+    style = format_settings(settings)
+
+    yaml_text = yaml.dump(style, default_flow_style=False)
+    filename = f'style_{uuid.uuid4()}.yaml'
+    filepath = os.path.join(TMP_DIR, filename)
+    f = open(filepath, "x")
     f.write(yaml_text)
     f.close()
     # Return the filename for reference
-    return {'filename': filename}
+    return {'filepath': filepath}
+
+def format_settings(settings: SoundSettings):
+
+    parameters = {
+        "filterCutOff": [0, 1] if settings.filterCutOff else None,
+        "pitch": [0, 1] if settings.pitch else None,
+        "volume": [0, 1] if settings.volume else None,
+        "leftRightPan": [0, 1] if settings.leftRightPan else None
+    }
+
+    # Remove any None entries in parameters
+    parameters = {k: v for k, v in parameters.items() if v is not None}
+
+    music = (
+        f"{settings.rootNote}{settings.quality}" 
+        if settings.chordMode 
+        else f"{settings.rootNote} {settings.scale}"
+        )
+
+    style = {
+        "sound": settings.sound,
+        "parameters": parameters if parameters else None,
+        "chord_mode": "on" if settings.chordMode else "off",
+        "chord": f"{settings.rootNote}{settings.quality}" if settings.chordMode else None,
+        "scale": None if settings.chordMode else f"{settings.rootNote} {settings.scale}"
+    }
+    
+    return style
