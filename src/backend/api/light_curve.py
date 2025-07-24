@@ -1,7 +1,9 @@
 from fastapi import APIRouter, HTTPException
+from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from extensions import sonify
 from pathlib import Path
+from paths import TMP_DIR
 
 import lightkurve as lk
 import matplotlib.pyplot as plt
@@ -15,10 +17,6 @@ import uuid
 import json
 
 router = APIRouter()
-
-# Create temp directory for storing light curves
-STORAGE_DIR = 'tmp'
-os.makedirs(STORAGE_DIR, exist_ok=True)
 
 # Define BaseModels for expected request types
 class StarQuery(BaseModel):
@@ -91,7 +89,7 @@ def download_lightcurve(data_uri):
     ext = os.path.splitext(data_uri)[-1]
 
     filename = f'{hash}{ext}'
-    filepath = os.path.join(STORAGE_DIR, filename)
+    filepath = os.path.join(TMP_DIR, filename)
 
     if not os.path.exists(filepath):
 
@@ -158,12 +156,17 @@ async def sonify_lightcurve(request: SonificationRequest):
     try:
         soni = sonify(data, style,'light_curve', length, system)
 
-        name = 'create ID here'
+        id = str(uuid.uuid4().hex)
         ext = '.wav'
-        filename = f'{name}{ext}'
-        filepath = os.path.join(STORAGE_DIR, filename)
+        filename = f'light_curve_{id}{ext}'
+        filepath = os.path.join(TMP_DIR, filename)
         soni.save(filepath)
 
+        return FileResponse(
+                path=filepath,
+                media_type='audio/wav',
+                filename=filename
+            )
     except Exception as e:
         raise HTTPException(status_code=404, detail=str(e))
     
@@ -178,7 +181,7 @@ async def save_sound_settings(settings: SoundSettings):
     # Save settings to a yaml file and return the filename
     yaml_text = yaml.dump(settings.__dict__, default_flow_style=False)
     filename = f'sound_settings_{uuid.uuid4()}.yaml'
-    f = open(os.path.join(STORAGE_DIR, filename), "x")
+    f = open(os.path.join(TMP_DIR, filename), "x")
     f.write(yaml_text)
     f.close()
     # Return the filename for reference
