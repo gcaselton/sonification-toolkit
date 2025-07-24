@@ -343,12 +343,15 @@ export default function Sound() {
 
             <Stack gap="4" direction="row" wrap="wrap">
                 {variants.map((variant) => (
-                    <Card.Root width="200px" key={variant}>
-                    <img src={`/assets/${variant}.jpg`} alt={variant} style={{ width: "100%", borderRadius: "8px" }} />
-                    <Card.Body gap="2">
-                        <Card.Title mb="2">{variant}</Card.Title>
-                    </Card.Body>
-                    </Card.Root>
+                    <LinkBox as="article" maxW="sm" borderWidth="1px" rounded="md" overflow="hidden">
+                        <Card.Root width="200px" key={variant}>
+                            <img src={`/assets/${variant}.jpg`} alt={variant} style={{ width: "100%", borderRadius: "8px" }} />
+                            <Card.Body gap="2">
+                                <Card.Title mb="2">{variant}</Card.Title>
+                            </Card.Body>
+                        </Card.Root>
+                    </LinkBox>
+                    
                 ))}
             </Stack>
         </Box>
