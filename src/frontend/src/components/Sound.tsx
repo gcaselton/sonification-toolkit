@@ -1,5 +1,5 @@
 import React, { useEffect, useState, createContext, ChangeEvent, useRef } from "react";
-import { useLocation, useNavigate } from 'react-router-dom';
+import { data, useLocation, useNavigate } from 'react-router-dom';
 
 import {
   Box,
@@ -8,6 +8,9 @@ import {
   Checkbox,
   createListCollection,
   Dialog,
+  Link,
+  LinkBox,
+  LinkOverlay,
   Select,
   Stack,
   Switch,  
@@ -107,8 +110,8 @@ export default function Sound() {
     };*/
     //const [settings, setSettings] = useState([])
     const location = useLocation();
-    const dataURI = location.state;
-    console.log("Data URI from Lightcurves:", dataURI);
+    const dataFilepath = location.state;
+    console.log("Filepath of Selected Lightcurve:", dataFilepath);
     const saveSoundSettings = async () => {
         const save_sound_settings_url = "http://localhost:8000/save-sound-settings/";
         const response = await fetch(save_sound_settings_url, {
@@ -129,14 +132,14 @@ export default function Sound() {
             }),
         });
         const data = await response.json();
-        return data.filename;
+        return data.filepath;
     }
 
     const handleSubmit  = async () => {
-        saveSoundSettings().then((filename) => {
-            console.log("Saved sound settings to:", filename);
+        saveSoundSettings().then((filepath) => {
+            console.log("Saved sound settings to:", filepath);
             // Navigate to the Sonify page with the settings
-            navigate('/sonify', { state: { filename } });
+            navigate('/sonify', { state: { filepath, dataFilepath } });
         });
     };
 
@@ -345,7 +348,9 @@ export default function Sound() {
                 {variants.map((variant) => (
                     <LinkBox as="article" maxW="sm" borderWidth="1px" rounded="md" overflow="hidden">
                         <Card.Root width="200px" key={variant}>
-                            <img src={`/assets/${variant}.jpg`} alt={variant} style={{ width: "100%", borderRadius: "8px" }} />
+                            <LinkOverlay as={Link} to="/target-route">
+                                <img src={`/assets/${variant}.jpg`} alt={variant} style={{ width: "100%", borderRadius: "8px" }} />
+                            </LinkOverlay>
                             <Card.Body gap="2">
                                 <Card.Title mb="2">{variant}</Card.Title>
                             </Card.Body>
