@@ -1,5 +1,7 @@
 import React, { useState } from "react";
 import { useLocation } from 'react-router-dom';
+// import ReactAudioPlayer from 'react-audio-player';
+// If you want to use a simple audio player, use the HTML <audio> element below.
 
 import {
   Box,
@@ -76,6 +78,12 @@ export default function Sonify() {
             </Button>
           </VStack>
       </form>
+      <audio
+        src="/assets/sample-15s.mp3" // Replace with the actual audio file URL
+        //autoPlay
+        controls
+        style={{ width: "100%" }}
+      />
     </Box>
   );
 }
