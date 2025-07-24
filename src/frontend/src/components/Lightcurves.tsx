@@ -88,6 +88,33 @@ export default function Lightcurves() {
     return image; // Assuming the response contains an image in base64 format
   }
 
+  const selectLightcurve = async (dataURI: string) => {
+    // Call the API endpoint to select the lightcurve and get the filepath
+    const url_selectlightcurve = "http://localhost:8000/select-lightcurve";
+    const data = {
+      "data_uri": dataURI
+    }
+    const config = {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data)
+    }
+    try {
+      const response = await fetch(url_selectlightcurve, config);
+      if (!response.ok) {
+        throw new Error("Network response was not ok");
+      }
+      const result = await response.json();
+      console.log("Select Lightcurve API response:", result);
+      return result.filepath;
+    } catch (error) {
+      console.error("Error fetching sonification:", error);
+    }
+  }
+
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     fetchLightcurves();
@@ -97,7 +124,15 @@ export default function Lightcurves() {
     // Handle the sonification logic here
     // For example, you can navigate to a sonification page or trigger a sonification function
     console.log("Sonify button clicked for star:", selectedStar);
-    navigate('/sound', { state: dataURI });
+    console.log("Data URI:", dataURI);
+    // Call the select lightcurve function with the dataURI
+    selectLightcurve(dataURI).then((filepath) => {
+      if (filepath) {
+        console.log("Lightcurve selected, filepath:", filepath);
+        // Navigate to the sound page with the filepath
+        navigate('/sound', { state: filepath });
+      }
+    });
   };
 
   return (
