@@ -1,11 +1,8 @@
 from fastapi import FastAPI
 from api import light_curve
-import logging
 from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
-
-LOG = logging.getLogger(__name__)
 
 origins = [
     "http://localhost:5173",
