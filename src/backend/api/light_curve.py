@@ -4,6 +4,7 @@ from pydantic import BaseModel
 from extensions import sonify
 from pathlib import Path
 from paths import TMP_DIR
+from main import LOG
 
 import lightkurve as lk
 import matplotlib.pyplot as plt
@@ -153,8 +154,12 @@ async def sonify_lightcurve(request: SonificationRequest):
     length = request.duration
     system = request.system
 
+    LOG.info('4')
+
     try:
         soni = sonify(data, style,'light_curve', length, system)
+
+        LOG.info('5')
 
         id = str(uuid.uuid4().hex)
         ext = '.wav'
@@ -181,6 +186,8 @@ async def save_sound_settings(settings: SoundSettings):
     # Save settings to a yaml file and return the filename
     style = format_settings(settings)
 
+    LOG.info('3')
+
     yaml_text = yaml.dump(style, default_flow_style=False)
     filename = f'style_{uuid.uuid4()}.yaml'
     filepath = os.path.join(TMP_DIR, filename)
@@ -198,9 +205,11 @@ def format_settings(settings: SoundSettings):
         "volume": [0, 1] if settings.volume else None,
         "leftRightPan": [0, 1] if settings.leftRightPan else None
     }
-
+    LOG.info('1')
     # Remove any None entries in parameters
     parameters = {k: v for k, v in parameters.items() if v is not None}
+    LOG.info('2')
+
 
     music = (
         f"{settings.rootNote}{settings.quality}" 
