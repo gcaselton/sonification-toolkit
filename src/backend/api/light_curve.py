@@ -19,6 +19,7 @@ import json
 
 router = APIRouter()
 
+logging.basicConfig(level=logging.INFO)
 LOG = logging.getLogger(__name__)
 
 # Define BaseModels for expected request types
