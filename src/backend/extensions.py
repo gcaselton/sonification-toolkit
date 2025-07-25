@@ -37,7 +37,7 @@ def sonify(data_filepath, style_filepath, sonify_type, length=15, system='stereo
       default_style = defaults[sonify_type]
 
       # Merge the user and default styles, overwriting defaults with user's where present
-      merged = {**default_style, **user_style}
+      merged = {**default_style, **{k: v for k, v in user_style.items() if v is not None}}
 
       # Validate the merged result NOTE problem is here
       validated_style = BaseStyle.model_validate(merged)
@@ -176,7 +176,6 @@ def light_curve_sources(data_filepath, params, chord_mode, data_mode, scale):
       else:
             time, upper_lim = 'time_evo', '100%'
      
-     # Clean this up - time needs to be x for discrete pitches
       data = {'pitch': pitches, 
               time: [x]*len(pitches)}
       m_lims = {time: ('0%', upper_lim)}

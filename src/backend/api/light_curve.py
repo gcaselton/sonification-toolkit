@@ -209,20 +209,19 @@ def format_settings(settings: SoundSettings):
     # Remove any None entries in parameters
     parameters = {k: v for k, v in parameters.items() if v is not None}
 
-    music = (
-        f"{settings.rootNote}{settings.quality}" 
-        if settings.chordMode 
-        else f"{settings.rootNote} {settings.scale}"
-        )
+    if settings.chordMode:
+        music = 'chord'
+        value = f"{settings.rootNote}{settings.quality}"
+    else:
+        music = 'scale'
+        value = f"{settings.rootNote} {settings.scale}"
 
-    # NOTE to fix - must either be chord OR scale
-    # Also - need to deal with the case that no params are specified 
     style = {
         "sound": settings.sound,
         "parameters": parameters if parameters else None,
         "chord_mode": "on" if settings.chordMode else "off",
         "chord": f"{settings.rootNote}{settings.quality}" if settings.chordMode else None,
-        "scale": None if settings.chordMode else f"{settings.rootNote} {settings.scale}"
+        music: value
     }
     
     return style

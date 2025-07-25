@@ -7,10 +7,11 @@ sound: 'default_synth'
 # data_mode: 'continuous'
 
 parameters:
-  pitch: [0,1]
+  cutoff: [0,1]
 
-chord_mode: 'off'
+chord_mode: 'on'
 
-scale: 'C major'
+chord: 'random'
 
-# chord: 'random'
+# scale: 'C major'
+
