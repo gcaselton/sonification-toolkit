@@ -19,8 +19,27 @@ import {
 export default function Sound() {
 
     const navigate = useNavigate();
+    // State to manage the dialog open/close
+    const [open, setOpen] = useState(false);
     // Musical types of sonification
-    const variants = ["Sci-Fi", "Windy", "Musical", "Custom"] as const;
+    const variants = [
+        {
+            name: "Sci-Fi",
+            filepath: "C:\\Users\\plant\\Projects\\sonification-toolkit\\src\\style_files\\light_curve\\sci_fi.yml",
+        },
+        {
+            name: "Windy",
+            filepath: "C:\\Users\\plant\\Projects\\sonification-toolkit\\src\\style_files\\light_curve\\windy.yml",
+        },
+        {
+            name: "Musical",
+            filepath: "C:\\Users\\plant\\Projects\\sonification-toolkit\\src\\style_files\\light_curve\\musical.yml",
+        },
+        {
+            name: "Custom",
+            filepath: "",
+        }
+    ] as const;
     // Sound parameters for sonification
     const [sound, setSound] = useState('default_synth');
     const [filterCutoff, setFilterCutoff] = useState<boolean | 'indeterminate'>(false);
@@ -29,7 +48,7 @@ export default function Sound() {
     const [leftRightPan, setLeftRightPan] = useState(false);
     const [chordMode, setChordMode] = useState(false);
     const [rootNote, setRootNote] = useState('C');
-    const [scale, setScale] = useState('major');
+    const [scale, setScale] = useState('None');
     const [quality, setQuality] = useState('maj');
     const soundOptions = createListCollection({
         items: [
@@ -56,6 +75,7 @@ export default function Sound() {
     });
     const scaleOptions = createListCollection({
         items: [
+            { label: "None", value: "None" },
             { label: "Major", value: "major" },
             { label: "Minor", value: "minor" },
             { label: "Augmented", value: "augmented" },
@@ -135,6 +155,19 @@ export default function Sound() {
         return data.filepath;
     }
 
+    const handleClick  = async (variant: any) => {
+        if (variant.name === "Custom") {
+            console.log("Custom sound settings selected, opening dialog...");
+            setOpen(true);
+        } else {
+            console.log("Selected variant:", variant.name);
+            const filepath = variant.filepath;
+            console.log("Filepath of selected variant:", filepath);
+            // Navigate to the Sonify page with the selected variant
+            navigate('/sonify', { state: { filepath, dataFilepath } });
+        }
+    }
+
     const handleSubmit  = async () => {
         saveSoundSettings().then((filepath) => {
             console.log("Saved sound settings to:", filepath);
@@ -190,6 +223,8 @@ export default function Sound() {
     const handleSelectScale = (event: React.FormEvent<HTMLDivElement>) => {
         const target = event.target as HTMLSelectElement;
         setScale(target.value);
+        setPitch(target.value !== 'None');
+        // If scale is selected, enable pitch
         //setSettings((prev) => ({ ...prev, Scale: target.value }));
         console.log("Selected Scale:", target.value);
     };
@@ -206,7 +241,7 @@ export default function Sound() {
             <h1>Sound</h1>
             <br />
 
-            <Dialog.Root>
+            <Dialog.Root lazyMount open={open} onOpenChange={(details) => setOpen(details.open)}>
                 <Dialog.Trigger />
                 <Dialog.Backdrop />
                 <Dialog.Positioner>
@@ -294,7 +329,7 @@ export default function Sound() {
                                     ))}
                                 </Select.Content>
                         </Select.Root>
-                        <Select.Root collection={scaleOptions} size="sm" width="320px" onChange={handleSelectScale}>
+                        {!chordMode && <Select.Root collection={scaleOptions} size="sm" width="320px" onChange={handleSelectScale}>
                             <Select.HiddenSelect />
                             <Select.Label>Scale</Select.Label>
                             <Select.Control>
@@ -313,8 +348,8 @@ export default function Sound() {
                                     </Select.Item>
                                     ))}
                                 </Select.Content>
-                        </Select.Root>
-                        <Select.Root collection={qualityOptions} size="sm" width="320px" onChange={handleSelectQuality}>
+                        </Select.Root>}
+                        {chordMode && <Select.Root collection={qualityOptions} size="sm" width="320px" onChange={handleSelectQuality}>
                             <Select.HiddenSelect />
                             <Select.Label>Quality</Select.Label>
                             <Select.Control>
@@ -333,7 +368,7 @@ export default function Sound() {
                                     </Select.Item>
                                     ))}
                                 </Select.Content>
-                        </Select.Root>
+                        </Select.Root>}
                         <Button onClick={() => handleSubmit()} colorScheme="blue" width="100%">
                             Submit
                         </Button>
@@ -342,17 +377,17 @@ export default function Sound() {
                     <Dialog.Footer />
                 </Dialog.Content>
                 </Dialog.Positioner>
-            </Dialog.Root>
+                </Dialog.Root>
 
             <Stack gap="4" direction="row" wrap="wrap">
                 {variants.map((variant) => (
                     <LinkBox as="article" maxW="sm" borderWidth="1px" rounded="md" overflow="hidden">
-                        <Card.Root width="200px" key={variant}>
-                            <LinkOverlay as={Link} to="/target-route">
-                                <img src={`/assets/${variant}.jpg`} alt={variant} style={{ width: "100%", borderRadius: "8px" }} />
+                        <Card.Root width="200px" key={variant.name}>
+                            <LinkOverlay as={Link} onClick={() => {handleClick(variant)}}>
+                                <img src={`/assets/${variant.name}.jpg`} alt={variant.name} style={{ width: "100%", borderRadius: "8px" }} />
                             </LinkOverlay>
                             <Card.Body gap="2">
-                                <Card.Title mb="2">{variant}</Card.Title>
+                                <Card.Title mb="2">{variant.name}</Card.Title>
                             </Card.Body>
                         </Card.Root>
                     </LinkBox>
