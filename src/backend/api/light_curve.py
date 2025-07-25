@@ -214,7 +214,7 @@ def format_settings(settings: SoundSettings):
         value = f"{settings.rootNote}{settings.quality}"
     else:
         music = 'scale'
-        value = f"{settings.rootNote} {settings.scale}"
+        value = f"{settings.rootNote} {settings.scale}" if settings.scale != 'None' else None
 
     style = {
         "sound": settings.sound,
