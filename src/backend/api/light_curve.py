@@ -160,21 +160,22 @@ async def sonify_lightcurve(request: SonificationRequest):
     try:
         soni = sonify(data, style,'light_curve', length, system)
 
-        LOG.info('5')
-
         id = str(uuid.uuid4().hex)
         ext = '.wav'
         filename = f'light_curve_{id}{ext}'
         filepath = os.path.join(TMP_DIR, filename)
         soni.save(filepath)
 
-        return FileResponse(
-                path=filepath,
-                media_type='audio/wav',
-                filename=filename
-            )
+        return {'filename': filename}
     except Exception as e:
         raise HTTPException(status_code=404, detail=str(e))
+    
+
+@router.get('/{filename}')
+def get_audio(filename: str):
+    filepath = TMP_DIR / filename
+    return FileResponse(filepath, media_type="audio/wav")
+
     
 @router.post('/save-sound-settings/')
 async def save_sound_settings(settings: SoundSettings):
