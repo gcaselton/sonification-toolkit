@@ -171,8 +171,8 @@ async def sonify_lightcurve(request: SonificationRequest):
         raise HTTPException(status_code=404, detail=str(e))
     
 
-@router.get('/{filename}')
-def get_audio(filename: str):
+@router.get('/audio/{filename}')
+async def get_audio(filename: str):
     filepath = TMP_DIR / filename
     return FileResponse(filepath, media_type="audio/wav")
 

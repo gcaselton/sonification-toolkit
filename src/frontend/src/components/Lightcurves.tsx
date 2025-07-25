@@ -1,5 +1,7 @@
 import React, { useEffect, useState, createContext, ChangeEvent } from "react";
 import { useNavigate } from 'react-router-dom';
+import { FaEye } from "react-icons/fa";
+import { HiSpeakerWave } from "react-icons/hi2";
 import {
   Box,
   Button,
@@ -10,6 +12,7 @@ import {
   Stack,
   VStack,
   Table,
+  IconButton,
 } from "@chakra-ui/react";
 
 interface Lightcurve {
@@ -36,41 +39,38 @@ export default function Lightcurves() {
   const navigate = useNavigate();
   const [selectedStar, setSelectedStar] = useState("HD 12345");
   const [lightcurves, setLightcurves] = useState([])
-  const [plots, setPlots] = useState([])
-  const url_search = "http://localhost:8000/search-lightcurves"
-  const url_plot = "http://localhost:8000/plot-lightcurve"
-  const data = {
-    "star_name": selectedStar
-  }
-  const config = {
-    method: 'POST',
-    headers: {
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(data)
-  }
-  const fetchLightcurves = async () => {
-    const response = await fetch(url_search, config)
-    const lc = await response.json()
-    setLightcurves(lc.results)
-  }
-  useEffect(() => {
-    fetchLightcurves()
-  }, [])
+  const [image, setImage] = useState("");
+  const [open, setOpen] = useState(false);
 
-  /*const fetchPlots = async () => {
-    for (const lightcurve of lightcurves) {
-      const image = await plotLightcurve(lightcurve.dataURI);
-      lightcurve.image = image; // Add the image to the lightcurve object
+  const searchLightcurves = async () => {
+    const url_search = "http://localhost:8000/search-lightcurves"
+    const data = {
+      "star_name": selectedStar
+    };
+    const config = {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data)
+    };
+    try {
+      const response = await fetch(url_search, config);
+      if (!response.ok) {
+        throw new Error("Network response was not ok");
+      }
+      const result = await response.json();
+      setLightcurves(result.results);
+      console.log("Search results:", result.results);
+    } catch (error) {
+      console.error("Error fetching lightcurves:", error);
     }
-    const response = await fetch(url_plot, config)
-    const plots = await response.json()
-    setPlots(plots.results)
-  }*/
+  }
 
   const plotLightcurve = async (dataURI: string) => {
 
+    const url_plot = "http://localhost:8000/plot-lightcurve"
     const response = await fetch(url_plot, {
       method: 'POST',
       headers: {
@@ -117,7 +117,7 @@ export default function Lightcurves() {
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    fetchLightcurves();
+    searchLightcurves();
   };
 
   const handleClick = (dataURI: string) => {
@@ -131,6 +131,20 @@ export default function Lightcurves() {
         console.log("Lightcurve selected, filepath:", filepath);
         // Navigate to the sound page with the filepath
         navigate('/sound', { state: filepath });
+      }
+    });
+  };
+
+  const handleClickPlot = (dataURI: string) => {
+    // Handle the plot logic here
+    console.log("Plot button clicked for star:", selectedStar);
+    console.log("Data URI:", dataURI);
+    plotLightcurve(dataURI).then((image) => {
+      if (image) {
+        console.log("Lightcurve plotted, image:", image);
+        // You can display the image in a modal or a new page
+        setImage("data:image/png;base64," + image);
+        setOpen(true);
       }
     });
   };
@@ -193,8 +207,10 @@ export default function Lightcurves() {
               <Table.Cell>{item.year}</Table.Cell>
               <Table.Cell>{item.period}</Table.Cell>
               <Table.Cell>
-                <Dialog.Root>
-                  <Dialog.Trigger />
+                <Dialog.Root lazyMount open={open} onOpenChange={(details) => setOpen(details.open)}>
+                  <Dialog.Trigger asChild>
+                    <IconButton aria-label="eye" icon={<FaEye />} colorScheme="blue" onClick={() => handleClickPlot(item.dataURI)} />
+                  </Dialog.Trigger>
                   <Dialog.Backdrop />
                   <Dialog.Positioner>
                     <Dialog.Content>
@@ -203,14 +219,15 @@ export default function Lightcurves() {
                         <Dialog.Title />
                         Lightcurve Graph for {item.period}, {item.pipeline}, {item.year}
                       </Dialog.Header>
-                      <Dialog.Body />
-                      <Image src={`data:image/png;base64,${plotLightcurve(item.dataURI)}`} />                      
+                      <Dialog.Body>
+                        <Image src={image} />
+                      </Dialog.Body>                    
                       <Dialog.Footer />
                     </Dialog.Content>
                   </Dialog.Positioner>
                 </Dialog.Root>
               </Table.Cell>
-              <Table.Cell><Button onClick={() => handleClick(item.dataURI)}>Sonify</Button></Table.Cell>
+              <Table.Cell><IconButton aria-label="speaker" icon={<HiSpeakerWave />} colorScheme="blue" onClick={() => handleClick(item.dataURI)} /></Table.Cell>
             </Table.Row>
           ))}
         </Table.Body>

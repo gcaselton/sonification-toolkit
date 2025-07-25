@@ -16,6 +16,7 @@ export default function Sonify() {
 
   const [length, setLength] = useState(10);
   const [audioSystem, setAudioSystem] = useState("stereo");
+  const [audioFilepath, setAudioFilepath] = useState("assets/sample-15s.mp3");
   const location = useLocation();
   const settingsFilepath = location.state.filepath;
   const dataFilepath = location.state.dataFilepath;
@@ -78,6 +79,7 @@ export default function Sonify() {
       if (filename) {
         console.log("Sonification file created:", filename);
         // You can handle the sonification file here, e.g., download it or play it
+        setAudioFilepath(filename);
       } else {
         console.error("No sonification file returned.");
       }
@@ -126,7 +128,7 @@ export default function Sonify() {
           </VStack>
       </form>
       <audio
-        src="/assets/sample-15s.mp3" // Replace with the actual audio file URL
+        src={`http://localhost:8000/audio/${audioFilepath}`} // Replace with the actual audio file URL
         //autoPlay
         controls
         style={{ width: "100%" }}
