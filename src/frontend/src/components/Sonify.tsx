@@ -137,7 +137,7 @@ export default function Sonify() {
         controls
         style={{ width: "100%" }}
       />
-      <Button onClick={handleDownload} type="submit" colorScheme="blue" width="320px">
+      <Button type="submit" colorScheme="blue" width="320px">
         Download Sonification
       </Button>
     </Box>
