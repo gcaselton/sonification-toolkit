@@ -165,7 +165,7 @@ async def get_stars():
         try:
             with open(file, 'r') as f:
                 data = yaml.safe_load(f)
-            star_name = data.get('name', file.stem)  # fallback to filename if 'name' missing
+            star_name = data.get('name', str(file.stem))  # fallback to filename if 'name' missing
             star_desc = data.get('description')
         except Exception as e:
             print(f'Failed to read or parse {file}: {e}')
@@ -173,7 +173,7 @@ async def get_stars():
 
         star = {'name': star_name,
                 'description': star_desc,
-                'filepath': STARS_DIR + file.stem + '.fits'}
+                'filepath': str(STARS_DIR) + str(file.stem) + '.fits'}
 
         stars.append(star)
         
