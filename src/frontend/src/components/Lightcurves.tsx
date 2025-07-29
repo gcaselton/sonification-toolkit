@@ -6,6 +6,8 @@ import {
   Box,
   Button,
   Card,
+  LinkOverlay,
+  Link,
   Image, 
   Input,
   Dialog,
@@ -25,7 +27,14 @@ interface Lightcurve {
   dataURI: string;
 }
 
-const variants = ["Pleonie", "Merope", "Beta Persei", "Sirius"] as const;
+interface Variant {
+  name: string;
+  description: string;
+  filepath: string;
+}
+
+//const variants = ["Pleonie", "Merope", "Beta Persei", "Sirius"] as const;
+
 
 //var selected_star = "HD 12345"; // This can be dynamic based on user selection
 
@@ -40,7 +49,20 @@ export default function Lightcurves() {
   const [selectedStar, setSelectedStar] = useState("HD 12345");
   const [lightcurves, setLightcurves] = useState([])
   const [image, setImage] = useState("");
+  const [title, setTitle] = useState("");
   const [open, setOpen] = useState(false);
+  const [variants, setVariants] = useState<Variant[]>([]);
+  useEffect(() => {
+        fetch("http://localhost:8000/suggested-stars/")
+            .then((res) => res.json())
+            .then((data) => {
+                setVariants(data);
+                console.log(variants)
+            })
+            .catch((err) => {
+                console.error("Failed to fetch presets:", err);
+            });
+    }, []);
 
   const searchLightcurves = async () => {
     const url_search = "http://localhost:8000/search-lightcurves"
@@ -120,7 +142,7 @@ export default function Lightcurves() {
     searchLightcurves();
   };
 
-  const handleClick = (dataURI: string) => {
+  const handleClickSonify = (dataURI: string) => {
     // Handle the sonification logic here
     // For example, you can navigate to a sonification page or trigger a sonification function
     console.log("Sonify button clicked for star:", selectedStar);
@@ -135,18 +157,26 @@ export default function Lightcurves() {
     });
   };
 
-  const handleClickPlot = (dataURI: string) => {
+  const handleClickPlot = (item: Lightcurve) => {
     // Handle the plot logic here
     console.log("Plot button clicked for star:", selectedStar);
-    console.log("Data URI:", dataURI);
-    plotLightcurve(dataURI).then((image) => {
+    console.log("Data URI:", item.dataURI);
+    plotLightcurve(item.dataURI).then((image) => {
       if (image) {
         console.log("Lightcurve plotted, image:", image);
         // You can display the image in a modal or a new page
         setImage("data:image/png;base64," + image);
+        setTitle(`Lightcurve Graph for ${item.period}, ${item.pipeline}, ${item.year}`);
+        // Open the dialog/modal to show the image
         setOpen(true);
       }
     });
+  };
+
+  const handleClickStar = (variant) => {
+    console.log("Star clicked:", variant.name);
+    const filepath = variant.filepath;
+    navigate('/sound', { state: filepath });
   };
 
   return (
@@ -175,10 +205,13 @@ export default function Lightcurves() {
       <br />
       <Stack gap="4" direction="row" wrap="wrap">
         {variants.map((variant) => (
-          <Card.Root width="200px" key={variant}>
-            <img src={`/assets/${variant}.jpg`} alt={variant} style={{ width: "100%", borderRadius: "8px" }} />
+          <Card.Root width="200px" key={variant.name}>
+            <LinkOverlay as={Link} onClick={() => {handleClickStar(variant)}}>
+              <img src={`/assets/${variant.name}.jpg`} alt={variant.name} style={{ width: "100%", borderRadius: "8px" }} />
+            </LinkOverlay>
             <Card.Body gap="2">
-              <Card.Title mb="2">{variant}</Card.Title>
+              <Card.Title mb="2">{variant.name}</Card.Title>
+              <Card.Description>{variant.description}</Card.Description>
             </Card.Body>
           </Card.Root>
         ))}
@@ -209,7 +242,7 @@ export default function Lightcurves() {
               <Table.Cell>
                 <Dialog.Root lazyMount open={open} onOpenChange={(details) => setOpen(details.open)}>
                   <Dialog.Trigger asChild>
-                    <IconButton aria-label="eye" icon={<FaEye />} colorScheme="blue" onClick={() => handleClickPlot(item.dataURI)} />
+                    <IconButton aria-label="eye" icon={<FaEye />} colorScheme="blue" onClick={() => handleClickPlot(item)} />
                   </Dialog.Trigger>
                   <Dialog.Backdrop />
                   <Dialog.Positioner>
@@ -217,7 +250,7 @@ export default function Lightcurves() {
                       <Dialog.CloseTrigger />
                       <Dialog.Header>
                         <Dialog.Title />
-                        Lightcurve Graph for {item.period}, {item.pipeline}, {item.year}
+                        {title}
                       </Dialog.Header>
                       <Dialog.Body>
                         <Image src={image} />
@@ -227,7 +260,7 @@ export default function Lightcurves() {
                   </Dialog.Positioner>
                 </Dialog.Root>
               </Table.Cell>
-              <Table.Cell><IconButton aria-label="speaker" icon={<HiSpeakerWave />} colorScheme="blue" onClick={() => handleClick(item.dataURI)} /></Table.Cell>
+              <Table.Cell><IconButton aria-label="speaker" icon={<HiSpeakerWave />} colorScheme="blue" onClick={() => handleClickSonify(item.dataURI)} /></Table.Cell>
             </Table.Row>
           ))}
         </Table.Body>
