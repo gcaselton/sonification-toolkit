@@ -6,6 +6,7 @@ import {
   Button,
   Card,
   Checkbox,
+  Collapsible,
   createListCollection,
   Dialog,
   Link,
@@ -25,15 +26,15 @@ export default function Sound() {
     const variants = [
         {
             name: "Sci-Fi",
-            filepath: "C:\\Users\\plant\\Projects\\sonification-toolkit\\src\\style_files\\light_curve\\sci_fi.yml",
+            filepath: "style_files\\light_curve\\sci_fi.yml",
         },
         {
             name: "Windy",
-            filepath: "C:\\Users\\plant\\Projects\\sonification-toolkit\\src\\style_files\\light_curve\\windy.yml",
+            filepath: "style_files\\light_curve\\windy.yml",
         },
         {
             name: "Musical",
-            filepath: "C:\\Users\\plant\\Projects\\sonification-toolkit\\src\\style_files\\light_curve\\musical.yml",
+            filepath: "style_files\\light_curve\\musical.yml",
         },
         {
             name: "Custom",
@@ -304,71 +305,77 @@ export default function Sound() {
                                 <Checkbox.Label>{parameters[3]}</Checkbox.Label>
                             </Checkbox.Root>
                         </Stack>
-                        <Switch.Root defaultChecked={chordMode} onCheckedChange={handleChordMode}>
-                            <Switch.HiddenInput />
-                            <Switch.Control />
-                            <Switch.Label>Chord Mode</Switch.Label>
-                        </Switch.Root>
-                        <Select.Root collection={rootNoteOptions} size="sm" width="320px" onChange={handleSelectRootNote}>
-                            <Select.HiddenSelect />
-                            <Select.Label>Root Note</Select.Label>
-                            <Select.Control>
-                                <Select.Trigger>
-                                <Select.ValueText placeholder={rootNote} />
-                                </Select.Trigger>
-                                <Select.IndicatorGroup>
-                                <Select.Indicator />
-                                </Select.IndicatorGroup>
-                            </Select.Control>
-                                <Select.Content>
-                                    {rootNoteOptions.items.map((option) => (
-                                    <Select.Item item={option} key={option.value}>
-                                        {option.label}
-                                        <Select.ItemIndicator />
-                                    </Select.Item>
-                                    ))}
-                                </Select.Content>
-                        </Select.Root>
-                        {!chordMode && <Select.Root collection={scaleOptions} size="sm" width="320px" onChange={handleSelectScale}>
-                            <Select.HiddenSelect />
-                            <Select.Label>Scale</Select.Label>
-                            <Select.Control>
-                                <Select.Trigger>
-                                <Select.ValueText placeholder={scale} />
-                                </Select.Trigger>
-                                <Select.IndicatorGroup>
-                                <Select.Indicator />
-                                </Select.IndicatorGroup>
-                            </Select.Control>
-                                <Select.Content>
-                                    {scaleOptions.items.map((option) => (
-                                    <Select.Item item={option} key={option.value}>
-                                        {option.label}
-                                        <Select.ItemIndicator />
-                                    </Select.Item>
-                                    ))}
-                                </Select.Content>
-                        </Select.Root>}
-                        {chordMode && <Select.Root collection={qualityOptions} size="sm" width="320px" onChange={handleSelectQuality}>
-                            <Select.HiddenSelect />
-                            <Select.Label>Quality</Select.Label>
-                            <Select.Control>
-                                <Select.Trigger>
-                                <Select.ValueText placeholder={quality} />
-                                </Select.Trigger>
-                                <Select.IndicatorGroup>
-                                <Select.Indicator />
-                                </Select.IndicatorGroup>
-                            </Select.Control>
-                                <Select.Content>
-                                    {qualityOptions.items.map((option) => (
-                                    <Select.Item item={option} key={option.value}>
-                                        {option.label}
-                                        <Select.ItemIndicator />
-                                    </Select.Item>
-                                    ))}
-                                </Select.Content>
-                        </Select.Root>}
+                        <Collapsible.Root>
+                            <Collapsible.Trigger>Musical Settings</Collapsible.Trigger>
+                            <Collapsible.Content>
+                                    <Switch.Root defaultChecked={chordMode} onCheckedChange={handleChordMode}>
+                                        <Switch.HiddenInput />
+                                        <Switch.Control />
+                                        <Switch.Label>Chord Mode</Switch.Label>
+                                    </Switch.Root>
+                                    <Select.Root collection={rootNoteOptions} size="sm" width="320px" onChange={handleSelectRootNote}>
+                                        <Select.HiddenSelect />
+                                        <Select.Label>Root Note</Select.Label>
+                                        <Select.Control>
+                                            <Select.Trigger>
+                                            <Select.ValueText placeholder={rootNote} />
+                                            </Select.Trigger>
+                                            <Select.IndicatorGroup>
+                                            <Select.Indicator />
+                                            </Select.IndicatorGroup>
+                                        </Select.Control>
+                                            <Select.Content>
+                                                {rootNoteOptions.items.map((option) => (
+                                                <Select.Item item={option} key={option.value}>
+                                                    {option.label}
+                                                    <Select.ItemIndicator />
+                                                </Select.Item>
+                                                ))}
+                                            </Select.Content>
+                                    </Select.Root>
+                                    {!chordMode && <Select.Root collection={scaleOptions} size="sm" width="320px" onChange={handleSelectScale}>
+                                        <Select.HiddenSelect />
+                                        <Select.Label>Scale</Select.Label>
+                                        <Select.Control>
+                                            <Select.Trigger>
+                                            <Select.ValueText placeholder={scale} />
+                                            </Select.Trigger>
+                                            <Select.IndicatorGroup>
+                                            <Select.Indicator />
+                                            </Select.IndicatorGroup>
+                                        </Select.Control>
+                                            <Select.Content>
+                                                {scaleOptions.items.map((option) => (
+                                                <Select.Item item={option} key={option.value}>
+                                                    {option.label}
+                                                    <Select.ItemIndicator />
+                                                </Select.Item>
+                                                ))}
+                                            </Select.Content>
+                                    </Select.Root>}
+                                    {chordMode && <Select.Root collection={qualityOptions} size="sm" width="320px" onChange={handleSelectQuality}>
+                                        <Select.HiddenSelect />
+                                        <Select.Label>Quality</Select.Label>
+                                        <Select.Control>
+                                            <Select.Trigger>
+                                            <Select.ValueText placeholder={quality} />
+                                            </Select.Trigger>
+                                            <Select.IndicatorGroup>
+                                            <Select.Indicator />
+                                            </Select.IndicatorGroup>
+                                        </Select.Control>
+                                            <Select.Content>
+                                                {qualityOptions.items.map((option) => (
+                                                <Select.Item item={option} key={option.value}>
+                                                    {option.label}
+                                                    <Select.ItemIndicator />
+                                                </Select.Item>
+                                                ))}
+                                            </Select.Content>
+                                    </Select.Root>}
+                            </Collapsible.Content>
+                        </Collapsible.Root>
+                        
                         <Button onClick={() => handleSubmit()} colorScheme="blue" width="100%">
                             Submit
                         </Button>
