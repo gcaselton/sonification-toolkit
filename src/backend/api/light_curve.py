@@ -3,7 +3,7 @@ from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from extensions import sonify
 from pathlib import Path
-from paths import TMP_DIR
+from paths import TMP_DIR, STYLE_FILES_DIR
 import logging
 
 import lightkurve as lk
@@ -18,6 +18,10 @@ import uuid
 import json
 
 router = APIRouter()
+
+CATEGORY = 'light_curve'
+
+STYLES_DIR = STYLE_FILES_DIR / CATEGORY
 
 logging.basicConfig(level=logging.INFO)
 LOG = logging.getLogger(__name__)
@@ -149,6 +153,30 @@ async def select_lightcurve(request: DownloadRequest):
     
     return {'filepath': filepath}
 
+@router.get('/styles/')
+async def get_styles():
+    if not STYLES_DIR.exists():
+        raise HTTPException(status_code=404, detail="Style directory not found")
+    
+    styles = []
+
+    for file in STYLES_DIR.glob("*.yml"):
+        try:
+            with open(file, "r") as f:
+                data = yaml.safe_load(f)
+            style_name = data.get("name", file.stem)  # fallback to filename if 'name' missing
+        except Exception as e:
+            print(f"Failed to read or parse {file}: {e}")
+            continue
+
+        style = {'name': style_name, 'filepath': str(file)}
+
+        styles.append(style)
+
+    return styles
+
+
+
 @router.post('/sonify-lightcurve/')
 async def sonify_lightcurve(request: SonificationRequest):
 
@@ -158,23 +186,23 @@ async def sonify_lightcurve(request: SonificationRequest):
     system = request.system
 
     try:
-        soni = sonify(data, style,'light_curve', length, system)
+        soni = sonify(data, style, CATEGORY, length, system)
 
         id = str(uuid.uuid4().hex)
         ext = '.wav'
-        filename = f'light_curve_{id}{ext}'
+        filename = f'{CATEGORY}_{id}{ext}'
         filepath = os.path.join(TMP_DIR, filename)
         soni.save(filepath)
 
         return {'filename': filename}
     except Exception as e:
         raise HTTPException(status_code=404, detail=str(e))
-    
 
 @router.get('/audio/{filename}')
 async def get_audio(filename: str):
     filepath = TMP_DIR / filename
     return FileResponse(filepath, media_type="audio/wav")
+
 
     
 @router.post('/save-sound-settings/')

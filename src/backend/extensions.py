@@ -118,7 +118,7 @@ def setup_strauss(data_filepath, style: BaseStyle, sonify_type, length):
       elif style.chord_mode == 'off' and style.scale:
 
             root, quality = style.scale.split(' ', 1)
-            notes = parse_scale(root, quality, 3)
+            notes = parse_scale(root, quality, 2) # Specify 2 octaves as default
             notes = [[str(note) for note in notes]]
       else:
             notes = [['C3']]

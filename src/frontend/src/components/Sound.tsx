@@ -19,27 +19,29 @@ import {
 export default function Sound() {
 
     const navigate = useNavigate();
+
     // State to manage the dialog open/close
     const [open, setOpen] = useState(false);
-    // Musical types of sonification
-    const variants = [
-        {
-            name: "Sci-Fi",
-            filepath: "C:\\Users\\plant\\Projects\\sonification-toolkit\\src\\style_files\\light_curve\\sci_fi.yml",
-        },
-        {
-            name: "Windy",
-            filepath: "C:\\Users\\plant\\Projects\\sonification-toolkit\\src\\style_files\\light_curve\\windy.yml",
-        },
-        {
-            name: "Musical",
-            filepath: "C:\\Users\\plant\\Projects\\sonification-toolkit\\src\\style_files\\light_curve\\musical.yml",
-        },
-        {
-            name: "Custom",
-            filepath: "",
-        }
-    ] as const;
+
+    // Suggested styles
+    const [variants, setVariants] = useState<any[]>([]);
+
+    useEffect(() => {
+        fetch("http://localhost:8000/styles/")
+            .then((res) => res.json())
+            .then((data) => {
+                data.push({'name': 'Custom'})
+                setVariants(data);
+                console.log(variants)
+            })
+            .catch((err) => {
+                console.error("Failed to fetch presets:", err);
+            });
+    }, []);
+
+    
+
+
     // Sound parameters for sonification
     const [sound, setSound] = useState('default_synth');
     const [filterCutoff, setFilterCutoff] = useState<boolean | 'indeterminate'>(false);
