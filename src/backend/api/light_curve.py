@@ -173,7 +173,7 @@ async def get_stars():
 
         star = {'name': star_name,
                 'description': star_desc,
-                'filepath': str(STARS_DIR) + str(file.stem) + '.fits'}
+                'filepath': os.path.join(str(STARS_DIR), str(file.stem) + '.fits')}
 
         stars.append(star)
         
