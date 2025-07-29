@@ -7,6 +7,7 @@ import {
   Box,
   Button,
   createListCollection,
+  Field,
   Input,
   VStack,
   Select,
@@ -96,15 +97,18 @@ export default function Sonify() {
       <br />
       <form onSubmit={handleSubmit}>
           <VStack spacing={4}>
-            <Input
-              placeholder="Length of Sonification (seconds)"
-              type="number"
-              value={length}
-              onChange={(e) => setLength(Number(e.target.value))}
-            />
+            <Field.Root width="320px">
+              <Field.Label>Duration (seconds)</Field.Label>
+              <Input
+                placeholder="Duration (seconds)"
+                type="number"
+                value={length}
+                onChange={(e) => setLength(Number(e.target.value))}
+              />
+            </Field.Root>
             <Select.Root collection={audioSystemOptions} size="sm" width="320px" onChange={handleAudioSystemChange}>
                 <Select.HiddenSelect />
-                <Select.Label>Root Note</Select.Label>
+                <Select.Label>Audio System</Select.Label>
                 <Select.Control>
                     <Select.Trigger>
                     <Select.ValueText placeholder={audioSystem} />
@@ -122,7 +126,7 @@ export default function Sonify() {
                         ))}
                     </Select.Content>
             </Select.Root>
-            <Button type="submit" colorScheme="blue" width="100%">
+            <Button type="submit" colorScheme="blue" width="320px">
               Generate
             </Button>
           </VStack>
@@ -133,6 +137,9 @@ export default function Sonify() {
         controls
         style={{ width: "100%" }}
       />
+      <Button onClick={handleDownload} type="submit" colorScheme="blue" width="320px">
+        Download Sonification
+      </Button>
     </Box>
   );
 }
