@@ -3,7 +3,7 @@ from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from extensions import sonify
 from pathlib import Path
-from paths import TMP_DIR, STYLE_FILES_DIR
+from paths import TMP_DIR, STYLE_FILES_DIR, SUGGESTED_DATA_DIR
 import logging
 
 import lightkurve as lk
@@ -22,6 +22,7 @@ router = APIRouter()
 CATEGORY = 'light_curve'
 
 STYLES_DIR = STYLE_FILES_DIR / CATEGORY
+STARS_DIR = SUGGESTED_DATA_DIR / CATEGORY
 
 logging.basicConfig(level=logging.INFO)
 LOG = logging.getLogger(__name__)
@@ -152,6 +153,31 @@ async def select_lightcurve(request: DownloadRequest):
     filepath = download_lightcurve(request.data_uri)
     
     return {'filepath': filepath}
+
+@router.get('/suggested-stars/')
+async def get_stars():
+    if not STARS_DIR.exists():
+        raise HTTPException(status_code=404, detail='Suggested stars directory not found')
+    
+    stars = []
+
+    for file in STARS_DIR.glob('*.yml'):
+        try:
+            with open(file, 'r') as f:
+                data = yaml.safe_load(f)
+            star_name = data.get('name', file.stem)  # fallback to filename if 'name' missing
+            star_desc = data.get('description')
+        except Exception as e:
+            print(f'Failed to read or parse {file}: {e}')
+            continue
+
+        star = {'name': star_name,
+                'description': star_desc,
+                'filepath': STARS_DIR + file.stem + '.fits'}
+
+        stars.append(star)
+        
+    return stars
 
 @router.get('/styles/')
 async def get_styles():

@@ -3,6 +3,7 @@ from pathlib import Path
 BACKEND_DIR = Path(__file__).resolve().parent
 SRC_DIR = BACKEND_DIR.parent
 STYLE_FILES_DIR = BACKEND_DIR / "style_files"
+SUGGESTED_DATA_DIR = BACKEND_DIR / "suggested_data"
 SOUND_ASSETS_DIR = SRC_DIR / "sound_assets"
 SYNTHS_DIR = SOUND_ASSETS_DIR / "synths"
 SAMPLES_DIR = SOUND_ASSETS_DIR / "samples"
