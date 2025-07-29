@@ -27,6 +27,9 @@ export default function Sound() {
     // Suggested styles
     const [variants, setVariants] = useState<any[]>([]);
 
+    // Reference to the file input
+    const inputRef = useRef<HTMLInputElement | null>(null);
+
     useEffect(() => {
         fetch("http://localhost:8000/styles/")
             .then((res) => res.json())
@@ -39,9 +42,6 @@ export default function Sound() {
                 console.error("Failed to fetch presets:", err);
             });
     }, []);
-
-    
-
 
     // Sound parameters for sonification
     const [sound, setSound] = useState('default_synth');
@@ -239,6 +239,25 @@ export default function Sound() {
         console.log("Selected Quality:", target.value);
     };
 
+    const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (file) {
+            onFileSelect(file); // Send file to parent or upload logic
+        }
+    };
+
+    const onFileSelect = (file: File) => {
+        console.log("File selected:", file);
+        // You can handle the file upload logic here
+        // For example, you can upload the file to the server or process it
+        
+    }
+
+    const handleButtonClick = () => {
+        console.log("Upload Custom YAML File clicked");
+        inputRef.current?.click(); // Programmatically open file dialog
+    };
+
     return (
         <Box>
             <h1>Sound</h1>
@@ -403,6 +422,8 @@ export default function Sound() {
                     
                 ))}
             </Stack>
+            <input type="file" ref={inputRef} style={{ display: 'none' }} onChange={handleFileChange} accept="*.yaml,*.yml" />
+            <Button onClick={handleButtonClick}>Upload Custom YAML File</Button>
         </Box>
 
     )
