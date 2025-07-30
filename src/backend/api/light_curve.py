@@ -289,7 +289,11 @@ async def upload_yaml(file: UploadFile = File(...)):
     contents = await file.read()
     try:
         parsed_yaml = yaml.safe_load(contents)
+        # Save the file to a temporary location
+        tmp_file_path = TMP_DIR / file.filename
+        with open(tmp_file_path, 'wb') as f:
+            f.write(contents)
     except yaml.YAMLError as e:
         return {"error": "Invalid YAML", "details": str(e)}
 
-    return {"filename": file.filename, "parsed": parsed_yaml}
+    return {"filepath": tmp_file_path, "parsed": parsed_yaml}

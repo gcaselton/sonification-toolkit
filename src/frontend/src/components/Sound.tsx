@@ -1,6 +1,5 @@
 import React, { useEffect, useState, createContext, ChangeEvent, useRef } from "react";
 import { data, useLocation, useNavigate } from 'react-router-dom';
-import axios from "axios";
 
 import {
   Box,
@@ -30,8 +29,6 @@ export default function Sound() {
 
     // Reference to the file input
     const inputRef = useRef<HTMLInputElement | null>(null);
-
-    const [response, setResponse] = useState<any>(null);
 
     useEffect(() => {
         fetch("http://localhost:8000/styles/")
@@ -263,11 +260,16 @@ export default function Sound() {
             });
 
             const data = await res.json();
-            return data.filepath;
+            //setFilepath(data.filepath); // Save the filepath returned by the server
+            console.log("File uploaded successfully:", data.filepath);
+            const filepath = data.filepath;
+            // Navigate to the Sonify page with the uploaded file
+            navigate('/sonify', { state: { filepath, dataFilepath } });
             //setResponse(data);
         } catch (err: any) {
             //setResponse({ error: err.message });
         }
+        
     }
 
     const handleButtonClick = () => {
@@ -291,6 +293,8 @@ export default function Sound() {
                     Custom Style
                     </Dialog.Header>
                     <Dialog.Body>
+                        <input type="file" ref={inputRef} style={{ display: 'none' }} onChange={handleFileChange} accept="*.yaml,*.yml" />
+                        <Button onClick={handleButtonClick}>Upload Custom YAML File</Button>
                         <form>
                         <Select.Root collection={soundOptions} size="sm" width="320px" onChange={handleSelectSound}>
                             <Select.HiddenSelect />
@@ -439,8 +443,7 @@ export default function Sound() {
                     
                 ))}
             </Stack>
-            <input type="file" ref={inputRef} style={{ display: 'none' }} onChange={handleFileChange} accept="*.yaml,*.yml" />
-            <Button onClick={handleButtonClick}>Upload Custom YAML File</Button>
+            
         </Box>
 
     )

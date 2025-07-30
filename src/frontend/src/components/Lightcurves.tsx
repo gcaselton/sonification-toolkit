@@ -14,6 +14,7 @@ import {
   Stack,
   VStack,
   Table,
+  Text,
   IconButton,
 } from "@chakra-ui/react";
 
@@ -52,6 +53,7 @@ export default function Lightcurves() {
   const [title, setTitle] = useState("");
   const [open, setOpen] = useState(false);
   const [variants, setVariants] = useState<Variant[]>([]);
+  const [errorMessage, setErrorMessage] = useState<string>("");
   useEffect(() => {
         fetch("http://localhost:8000/suggested-stars/")
             .then((res) => res.json())
@@ -80,13 +82,33 @@ export default function Lightcurves() {
     try {
       const response = await fetch(url_search, config);
       if (!response.ok) {
-        throw new Error("Network response was not ok");
+        //setErrorMessage("Error fetching lightcurves: " + response.formData);
+        console.error(`Error ${response.status}: ${response.statusText}`);
+        let errorDetail;
+        try {
+          const contentType = response.headers.get("Content-Type");
+
+          if (contentType && contentType.includes("application/json")) {
+            const errorJson = await response.json();
+            console.error("Error details:", errorJson);
+            errorDetail = errorJson;
+          } else {
+            const errorText = await response.text();
+            console.error("Error details:", errorText);
+            errorDetail = errorText;
+          }
+        } catch (e) {
+          console.error("Failed to read error body:", e);
+        }
+        throw new Error(errorDetail.detail || "Unknown error");
       }
       const result = await response.json();
       setLightcurves(result.results);
       console.log("Search results:", result.results);
+      setErrorMessage(result.details); // Clear any previous error messages
     } catch (error) {
-      console.error("Error fetching lightcurves:", error);
+      console.error("Error: " + error);
+      setErrorMessage(String(error)); // Set error message to display
     }
   }
 
@@ -198,6 +220,7 @@ export default function Lightcurves() {
           <Button type="submit" colorScheme="blue" width="100%">
             Submit
           </Button>
+          <Text color="red.500">{errorMessage}</Text>
         </VStack>
       </form>
       <br />
