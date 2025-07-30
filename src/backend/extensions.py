@@ -45,9 +45,15 @@ def sonify(data_filepath, style_filepath, sonify_type, length=15, system='stereo
       # Set up Sonification elements
       score, sources, generator = setup_strauss(data_filepath, validated_style, sonify_type, length)
 
+      print('Here')
+
       # Render sonification
       sonification = Sonification(score, sources, generator, system)
+
+      print('2')
       sonification.render()
+
+      print('3')
 
       return sonification
 
@@ -94,9 +100,19 @@ def setup_strauss(data_filepath, style: BaseStyle, sonify_type, length):
 
       # Read and find sound to create Generator
       folder, path = find_sound(style.sound)
-      generator = Synthesizer() if folder == 'synths' else Sampler()
-      path_stem = str(path.with_suffix(""))
-      generator.load_preset(path_stem)
+
+      if folder == 'synths':
+            generator = Synthesizer()
+            path_stem = str(path.with_suffix(""))
+            generator.load_preset(path_stem)
+      else:
+            generator = Sampler(str(path))
+            preset = 'staccato' if style.scale else 'sustain'
+            generator.load_preset(preset)
+      
+      # generator = Synthesizer() if folder == 'synths' else Sampler()
+      # path_stem = str(path.with_suffix(""))
+      # generator.load_preset(path_stem)
 
       # Check if filter needs switching on
       if 'cutoff' in style.parameters:
@@ -121,6 +137,7 @@ def setup_strauss(data_filepath, style: BaseStyle, sonify_type, length):
             notes = parse_scale(root, quality, 2) # Specify 2 octaves as default
             notes = [[str(note) for note in notes]]
       else:
+            # NOTE to do: this returns a Key error when using Twinkle style
             notes = [['C3']]
       
       score = Score(notes,length)
