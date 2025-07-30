@@ -1,5 +1,6 @@
 import React, { useEffect, useState, createContext, ChangeEvent, useRef } from "react";
 import { data, useLocation, useNavigate } from 'react-router-dom';
+import axios from "axios";
 
 import {
   Box,
@@ -29,6 +30,8 @@ export default function Sound() {
 
     // Reference to the file input
     const inputRef = useRef<HTMLInputElement | null>(null);
+
+    const [response, setResponse] = useState<any>(null);
 
     useEffect(() => {
         fetch("http://localhost:8000/styles/")
@@ -246,11 +249,25 @@ export default function Sound() {
         }
     };
 
-    const onFileSelect = (file: File) => {
+    const onFileSelect = async (file: File) => {
         console.log("File selected:", file);
         // You can handle the file upload logic here
         // For example, you can upload the file to the server or process it
-        
+        const formData = new FormData();
+        formData.append("file", file);
+
+        try {
+            const res = await fetch("http://localhost:8000/upload-yaml/", {
+                method: "POST",
+                body: formData,
+            });
+
+            const data = await res.json();
+            return data.filepath;
+            //setResponse(data);
+        } catch (err: any) {
+            //setResponse({ error: err.message });
+        }
     }
 
     const handleButtonClick = () => {
