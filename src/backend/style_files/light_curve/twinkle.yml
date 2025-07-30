@@ -1,0 +1,10 @@
+name: 'Twinkle'
+
+description: 'Twinkle sound + cutoff filter.'
+
+sound: 'twinkle'
+
+parameters:
+  cutoff: [0.3, 1]
+
+chord_mode: 'off'

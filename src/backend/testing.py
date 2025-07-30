@@ -51,7 +51,7 @@ from pathlib import Path
 s_type = 'light_curve'
 
 data_path = Path('src', 'backend', 'tmp', '2070bf69d1291ba08e67a3191f511107.fits')
-style_path = Path('src', 'backend','style_files', 'my_style.yml')
+style_path = Path('src', 'backend','style_files', s_type, 'twinkle.yml')
 
 s = sonify(data_path, style_path, s_type)
 s.hear()
