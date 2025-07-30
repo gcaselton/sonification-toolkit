@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, UploadFile, File
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from extensions import sonify
@@ -280,3 +280,16 @@ def format_settings(settings: SoundSettings):
     }
     
     return style
+
+@router.post("/upload-yaml/")
+async def upload_yaml(file: UploadFile = File(...)):
+    if not file.filename.endswith(('.yaml', '.yml')):
+        return {"error": "Only YAML files are allowed"}
+    
+    contents = await file.read()
+    try:
+        parsed_yaml = yaml.safe_load(contents)
+    except yaml.YAMLError as e:
+        return {"error": "Invalid YAML", "details": str(e)}
+
+    return {"filename": file.filename, "parsed": parsed_yaml}
