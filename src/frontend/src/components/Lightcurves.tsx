@@ -12,6 +12,7 @@ import {
   Input,
   Dialog,
   Stack,
+  Spinner,
   VStack,
   Table,
   Text,
@@ -47,13 +48,14 @@ const LightcurvesContext = createContext({
 
 export default function Lightcurves() {
   const navigate = useNavigate();
-  const [selectedStar, setSelectedStar] = useState("HD 12345");
+  const [selectedStar, setSelectedStar] = useState("");
   const [lightcurves, setLightcurves] = useState([])
   const [image, setImage] = useState("");
   const [title, setTitle] = useState("");
   const [open, setOpen] = useState(false);
   const [variants, setVariants] = useState<Variant[]>([]);
   const [errorMessage, setErrorMessage] = useState<string>("");
+  const [loading, setLoading] = useState(false);
   useEffect(() => {
         fetch("http://localhost:8000/suggested-stars/")
             .then((res) => res.json())
@@ -67,6 +69,9 @@ export default function Lightcurves() {
     }, []);
 
   const searchLightcurves = async () => {
+
+    setLoading(true);
+
     const url_search = "http://localhost:8000/search-lightcurves"
     const data = {
       "star_name": selectedStar
@@ -109,6 +114,8 @@ export default function Lightcurves() {
     } catch (error) {
       console.error("Error: " + error);
       setErrorMessage(String(error)); // Set error message to display
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -202,10 +209,10 @@ export default function Lightcurves() {
   };
 
   return (
-    <Box>
-      <h1>Lightcurves</h1>
+    <Box width='100%' mx='auto'>
+      <h1>Light Curves</h1>
       <br />
-      <h4>Search for a specific star or choose from the suggestions below</h4>
+      <h4>Search for a specific star or choose from the suggestions below.</h4>
       <br />
       <br />
       <form onSubmit={handleSubmit}>
@@ -223,6 +230,13 @@ export default function Lightcurves() {
           <Text color="red.500">{errorMessage}</Text>
         </VStack>
       </form>
+      {loading && (
+        <Box textAlign="center" mt={4}>
+          <Spinner size="xl" color="blue.500" />
+          <Text mt={2}>Searching the Universe for {selectedStar}...</Text>
+        </Box>
+      )}
+
       <br />
       <h2>Suggested</h2>
       <br />
@@ -240,7 +254,7 @@ export default function Lightcurves() {
         ))}
       </Stack>
       <br />
-      <h2>Selected Star: {selectedStar}</h2>
+      <h2>Search results for {selectedStar}:</h2>
       <br />
       <Table.Root size="sm">
         <Table.Header>

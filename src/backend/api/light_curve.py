@@ -4,6 +4,7 @@ from pydantic import BaseModel
 from extensions import sonify
 from pathlib import Path
 from paths import TMP_DIR, STYLE_FILES_DIR, SUGGESTED_DATA_DIR
+from strauss.sources import param_lim_dict
 import logging
 
 import lightkurve as lk
@@ -252,14 +253,31 @@ async def save_sound_settings(settings: SoundSettings):
     # Return the filename for reference
     return {'filepath': filepath}
 
+default_lims = {
+    'cutoff': [0.1, 0.9],
+    'pitch': [0, 1],
+    'pitch_shift': [0, 24],
+    'volume': [0, 1],
+    'azimuth': [0, 1]
+}
+
 def format_settings(settings: SoundSettings):
 
     parameters = {
-        "cutoff": [0, 1] if settings.filterCutOff else None,
-        "pitch": [0, 1] if settings.pitch else None,
-        "volume": [0, 1] if settings.volume else None,
-        "azimuth": [0, 1] if settings.leftRightPan else None
+        "cutoff": default_lims['cutoff'] if settings.filterCutOff else None,
+        "volume": default_lims['volume'] if settings.volume else None,
+        "azimuth": default_lims['azimuth'] if settings.leftRightPan else None
     }
+
+    # Check which type of pitch lims are needed
+    if settings.pitch:
+        if settings.scale == 'None':
+            parameters['pitch'] = default_lims['pitch_shift']
+        else:
+            parameters['pitch'] = default_lims['pitch']
+    else:
+        parameters['pitch'] = None
+        
 
     # Remove any None entries in parameters
     parameters = {k: v for k, v in parameters.items() if v is not None}

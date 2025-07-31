@@ -174,6 +174,7 @@ def light_curve_sources(data_filepath, params, chord_mode, data_mode, scale):
       lc = lk.read(data_filepath)
       lc = lc.remove_nans()
 
+
       x = np.asarray(lc.time.value)
       y = np.asarray(lc.flux)
 

@@ -65,6 +65,8 @@ class BaseStyle(BaseModel):
             if min > max:
                 raise ValueError(f'Parameter "{key}" has min limit greater than max limit: {limits}')
             if min < valid_min or max > valid_max:
+                if key == 'pitch':
+                    continue
                 raise ValueError(f'Parameter limits for "{key}" must be between those stated in the schema.')
             
         return value
@@ -100,11 +102,16 @@ class BaseStyle(BaseModel):
     @model_validator(mode="after")
     def check_scale_conflicts(self):
 
-        if self.scale:
-            if 'pitch' not in self.parameters:
-                raise ValueError('"pitch" must be a parameter to use a musical scale.')
-            # if self.data_mode != 'discrete':
-            #     raise ValueError('Data mode must be "discrete" to use a musical scale.')
+        if self.scale and 'pitch' not in self.parameters:
+            raise ValueError('"pitch" must be a parameter to use a musical scale.')
+
+        if 'pitch' in self.parameters:
+
+            min, max = self.parameters['pitch']
+            key = 'pitch' if self.scale else 'pitch_shift'
+            valid_min, valid_max = param_lim_dict[key]
+            if min < valid_min or max > valid_max:
+                raise ValueError(f'Parameter limits for "{key}" must be between those stated in the schema.')
 
         return self
 
