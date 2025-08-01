@@ -1,5 +1,5 @@
 # preset name
-name: "windy"
+name: "Windy"
 
 description: >-
   Use a low-pass filtered white noise oscillator. Mapping the

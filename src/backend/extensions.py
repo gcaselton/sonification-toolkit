@@ -45,17 +45,13 @@ def sonify(data_filepath, style_filepath, sonify_type, length=15, system='stereo
       # Set up Sonification elements
       score, sources, generator = setup_strauss(data_filepath, validated_style, sonify_type, length)
 
-      print('Here')
-
       # Render sonification
       sonification = Sonification(score, sources, generator, system)
 
-      print('2')
       sonification.render()
 
-      print('3')
-
       return sonification
+
 
 
 def quick_sonify(x_data, y_data, sound='default', y_params=['cutoff'], chordal=True, length=15, system='stereo'):
@@ -84,7 +80,7 @@ def find_sound(sound_name):
 
     # Search for any file starting with 'sound_name'
     synth_matches = list(SYNTHS_DIR.glob(f"{sound_name}.*"))
-    samples_matches = list(SAMPLES_DIR.glob(f"{sound_name}.*"))
+    samples_matches = list(SAMPLES_DIR.glob(f"{sound_name}*"))
 
     if synth_matches and samples_matches:
           raise ValueError(f'The name "{sound_name}" is present in both /synths and /samples directories.')
@@ -138,7 +134,7 @@ def setup_strauss(data_filepath, style: BaseStyle, sonify_type, length):
             notes = [[str(note) for note in notes]]
       else:
             # NOTE to do: this returns a Key error when using Twinkle style
-            notes = [['C3']]
+            notes = [['A3']]
       
       score = Score(notes,length)
 

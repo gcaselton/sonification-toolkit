@@ -5,6 +5,7 @@ from extensions import sonify
 from pathlib import Path
 from paths import TMP_DIR, STYLE_FILES_DIR, SUGGESTED_DATA_DIR
 from strauss.sources import param_lim_dict
+from style_schemas import sound_names
 import logging
 
 import lightkurve as lk
@@ -201,6 +202,10 @@ async def get_styles():
         styles.append(style)
 
     return styles
+
+@router.get('/sound_names/')
+async def get_sound_names():
+    return sound_names()
 
 
 
