@@ -21,6 +21,8 @@ export default function Sound() {
 
     const navigate = useNavigate();
 
+    type Option = { label: string; value: string };
+
     // State to manage the dialog open/close
     const [open, setOpen] = useState(false);
 
@@ -43,8 +45,24 @@ export default function Sound() {
             });
     }, []);
 
+    useEffect(() => {
+        fetch("http://localhost:8000/sound_names/")
+            .then((res) => res.json())
+            .then((data: string[]) => {
+                const items = data.map((name) => ({
+                    label: name,
+                    value: name,
+                }));
+                setSoundOptions(createListCollection<Option>({ items }));
+            })
+            .catch((err) => {
+                console.error("Failed to fetch sound names:", err);
+            });
+    }, []);
+
+
     // Sound parameters for sonification
-    const [sound, setSound] = useState('default_synth');
+    const [sound, setSound] = useState('Synth');
     const [filterCutoff, setFilterCutoff] = useState<boolean | 'indeterminate'>(false);
     const [pitch, setPitch] = useState(false);
     const [volume, setVolume] = useState(false);
@@ -53,12 +71,8 @@ export default function Sound() {
     const [rootNote, setRootNote] = useState('C');
     const [scale, setScale] = useState('None');
     const [quality, setQuality] = useState('maj');
-    const soundOptions = createListCollection({
-        items: [
-            { label: "default_synth", value: "default_synth" },
-            { label: "windy", value: "windy" },
-        ],
-    });
+    const [soundOptions, setSoundOptions] = useState(createListCollection<Option>({ items: [] }));
+
     const rootNoteOptions = createListCollection({
         items: [
             //C, C#/Db, D, D#/Eb, E, F, F#/Gb, G, G#/Ab, A, A#/Bb, B

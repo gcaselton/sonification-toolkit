@@ -2,7 +2,7 @@ import lightkurve as lk
 import matplotlib.pyplot as plt
 import numpy as np
 
-from backend.extensions import quick_sonify
+from extensions import quick_sonify
 
 def filter_by_author(search_result):
 

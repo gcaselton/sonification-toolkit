@@ -15,8 +15,11 @@ import {
 
 export default function Sonify() {
 
-  const [length, setLength] = useState(10);
-  const [audioSystem, setAudioSystem] = useState("stereo");
+  const [length, setLength] = useState(15);
+  const [audioSystem, setAudioSystem] = useState<{ label: string; value: string }>({
+    label: "Stereo",
+    value: "stereo",
+  });
   const [audioFilepath, setAudioFilepath] = useState("assets/sample-15s.mp3");
   const location = useLocation();
   const settingsFilepath = location.state.filepath;
@@ -40,15 +43,12 @@ export default function Sonify() {
 
   const requestSonification = async () => {
     const url_sonification = "http://localhost:8000/sonify-lightcurve";
-    //data_filepath: str
-    //style_filepath: str
-    //duration: int
-    //system: str
+  
     const data = {
       "data_filepath": dataFilepath,
       "style_filepath": settingsFilepath,
       "duration": length,
-      "system": audioSystem
+      "system": audioSystem.value
     };
     const config = {
       method: 'POST',
@@ -106,7 +106,7 @@ export default function Sonify() {
                 onChange={(e) => setLength(Number(e.target.value))}
               />
             </Field.Root>
-            <Select.Root collection={audioSystemOptions} size="sm" width="320px" onChange={handleAudioSystemChange}>
+            <Select.Root collection={audioSystemOptions} size="sm" width="320px" value={audioSystem} onValueChange={(details) => {setAudioSystem(details);}}>
                 <Select.HiddenSelect />
                 <Select.Label>Audio System</Select.Label>
                 <Select.Control>
