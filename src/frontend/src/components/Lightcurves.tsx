@@ -2,6 +2,7 @@ import React, { useEffect, useState, createContext, ChangeEvent } from "react";
 import { useNavigate } from 'react-router-dom';
 import { FaEye } from "react-icons/fa";
 import { HiSpeakerWave } from "react-icons/hi2";
+import LoadingMessage from './LoadingMessage';
 import {
   Box,
   Button,
@@ -56,6 +57,7 @@ export default function Lightcurves() {
   const [variants, setVariants] = useState<Variant[]>([]);
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [loading, setLoading] = useState(false);
+  
   useEffect(() => {
         fetch("http://localhost:8000/suggested-stars/")
             .then((res) => res.json())
@@ -230,13 +232,9 @@ export default function Lightcurves() {
           <Text color="red.500">{errorMessage}</Text>
         </VStack>
       </form>
-      {loading && (
-        <Box textAlign="center" mt={4}>
-          <Spinner size="xl" color="blue.500" />
-          <Text mt={2}>Searching the Universe for {selectedStar}...</Text>
-        </Box>
-      )}
-
+      {loading &&
+        <LoadingMessage msg={`Searching the Universe for ${selectedStar}`} />
+      }
       <br />
       <h2>Suggested</h2>
       <br />

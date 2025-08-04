@@ -2,7 +2,7 @@ name: "Musical"
 
 description: This style maps the flux of a light curve to pitches in a musical scale.
 
-sound: "default_synth"
+sound: "Synth"
 
 parameters:
   pitch: [0, 1]

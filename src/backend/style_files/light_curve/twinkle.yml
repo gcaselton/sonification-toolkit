@@ -2,7 +2,7 @@ name: 'Twinkle'
 
 description: 'Twinkle sound + cutoff filter.'
 
-sound: 'twinkle'
+sound: 'Twinkle'
 
 parameters:
   cutoff: [0.3, 1]
