@@ -3,7 +3,7 @@ name: "Sci-Fi"
 description: Default style for sonifying light curves. It combines the default
   STRAUSS synth sound with a cutoff filter, and chooses a random chord to play.
 
-sound: "default_synth"
+sound: "Synth"
 
 parameters:
   cutoff: [0, 1]

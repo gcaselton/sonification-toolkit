@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useLocation } from 'react-router-dom';
 // import ReactAudioPlayer from 'react-audio-player';
 // If you want to use a simple audio player, use the HTML <audio> element below.
-
+import LoadingMessage from "./LoadingMessage";
 import {
   Box,
   Button,
@@ -10,20 +10,18 @@ import {
   Field,
   Input,
   VStack,
-  Select,
+  Select
 } from "@chakra-ui/react";
 
 export default function Sonify() {
 
   const [length, setLength] = useState(15);
-  const [audioSystem, setAudioSystem] = useState<{ label: string; value: string }>({
-    label: "Stereo",
-    value: "stereo",
-  });
-  const [audioFilepath, setAudioFilepath] = useState("assets/sample-15s.mp3");
+  const [audioSystem, setAudioSystem] = useState<string[]>(["stereo"])
+  const [audioFilepath, setAudioFilepath] = useState("");
   const location = useLocation();
   const settingsFilepath = location.state.filepath;
   const dataFilepath = location.state.dataFilepath;
+  const [soniReady, setSoniReady] = useState(false)
   console.log("Filepath of Selected Lightcurve:", dataFilepath);
   console.log("Settings filepath:", settingsFilepath);
 
@@ -36,10 +34,10 @@ export default function Sonify() {
     ],
   });
 
-  const handleAudioSystemChange = (value: string) => {
-    console.log("Selected Audio System:", value);
-    setAudioSystem(value);
-  };
+  // const handleAudioSystemChange = (value: string) => {
+  //   console.log("Selected Audio System:", value);
+  //   setAudioSystem(value);
+  // };
 
   const requestSonification = async () => {
     const url_sonification = "http://localhost:8000/sonify-lightcurve";
@@ -48,7 +46,7 @@ export default function Sonify() {
       "data_filepath": dataFilepath,
       "style_filepath": settingsFilepath,
       "duration": length,
-      "system": audioSystem.value
+      "system": audioSystem[0]
     };
     const config = {
       method: 'POST',
@@ -73,27 +71,25 @@ export default function Sonify() {
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    // Log the length and audio system for debugging
+    setSoniReady(false)
     console.log("Sonification Length:", length);
     console.log("Audio System:", audioSystem);
     requestSonification().then((filename) => {
       if (filename) {
         console.log("Sonification file created:", filename);
-        // You can handle the sonification file here, e.g., download it or play it
         setAudioFilepath(filename);
+        setSoniReady(true)
       } else {
         console.error("No sonification file returned.");
       }
     });
-
-
   };
 
   return (
     <Box>
       <h1>Sonify</h1>
       <br />
-      <h4>Set the length of the sonification and specify the audio system you intend to play it on</h4>
+      <h4>Set the length of the sonification and specify the audio system you intend to play it on.</h4>
       <br />
       <form onSubmit={handleSubmit}>
           <VStack spacing={4}>
@@ -106,12 +102,12 @@ export default function Sonify() {
                 onChange={(e) => setLength(Number(e.target.value))}
               />
             </Field.Root>
-            <Select.Root collection={audioSystemOptions} size="sm" width="320px" value={audioSystem} onValueChange={(details) => {setAudioSystem(details);}}>
+            <Select.Root collection={audioSystemOptions} size="sm" width="320px" value={audioSystem} onValueChange={(e) => setAudioSystem(e.value)} variant='outline'>
                 <Select.HiddenSelect />
                 <Select.Label>Audio System</Select.Label>
                 <Select.Control>
                     <Select.Trigger>
-                    <Select.ValueText placeholder={audioSystem} />
+                      <Select.ValueText placeholder="Select audio system" />
                     </Select.Trigger>
                     <Select.IndicatorGroup>
                     <Select.Indicator />
@@ -119,10 +115,10 @@ export default function Sonify() {
                 </Select.Control>
                     <Select.Content>
                         {audioSystemOptions.items.map((option) => (
-                        <Select.Item item={option} key={option.value}>
-                            {option.label}
-                            <Select.ItemIndicator />
-                        </Select.Item>
+                          <Select.Item item={option} key={option.value}>
+                              {option.label}
+                              <Select.ItemIndicator />
+                          </Select.Item>
                         ))}
                     </Select.Content>
             </Select.Root>
@@ -131,15 +127,16 @@ export default function Sonify() {
             </Button>
           </VStack>
       </form>
-      <audio
-        src={`http://localhost:8000/audio/${audioFilepath}`} // Replace with the actual audio file URL
-        //autoPlay
-        controls
-        style={{ width: "100%" }}
-      />
-      <Button type="submit" colorScheme="blue" width="320px">
-        Download Sonification
-      </Button>
+      {soniReady && (
+        <Box mt={4} animation="fade-in" animationDuration="0.3s">
+          <audio
+            src={`http://localhost:8000/audio/${audioFilepath}`}
+            controls
+            style={{ width: "100%" }}
+          />
+        </Box>
+      )}
+      
     </Box>
   );
 }
