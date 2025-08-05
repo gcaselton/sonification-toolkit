@@ -3,8 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import { FaEye } from "react-icons/fa";
 import { HiSpeakerWave } from "react-icons/hi2";
 import LoadingMessage from './LoadingMessage';
+import { LuX } from "react-icons/lu";
+
 import {
   Box,
+  Alert,
   Button,
   Card,
   LinkOverlay,
@@ -13,12 +16,15 @@ import {
   Input,
   Dialog,
   Stack,
-  Spinner,
+  Heading,
   VStack,
   Table,
   Text,
   IconButton,
+  chakra,
 } from "@chakra-ui/react";
+
+import { CloseIcon } from "@chakra-ui/icons";
 
 interface Lightcurve {
   id: string;
@@ -36,16 +42,10 @@ interface Variant {
   filepath: string;
 }
 
-//const variants = ["Pleonie", "Merope", "Beta Persei", "Sirius"] as const;
-
-
-//var selected_star = "HD 12345"; // This can be dynamic based on user selection
-
 const LightcurvesContext = createContext({
   lightcurves: [], fetchLightcurves: () => {}
 })
 
-//const { openSidebar, openModal } = useAppContext();
 
 export default function Lightcurves() {
   const navigate = useNavigate();
@@ -57,6 +57,8 @@ export default function Lightcurves() {
   const [variants, setVariants] = useState<Variant[]>([]);
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [loading, setLoading] = useState(false);
+  const [searched, setSearched] = useState(false)
+  const [loadingPlot, setLoadingPlot] = useState(true)
   
   useEffect(() => {
         fetch("http://localhost:8000/suggested-stars/")
@@ -72,7 +74,13 @@ export default function Lightcurves() {
 
   const searchLightcurves = async () => {
 
+    if(!selectedStar.trim()) {
+      setErrorMessage("Please enter a star name before searching.")
+      return;
+    }
+
     setLoading(true);
+    setErrorMessage("");
 
     const url_search = "http://localhost:8000/search-lightcurves"
     const data = {
@@ -170,6 +178,7 @@ export default function Lightcurves() {
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    setSearched(true);
     searchLightcurves();
   };
 
@@ -188,20 +197,24 @@ export default function Lightcurves() {
     });
   };
 
-  const handleClickPlot = (item: Lightcurve) => {
-    // Handle the plot logic here
+  const handleClickPlot = async (item: Lightcurve) => {
+  
     console.log("Plot button clicked for star:", selectedStar);
     console.log("Data URI:", item.dataURI);
-    plotLightcurve(item.dataURI).then((image) => {
+    setLoadingPlot(true);
+    try {
+      setImage("");
+      const image = await plotLightcurve(item.dataURI);
+
       if (image) {
-        console.log("Lightcurve plotted, image:", image);
-        // You can display the image in a modal or a new page
         setImage("data:image/png;base64," + image);
         setTitle(`Lightcurve Graph for ${item.period}, ${item.pipeline}, ${item.year}`);
-        // Open the dialog/modal to show the image
         setOpen(true);
+        setLoadingPlot(false);
       }
-    });
+    } catch (err) {
+      console.error("Error plotting light curve:", err)
+    }
   };
 
   const handleClickStar = (variant) => {
@@ -212,94 +225,124 @@ export default function Lightcurves() {
 
   return (
     <Box width='100%' mx='auto'>
-      <h1>Light Curves</h1>
+      <Heading size="4xl">Light Curves</Heading>
       <br />
-      <h4>Search for a specific star or choose from the suggestions below.</h4>
+      <Text>Search for a specific star or choose from the suggestions below.</Text>
       <br />
       <br />
       <form onSubmit={handleSubmit}>
-        <VStack spacing={4}>
-          <Input
-            placeholder="Search for a star"
-            type="text"
-            name="star_name"
-            defaultValue={selectedStar}
-            onChange={(e) => setSelectedStar(e.target.value)}
-          />
-          <Button type="submit" colorScheme="blue" width="100%">
-            Submit
-          </Button>
-          <Text color="red.500">{errorMessage}</Text>
-        </VStack>
+        <Box display="flex" justifyContent="center">
+          <VStack gap={4} width="50%">
+            <Input
+              placeholder="Search for a star by name, KIC or EPIC identifier"
+              type="text"
+              name="star_name"
+              value={selectedStar}
+              onChange={ (e) => {
+                const value = e.target.value;
+                setSelectedStar(value);
+                if (value.trim() === "") {
+                  setSearched(false); 
+                  setLightcurves([]);
+                }
+              }}
+            />
+            <Button type="submit" colorScheme="blue" width="100%">
+              Search
+            </Button>
+            {errorMessage && (
+              <Alert.Root status='error' animation="fade-in 300ms ease-out">
+                <Alert.Indicator />
+                <Alert.Content>
+                  <Alert.Title>{errorMessage}</Alert.Title>
+                </Alert.Content>
+              </Alert.Root>
+            )}
+          </VStack>
+        </Box>
       </form>
-      {loading &&
-        <LoadingMessage msg={`Searching the Universe for ${selectedStar}`} />
-      }
+      {loading && <LoadingMessage msg={`Searching the Universe for ${selectedStar}...`} />}
       <br />
-      <h2>Suggested</h2>
-      <br />
-      <Stack gap="4" direction="row" wrap="wrap">
-        {variants.map((variant) => (
-          <Card.Root width="200px" key={variant.name}>
-            <LinkOverlay as={Link} onClick={() => {handleClickStar(variant)}}>
-              <img src={`/assets/${variant.name}.jpg`} alt={variant.name} style={{ width: "100%", borderRadius: "8px" }} />
-            </LinkOverlay>
-            <Card.Body gap="2">
-              <Card.Title mb="2">{variant.name}</Card.Title>
-              <Card.Description>{variant.description}</Card.Description>
-            </Card.Body>
-          </Card.Root>
-        ))}
-      </Stack>
-      <br />
-      <h2>Search results for {selectedStar}:</h2>
-      <br />
-      <Table.Root size="sm">
-        <Table.Header>
-          <Table.Row>
-            <Table.ColumnHeader>Mission</Table.ColumnHeader>
-            <Table.ColumnHeader>Exposure</Table.ColumnHeader>
-            <Table.ColumnHeader>Pipeline</Table.ColumnHeader>
-            <Table.ColumnHeader>Year</Table.ColumnHeader>
-            <Table.ColumnHeader>Period</Table.ColumnHeader>
-            <Table.ColumnHeader>Graph</Table.ColumnHeader>
-            <Table.ColumnHeader>Sonify</Table.ColumnHeader>
-          </Table.Row>
-        </Table.Header>
-        <Table.Body>
-          {lightcurves.map((item: Lightcurve) => (
-            <Table.Row key={item.id}>
-              <Table.Cell>{item.mission}</Table.Cell>
-              <Table.Cell>{item.exposure}</Table.Cell>
-              <Table.Cell>{item.pipeline}</Table.Cell>
-              <Table.Cell>{item.year}</Table.Cell>
-              <Table.Cell>{item.period}</Table.Cell>
-              <Table.Cell>
-                <Dialog.Root lazyMount open={open} onOpenChange={(details) => setOpen(details.open)}>
-                  <Dialog.Trigger asChild>
-                    <IconButton aria-label="eye" icon={<FaEye />} colorScheme="blue" onClick={() => handleClickPlot(item)} />
-                  </Dialog.Trigger>
-                  <Dialog.Backdrop />
-                  <Dialog.Positioner>
-                    <Dialog.Content>
-                      <Dialog.CloseTrigger />
-                      <Dialog.Header>
-                        <Dialog.Title />
-                        {title}
-                      </Dialog.Header>
-                      <Dialog.Body>
-                        <Image src={image} />
-                      </Dialog.Body>                    
-                      <Dialog.Footer />
-                    </Dialog.Content>
-                  </Dialog.Positioner>
-                </Dialog.Root>
-              </Table.Cell>
-              <Table.Cell><IconButton aria-label="speaker" icon={<HiSpeakerWave />} colorScheme="blue" onClick={() => handleClickSonify(item.dataURI)} /></Table.Cell>
+      {!searched && (
+        <Box animation="fade-in 300ms ease-out">
+          <Heading size="2xl">Suggested</Heading>
+          <br />
+          <br />
+          <Stack gap="4" direction="row" wrap="wrap">
+            {variants.map((variant) => (
+              <Card.Root width="200px" key={variant.name}>
+                <LinkOverlay as={Link} onClick={() => {handleClickStar(variant)}}>
+                  <img src={`/assets/${variant.name}.jpg`} alt={variant.name} style={{ width: "100%", borderRadius: "8px" }} />
+                </LinkOverlay>
+                <Card.Body gap="2">
+                  <Card.Title mb="2">{variant.name}</Card.Title>
+                  <Card.Description>{variant.description}</Card.Description>
+                </Card.Body>
+              </Card.Root>
+            ))}
+          </Stack>
+          <br />
+        </Box>
+      )}
+      {lightcurves.length > 0 && (
+        <>
+        <Heading>Search results for {selectedStar}:</Heading>
+        <br />
+        <Table.Root size="sm">
+          <Table.Header>
+            <Table.Row>
+              <Table.ColumnHeader>Mission</Table.ColumnHeader>
+              <Table.ColumnHeader>Exposure</Table.ColumnHeader>
+              <Table.ColumnHeader>Pipeline</Table.ColumnHeader>
+              <Table.ColumnHeader>Year</Table.ColumnHeader>
+              <Table.ColumnHeader>Period</Table.ColumnHeader>
+              <Table.ColumnHeader>Graph</Table.ColumnHeader>
+              <Table.ColumnHeader>Sonify</Table.ColumnHeader>
             </Table.Row>
-          ))}
-        </Table.Body>
-      </Table.Root>
+          </Table.Header>
+          <Table.Body>
+            {lightcurves.map((item: Lightcurve) => (
+              <Table.Row key={item.id}>
+                <Table.Cell>{item.mission}</Table.Cell>
+                <Table.Cell>{item.exposure}</Table.Cell>
+                <Table.Cell>{item.pipeline}</Table.Cell>
+                <Table.Cell>{item.year}</Table.Cell>
+                <Table.Cell>{item.period}</Table.Cell>
+                <Table.Cell>
+                  <Dialog.Root lazyMount open={open} onOpenChange={(details) => setOpen(details.open)}>
+                    <Dialog.Trigger asChild>
+                      <IconButton aria-label="eye" icon={<FaEye />} colorScheme="blue" onClick={() => handleClickPlot(item)} />
+                    </Dialog.Trigger>
+                    <Dialog.Backdrop />
+                    <Dialog.Positioner>
+                      <Dialog.Content>
+                        <Dialog.CloseTrigger asChild>
+                          <IconButton size="sm"
+                            variant="ghost"
+                            position="absolute"
+                            top="0.5rem"
+                            right="0.5rem"
+                            aria-label="Close">
+                            <LuX />
+                          </IconButton>
+                        </Dialog.CloseTrigger>
+                        <Dialog.Header>
+                          <Dialog.Title>{title}</Dialog.Title>
+                        </Dialog.Header>
+                        <Dialog.Body>
+                          {loadingPlot ? (<LoadingMessage msg=""/>) : (<Image src={image} />)}
+                        </Dialog.Body>                    
+                      </Dialog.Content>
+                    </Dialog.Positioner>
+                  </Dialog.Root>
+                </Table.Cell>
+                <Table.Cell><IconButton aria-label="speaker" icon={<HiSpeakerWave />} colorScheme="blue" onClick={() => handleClickSonify(item.dataURI)} /></Table.Cell>
+              </Table.Row>
+            ))}
+          </Table.Body>
+        </Table.Root>
+        </>
+      )}
     </Box>
   )
 }
