@@ -9,6 +9,7 @@ import {
   Collapsible,
   createListCollection,
   Dialog,
+  Heading,
   Link,
   LinkBox,
   LinkOverlay,
@@ -293,18 +294,15 @@ export default function Sound() {
 
     return (
         <Box>
-            <h1>Sound</h1>
+            <Heading size="4xl">Sound</Heading>
             <br />
-
-            <Dialog.Root lazyMount open={open} onOpenChange={(details) => setOpen(details.open)}>
-                <Dialog.Trigger />
+            <Dialog.Root lazyMount open={open} placement='center' onOpenChange={(details) => setOpen(details.open)}>
                 <Dialog.Backdrop />
                 <Dialog.Positioner>
                 <Dialog.Content>
                     <Dialog.CloseTrigger />
                     <Dialog.Header>
-                    <Dialog.Title />
-                    Custom Style
+                        <Dialog.Title>Custom Style</Dialog.Title>
                     </Dialog.Header>
                     <Dialog.Body>
                         <input type="file" ref={inputRef} style={{ display: 'none' }} onChange={handleFileChange} accept="*.yaml,*.yml" />
@@ -411,7 +409,7 @@ export default function Sound() {
                                     </Select.Root>}
                                     {chordMode && <Select.Root collection={qualityOptions} size="sm" width="320px" onChange={handleSelectQuality}>
                                         <Select.HiddenSelect />
-                                        <Select.Label>Quality</Select.Label>
+                                        <Select.Label>Chord</Select.Label>
                                         <Select.Control>
                                             <Select.Trigger>
                                             <Select.ValueText placeholder={quality} />
@@ -431,13 +429,14 @@ export default function Sound() {
                                     </Select.Root>}
                             </Collapsible.Content>
                         </Collapsible.Root>
-                        
-                        <Button onClick={() => handleSubmit()} colorScheme="blue" width="100%">
-                            Submit
-                        </Button>
                     </form>
                     </Dialog.Body>
-                    <Dialog.Footer />
+                    <Dialog.Footer display="flex" justifyContent="center">
+                        <Dialog.CloseTrigger asChild>
+                            <Button variant="outline">Cancel</Button>
+                        </Dialog.CloseTrigger>
+                        <Button onClick={() => handleSubmit()}>Submit</Button>
+                    </Dialog.Footer>
                 </Dialog.Content>
                 </Dialog.Positioner>
                 </Dialog.Root>

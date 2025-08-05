@@ -8,7 +8,9 @@ import {
   Button,
   createListCollection,
   Field,
+  Heading,
   Input,
+  Text,
   VStack,
   Select
 } from "@chakra-ui/react";
@@ -22,6 +24,7 @@ export default function Sonify() {
   const settingsFilepath = location.state.filepath;
   const dataFilepath = location.state.dataFilepath;
   const [soniReady, setSoniReady] = useState(false)
+  const [loading, setLoading] = useState(false)
   console.log("Filepath of Selected Lightcurve:", dataFilepath);
   console.log("Settings filepath:", settingsFilepath);
 
@@ -72,9 +75,13 @@ export default function Sonify() {
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setSoniReady(false)
+    setLoading(true)
+
     console.log("Sonification Length:", length);
     console.log("Audio System:", audioSystem);
+
     requestSonification().then((filename) => {
+      setLoading(false)
       if (filename) {
         console.log("Sonification file created:", filename);
         setAudioFilepath(filename);
@@ -87,9 +94,9 @@ export default function Sonify() {
 
   return (
     <Box>
-      <h1>Sonify</h1>
+      <Heading size="4xl">Sonify</Heading>
       <br />
-      <h4>Set the length of the sonification and specify the audio system you intend to play it on.</h4>
+      <Text>Set the length of the sonification and specify the audio system you intend to play it on.</Text>
       <br />
       <form onSubmit={handleSubmit}>
           <VStack spacing={4}>
@@ -127,7 +134,8 @@ export default function Sonify() {
             </Button>
           </VStack>
       </form>
-      {soniReady && (
+      {loading && <LoadingMessage msg="Generating Sonification..."/>}
+      {!loading && soniReady && (
         <Box mt={4} animation="fade-in" animationDuration="0.3s">
           <audio
             src={`http://localhost:8000/audio/${audioFilepath}`}

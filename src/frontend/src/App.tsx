@@ -12,7 +12,7 @@ function App() {
 
   return (
     <ChakraProvider value={defaultSystem}>
-      <Flex direction="column" align="center" justify="flex-start" minH="100vh" p={6}>
+      <Flex direction="column" align="center" justify="flex-start" minH="100vh" p="5rem">
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<Lightcurves />} />
