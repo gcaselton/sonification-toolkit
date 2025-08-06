@@ -102,9 +102,27 @@ def setup_strauss(data_filepath, style: BaseStyle, sonify_type, length):
             path_stem = str(path.with_suffix(""))
             generator.load_preset(path_stem)
       else:
-            generator = Sampler(str(path))
-            preset = 'staccato' if style.scale else 'sustain'
-            generator.load_preset(preset)
+            path = str(path)
+
+            if path.endswith('.sf2'):
+                  generator = Sampler(path, sf_preset=19)
+                  generator.modify_preset(
+                        {'note_length':0.03,
+                         'volume_envelope': {'use':'on',
+                                            'A':0.01,
+                                            'D':0.0,
+                                            'S':1.,
+                                            'R':0.07}}
+                  )
+            else:
+                  # Put looping info in here 
+                  generator = Sampler(path)
+            
+
+            if style.scale:
+                  generator.load_preset('staccato')
+                  generator.modify_preset()
+            
       
       # generator = Synthesizer() if folder == 'synths' else Sampler()
       # path_stem = str(path.with_suffix(""))
@@ -130,10 +148,9 @@ def setup_strauss(data_filepath, style: BaseStyle, sonify_type, length):
       elif style.chord_mode == 'off' and style.scale:
 
             root, quality = style.scale.split(' ', 1)
-            notes = parse_scale(root, quality, 2) # Specify 2 octaves as default
+            notes = parse_scale(root, quality, 3) # 3 octave range as default, could give users the option?
             notes = [[str(note) for note in notes]]
       else:
-            # NOTE to do: this returns a Key error when using Twinkle style
             notes = [['A3']]
       
       score = Score(notes,length)

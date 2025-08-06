@@ -336,7 +336,7 @@ export default function Lightcurves() {
                     </Dialog.Positioner>
                   </Dialog.Root>
                 </Table.Cell>
-                <Table.Cell><IconButton aria-label="speaker" icon={<HiSpeakerWave />} colorScheme="blue" onClick={() => handleClickSonify(item.dataURI)} /></Table.Cell>
+                <Table.Cell><IconButton aria-label="Sonify" icon={<HiSpeakerWave />} colorScheme="blue" onClick={() => handleClickSonify(item.dataURI)} /></Table.Cell>
               </Table.Row>
             ))}
           </Table.Body>
