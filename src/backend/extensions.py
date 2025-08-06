@@ -103,25 +103,14 @@ def setup_strauss(data_filepath, style: BaseStyle, sonify_type, length):
             generator.load_preset(path_stem)
       else:
             path = str(path)
-
-            if path.endswith('.sf2'):
-                  generator = Sampler(path, sf_preset=19)
-                  generator.modify_preset(
-                        {'note_length':0.03,
-                         'volume_envelope': {'use':'on',
-                                            'A':0.01,
-                                            'D':0.0,
-                                            'S':1.,
-                                            'R':0.07}}
-                  )
-            else:
-                  # Put looping info in here 
-                  generator = Sampler(path)
+            generator = Sampler(path, sf_preset=19) if path.endswith(".sf2") else Sampler(path)
             
-
             if style.scale:
                   generator.load_preset('staccato')
-                  generator.modify_preset()
+                  generator.modify_preset({'volume_envelope': {'use':'on', 'R':0.2}})
+            else:
+                  generator.load_preset('sustain')
+                  generator.modify_preset({'looping': 'forward', 'loop_start': 0., 'loop_end': 5.})
             
       
       # generator = Synthesizer() if folder == 'synths' else Sampler()
