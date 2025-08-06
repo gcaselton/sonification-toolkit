@@ -2,7 +2,7 @@ name: "Windy"
 
 description: This style combines a white noise generator with a cutoff filter, creating a 'windy' sound.
 
-sound: "Windy"
+sound: "White Noise"
 
 parameters:
   cutoff: [0, 1]

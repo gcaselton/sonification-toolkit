@@ -118,7 +118,7 @@ class BaseStyle(BaseModel):
 def sound_names():
 
       synths = [f.stem for f in SYNTHS_DIR.iterdir() if f.is_file()]
-      samples = [f.stem for f in SAMPLES_DIR.iterdir() if f.is_dir()]
+      samples = [f.stem for f in SAMPLES_DIR.iterdir()]
 
       all_sounds = synths + samples
       
