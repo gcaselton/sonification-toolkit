@@ -99,7 +99,7 @@ export default function Sonify() {
       <Text>Set the length of the sonification and specify the audio system you intend to play it on.</Text>
       <br />
       <form onSubmit={handleSubmit}>
-          <VStack spacing={4}>
+          <VStack gap="5">
             <Field.Root width="320px">
               <Field.Label>Duration (seconds)</Field.Label>
               <Input
@@ -129,7 +129,7 @@ export default function Sonify() {
                         ))}
                     </Select.Content>
             </Select.Root>
-            <Button type="submit" colorScheme="blue" width="320px">
+            <Button type="submit" colorPalette="teal" width="320px">
               Generate
             </Button>
           </VStack>

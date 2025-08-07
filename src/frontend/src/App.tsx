@@ -4,7 +4,7 @@ import ReactDOM from "react-dom/client";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Header from "./components/Header";
 import Lightcurves from './components/Lightcurves';
-import Sound from './components/Sound';
+import Style from './components/Style';
 import Sidebar from './components/Sidebar';
 import Sonify from './components/Sonify';
 
@@ -16,7 +16,7 @@ function App() {
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<Lightcurves />} />
-            <Route path="/sound" element={<Sound />} />
+            <Route path="/style" element={<Style />} />
             <Route path="/sonify" element={<Sonify />} />
           </Routes>
         </BrowserRouter>

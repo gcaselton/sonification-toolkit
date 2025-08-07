@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { FaEye } from "react-icons/fa";
 import { HiSpeakerWave } from "react-icons/hi2";
 import LoadingMessage from './LoadingMessage';
-import { LuX } from "react-icons/lu";
+import { LuX, LuChartSpline, LuAudioLines } from "react-icons/lu";
 
 import {
   Box,
@@ -59,6 +59,7 @@ export default function Lightcurves() {
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false)
   const [loadingPlot, setLoadingPlot] = useState(true)
+  const [searchTerm, setSearchTerm] = useState("")
   
   useEffect(() => {
         fetch("http://localhost:8000/suggested-stars/")
@@ -178,6 +179,7 @@ export default function Lightcurves() {
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    setSearchTerm(selectedStar)
     setSearched(true);
     searchLightcurves();
   };
@@ -192,7 +194,7 @@ export default function Lightcurves() {
       if (filepath) {
         console.log("Lightcurve selected, filepath:", filepath);
         // Navigate to the sound page with the filepath
-        navigate('/sound', { state: filepath });
+        navigate('/style', { state: filepath });
       }
     });
   };
@@ -220,14 +222,14 @@ export default function Lightcurves() {
   const handleClickStar = (variant) => {
     console.log("Star clicked:", variant.name);
     const filepath = variant.filepath;
-    navigate('/sound', { state: filepath });
+    navigate('/style', { state: filepath });
   };
 
   return (
-    <Box width='100%' mx='auto'>
+    <Box width='80%' mx='auto'>
       <Heading size="4xl">Light Curves</Heading>
       <br />
-      <Text>Search for a specific star or choose from the suggestions below.</Text>
+      <Text textStyle="lg">Search for a specific star or choose from the suggestions below.</Text>
       <br />
       <br />
       <form onSubmit={handleSubmit}>
@@ -247,7 +249,7 @@ export default function Lightcurves() {
                 }
               }}
             />
-            <Button type="submit" colorScheme="blue" width="100%">
+            <Button type="submit" colorPalette="teal" width="100%">
               Search
             </Button>
             {errorMessage && (
@@ -261,7 +263,7 @@ export default function Lightcurves() {
           </VStack>
         </Box>
       </form>
-      {loading && <LoadingMessage msg={`Searching the Universe for ${selectedStar}...`} />}
+      {loading && <LoadingMessage msg={`Searching the Universe for ${searchTerm}...`} icon='pulsar'/>}
       <br />
       {!searched && (
         <Box animation="fade-in 300ms ease-out">
@@ -286,7 +288,7 @@ export default function Lightcurves() {
       )}
       {lightcurves.length > 0 && (
         <>
-        <Heading>Search results for {selectedStar}:</Heading>
+        <Heading>Search results for {searchTerm}:</Heading>
         <br />
         <Table.Root size="sm">
           <Table.Header>
@@ -296,8 +298,8 @@ export default function Lightcurves() {
               <Table.ColumnHeader>Pipeline</Table.ColumnHeader>
               <Table.ColumnHeader>Year</Table.ColumnHeader>
               <Table.ColumnHeader>Period</Table.ColumnHeader>
-              <Table.ColumnHeader>Graph</Table.ColumnHeader>
-              <Table.ColumnHeader>Sonify</Table.ColumnHeader>
+              <Table.ColumnHeader></Table.ColumnHeader>
+              <Table.ColumnHeader></Table.ColumnHeader>
             </Table.Row>
           </Table.Header>
           <Table.Body>
@@ -311,7 +313,9 @@ export default function Lightcurves() {
                 <Table.Cell>
                   <Dialog.Root lazyMount open={open} onOpenChange={(details) => setOpen(details.open)}>
                     <Dialog.Trigger asChild>
-                      <IconButton aria-label="eye" icon={<FaEye />} colorScheme="blue" onClick={() => handleClickPlot(item)} />
+                      <Button colorPalette="teal" onClick={() => handleClickPlot(item)}>
+                        <LuChartSpline /> View Plot
+                      </Button>
                     </Dialog.Trigger>
                     <Dialog.Backdrop />
                     <Dialog.Positioner>
@@ -330,13 +334,17 @@ export default function Lightcurves() {
                           <Dialog.Title>{title}</Dialog.Title>
                         </Dialog.Header>
                         <Dialog.Body>
-                          {loadingPlot ? (<LoadingMessage msg=""/>) : (<Image src={image} />)}
+                          {loadingPlot ? (<LoadingMessage msg="" icon="pulsar"/>) : (<Image src={image} />)}
                         </Dialog.Body>                    
                       </Dialog.Content>
                     </Dialog.Positioner>
                   </Dialog.Root>
                 </Table.Cell>
-                <Table.Cell><IconButton aria-label="Sonify" icon={<HiSpeakerWave />} colorScheme="blue" onClick={() => handleClickSonify(item.dataURI)} /></Table.Cell>
+                <Table.Cell>
+                  <Button colorPalette="teal" onClick={() => handleClickSonify(item.dataURI)}>
+                    <LuAudioLines /> Sonify
+                  </Button>
+                </Table.Cell>
               </Table.Row>
             ))}
           </Table.Body>

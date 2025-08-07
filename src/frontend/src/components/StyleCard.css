@@ -1,0 +1,106 @@
+/* components/StyleCard.css */
+
+.style-card {
+  width: 300px;
+  height: 200px;
+  border-radius: 1rem;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 1rem;
+  color: white;
+  font-weight: bold;
+  font-size: 1.2rem;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+  transition: transform 0.3s ease;
+}
+
+.style-card:hover {
+  transform: scale(1.03);
+}
+
+.style-title {
+  z-index: 2;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+}
+
+
+.gradient-aurora {
+  background: linear-gradient(-45deg, #ff9a9e, #fad0c4, #fbc2eb, #a18cd1);
+  background-size: 400% 400%;
+  animation: gradientMove 10s ease infinite;
+}
+
+.gradient-neon {
+  background: linear-gradient(-45deg, #00f2fe, #4facfe, #43e97b, #38f9d7);
+  background-size: 400% 400%;
+  animation: gradientMove 15s ease infinite;
+}
+
+.gradient-darkwave {
+  background: linear-gradient(-45deg, #2c3e50, #4ca1af, #1b1b1b, #434343);
+  background-size: 400% 400%;
+  animation: gradientMove 20s ease infinite;
+}
+
+.gradient-sunset {
+  background: linear-gradient(-45deg, #ff7e5f, #feb47b, #ff6a88, #ff99ac);
+  background-size: 400% 400%;
+  animation: gradientMove 12s ease infinite;
+}
+
+.gradient-ocean {
+  background: linear-gradient(-45deg, #00c6ff, #0072ff, #00f260, #0575e6);
+  background-size: 400% 400%;
+  animation: gradientMove 18s ease infinite;
+}
+
+.gradient-forest {
+  background: linear-gradient(-45deg, #6a9113, #141517, #2c7744, #c1dfc4);
+  background-size: 400% 400%;
+  animation: gradientMove 16s ease infinite;
+}
+
+.gradient-custom {
+  background: linear-gradient(
+    45deg,
+    #f8f9fa,
+    #f8f9fa 10px,
+    #e9ecef 10px,
+    #e9ecef 20px
+  );
+  border: 2px dashed #adb5bd;
+  animation: subtlePulse 3s ease-in-out infinite;
+  position: relative;
+}
+
+@keyframes subtlePulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.92; }
+}
+
+.gear-icon {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 3rem;
+  color: #6c757d;
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+
+@keyframes gradientMove {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
