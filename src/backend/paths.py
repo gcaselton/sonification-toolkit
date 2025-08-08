@@ -1,4 +1,5 @@
 from pathlib import Path
+import shutil
 
 BACKEND_DIR = Path(__file__).resolve().parent
 SRC_DIR = BACKEND_DIR.parent
@@ -11,3 +12,11 @@ SAMPLES_DIR = SOUND_ASSETS_DIR / "samples"
 # Temp directory for storing data files and sonifications
 TMP_DIR = BACKEND_DIR / "tmp"
 TMP_DIR.mkdir(exist_ok=True)
+
+def clear_tmp_dir():
+    """Delete all contents of the TMP_DIR on startup."""
+    for item in TMP_DIR.iterdir():
+        if item.is_dir():
+            shutil.rmtree(item)
+        else:
+            item.unlink()

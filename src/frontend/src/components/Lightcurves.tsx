@@ -219,7 +219,7 @@ export default function Lightcurves() {
     }
   };
 
-  const handleClickStar = (variant) => {
+  const handleClickStar = (variant: any) => {
     console.log("Star clicked:", variant.name);
     const filepath = variant.filepath;
     navigate('/style', { state: filepath });
