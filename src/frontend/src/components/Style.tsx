@@ -1,6 +1,8 @@
 import React, { useEffect, useState, createContext, ChangeEvent, useRef } from "react";
 import { data, useLocation, useNavigate } from 'react-router-dom';
 import StyleCard from "./StyleCard";
+import BackButton from "./BackButton";
+import PageContainer from "./PageContainer";
 
 import {
   Box,
@@ -295,175 +297,179 @@ export default function Style() {
     };
 
     return (
-        <Box>
-            <Heading size="4xl">Style</Heading>
-            <br />
-            <Text textStyle="lg">Choose from the styles below, or configure your own.</Text>
-            <br />
-            <Dialog.Root lazyMount open={open} placement='center' onOpenChange={(details) => setOpen(details.open)}>
-                <Dialog.Backdrop />
-                <Dialog.Positioner>
-                <Dialog.Content>
-                    <Dialog.CloseTrigger />
-                    <Dialog.Header>
-                        <Dialog.Title>Custom Style</Dialog.Title>
-                    </Dialog.Header>
-                    <Dialog.Body>
-                        <input type="file" ref={inputRef} style={{ display: 'none' }} onChange={handleFileChange} accept=".yml" />
-                        <Button colorPalette='teal' onClick={handleButtonClick}>Upload Custom YAML File</Button>
-                        <form>
-                        <br />
-                        <Select.Root collection={soundOptions} size="sm" width="320px" onChange={handleSelectSound}>
-                            <Select.HiddenSelect />
-                            <Select.Label>Sound</Select.Label>
-                            <Select.Control>
-                                <Select.Trigger>
-                                <Select.ValueText placeholder={sound} />
-                                </Select.Trigger>
-                                <Select.IndicatorGroup>
-                                <Select.Indicator />
-                                </Select.IndicatorGroup>
-                            </Select.Control>
-                                <Select.Content>
-                                    {soundOptions.items.map((option) => (
-                                    <Select.Item item={option} key={option.value}>
-                                        {option.label}
-                                        <Select.ItemIndicator />
-                                    </Select.Item>
-                                    ))}
-                                </Select.Content>
-                        </Select.Root>
-                        <br />
-                        <Text fontWeight='medium'>Parameters</Text>
-                        <br />
-                        <Stack gap="4" direction="row" wrap="wrap">
-                            <Checkbox.Root key={parameters[0]} checked={filterCutoff} onCheckedChange={handleChangeFilterCutoff}>
-                                <Checkbox.HiddenInput />
-                                <Checkbox.Control>
-                                    <Checkbox.Indicator />
-                                </Checkbox.Control>
-                                <Checkbox.Label>{parameters[0]}</Checkbox.Label>
-                            </Checkbox.Root>
-                            <Checkbox.Root key={parameters[1]} checked={pitch} onCheckedChange={handleChangePitch}>
-                                <Checkbox.HiddenInput />
-                                <Checkbox.Control>
-                                    <Checkbox.Indicator />
-                                </Checkbox.Control>
-                                <Checkbox.Label>{parameters[1]}</Checkbox.Label>
-                            </Checkbox.Root>
-                            <Checkbox.Root key={parameters[2]} checked={volume} onCheckedChange={handleChangeVolume}>
-                                <Checkbox.HiddenInput />
-                                <Checkbox.Control>
-                                    <Checkbox.Indicator />
-                                </Checkbox.Control>
-                                <Checkbox.Label>{parameters[2]}</Checkbox.Label>
-                            </Checkbox.Root>
-                            <Checkbox.Root key={parameters[3]} defaultChecked={leftRightPan} onCheckedChange={handleChangeLeftRightPan}>
-                                <Checkbox.HiddenInput />
-                                <Checkbox.Control>
-                                    <Checkbox.Indicator />
-                                </Checkbox.Control>
-                                <Checkbox.Label>{parameters[3]}</Checkbox.Label>
-                            </Checkbox.Root>
-                        </Stack>
-                        <br />
-                        <Collapsible.Root>
-                            <Collapsible.Trigger>
-                                <Text color='teal' fontWeight='medium'>Musical Settings</Text>
-                            </Collapsible.Trigger>
-                            <Collapsible.Content>
-                                    <Switch.Root defaultChecked={chordMode} onCheckedChange={handleChordMode}>
-                                        <Switch.HiddenInput />
-                                        <Switch.Control />
-                                        <Switch.Label>Chord Mode</Switch.Label>
-                                    </Switch.Root>
-                                    <Select.Root collection={rootNoteOptions} size="sm" width="320px" onChange={handleSelectRootNote}>
-                                        <Select.HiddenSelect />
-                                        <Select.Label>Root Note</Select.Label>
-                                        <Select.Control>
-                                            <Select.Trigger>
-                                            <Select.ValueText placeholder={rootNote} />
-                                            </Select.Trigger>
-                                            <Select.IndicatorGroup>
-                                            <Select.Indicator />
-                                            </Select.IndicatorGroup>
-                                        </Select.Control>
-                                            <Select.Content>
-                                                {rootNoteOptions.items.map((option) => (
-                                                <Select.Item item={option} key={option.value}>
-                                                    {option.label}
-                                                    <Select.ItemIndicator />
-                                                </Select.Item>
-                                                ))}
-                                            </Select.Content>
-                                    </Select.Root>
-                                    {!chordMode && <Select.Root collection={scaleOptions} size="sm" width="320px" onChange={handleSelectScale}>
-                                        <Select.HiddenSelect />
-                                        <Select.Label>Scale</Select.Label>
-                                        <Select.Control>
-                                            <Select.Trigger>
-                                            <Select.ValueText placeholder={scale} />
-                                            </Select.Trigger>
-                                            <Select.IndicatorGroup>
-                                            <Select.Indicator />
-                                            </Select.IndicatorGroup>
-                                        </Select.Control>
-                                            <Select.Content>
-                                                {scaleOptions.items.map((option) => (
-                                                <Select.Item item={option} key={option.value}>
-                                                    {option.label}
-                                                    <Select.ItemIndicator />
-                                                </Select.Item>
-                                                ))}
-                                            </Select.Content>
-                                    </Select.Root>}
-                                    {chordMode && <Select.Root collection={qualityOptions} size="sm" width="320px" onChange={handleSelectQuality}>
-                                        <Select.HiddenSelect />
-                                        <Select.Label>Chord</Select.Label>
-                                        <Select.Control>
-                                            <Select.Trigger>
-                                            <Select.ValueText placeholder={quality} />
-                                            </Select.Trigger>
-                                            <Select.IndicatorGroup>
-                                            <Select.Indicator />
-                                            </Select.IndicatorGroup>
-                                        </Select.Control>
-                                            <Select.Content>
-                                                {qualityOptions.items.map((option) => (
-                                                <Select.Item item={option} key={option.value}>
-                                                    {option.label}
-                                                    <Select.ItemIndicator />
-                                                </Select.Item>
-                                                ))}
-                                            </Select.Content>
-                                    </Select.Root>}
-                            </Collapsible.Content>
-                        </Collapsible.Root>
-                    </form>
-                    </Dialog.Body>
-                    <Dialog.Footer display="flex" justifyContent="center">
-                        <Dialog.CloseTrigger asChild>
-                            <Button colorPalette='teal' variant="outline">Cancel</Button>
-                        </Dialog.CloseTrigger>
-                        <Button colorPalette='teal' onClick={() => handleSubmit()}>Submit</Button>
-                    </Dialog.Footer>
-                </Dialog.Content>
-                </Dialog.Positioner>
-                </Dialog.Root>
+        <PageContainer>
+            <Box position='relative'>
+                <Box position='absolute' left='-75px'>
+                    <BackButton fallbackPath="/" />
+                </Box>
+                <Heading size="4xl">Style</Heading>
+                <br />
+                <Text textStyle="lg">Choose from the styles below, or configure your own.</Text>
+                <br />
+                <Dialog.Root lazyMount open={open} placement='center' onOpenChange={(details) => setOpen(details.open)}>
+                    <Dialog.Backdrop />
+                    <Dialog.Positioner>
+                    <Dialog.Content>
+                        <Dialog.CloseTrigger />
+                        <Dialog.Header>
+                            <Dialog.Title>Custom Style</Dialog.Title>
+                        </Dialog.Header>
+                        <Dialog.Body>
+                            <input type="file" ref={inputRef} style={{ display: 'none' }} onChange={handleFileChange} accept=".yml" />
+                            <Button colorPalette='teal' onClick={handleButtonClick}>Upload Custom YAML File</Button>
+                            <form>
+                            <br />
+                            <Select.Root collection={soundOptions} size="sm" width="320px" onChange={handleSelectSound}>
+                                <Select.HiddenSelect />
+                                <Select.Label>Sound</Select.Label>
+                                <Select.Control>
+                                    <Select.Trigger>
+                                    <Select.ValueText placeholder={sound} />
+                                    </Select.Trigger>
+                                    <Select.IndicatorGroup>
+                                    <Select.Indicator />
+                                    </Select.IndicatorGroup>
+                                </Select.Control>
+                                    <Select.Content>
+                                        {soundOptions.items.map((option) => (
+                                        <Select.Item item={option} key={option.value}>
+                                            {option.label}
+                                            <Select.ItemIndicator />
+                                        </Select.Item>
+                                        ))}
+                                    </Select.Content>
+                            </Select.Root>
+                            <br />
+                            <Text fontWeight='medium'>Parameters</Text>
+                            <br />
+                            <Stack gap="4" direction="row" wrap="wrap">
+                                <Checkbox.Root key={parameters[0]} checked={filterCutoff} onCheckedChange={handleChangeFilterCutoff}>
+                                    <Checkbox.HiddenInput />
+                                    <Checkbox.Control>
+                                        <Checkbox.Indicator />
+                                    </Checkbox.Control>
+                                    <Checkbox.Label>{parameters[0]}</Checkbox.Label>
+                                </Checkbox.Root>
+                                <Checkbox.Root key={parameters[1]} checked={pitch} onCheckedChange={handleChangePitch}>
+                                    <Checkbox.HiddenInput />
+                                    <Checkbox.Control>
+                                        <Checkbox.Indicator />
+                                    </Checkbox.Control>
+                                    <Checkbox.Label>{parameters[1]}</Checkbox.Label>
+                                </Checkbox.Root>
+                                <Checkbox.Root key={parameters[2]} checked={volume} onCheckedChange={handleChangeVolume}>
+                                    <Checkbox.HiddenInput />
+                                    <Checkbox.Control>
+                                        <Checkbox.Indicator />
+                                    </Checkbox.Control>
+                                    <Checkbox.Label>{parameters[2]}</Checkbox.Label>
+                                </Checkbox.Root>
+                                <Checkbox.Root key={parameters[3]} defaultChecked={leftRightPan} onCheckedChange={handleChangeLeftRightPan}>
+                                    <Checkbox.HiddenInput />
+                                    <Checkbox.Control>
+                                        <Checkbox.Indicator />
+                                    </Checkbox.Control>
+                                    <Checkbox.Label>{parameters[3]}</Checkbox.Label>
+                                </Checkbox.Root>
+                            </Stack>
+                            <br />
+                            <Collapsible.Root>
+                                <Collapsible.Trigger>
+                                    <Text color='teal' fontWeight='medium'>Musical Settings</Text>
+                                </Collapsible.Trigger>
+                                <Collapsible.Content>
+                                        <Switch.Root defaultChecked={chordMode} onCheckedChange={handleChordMode}>
+                                            <Switch.HiddenInput />
+                                            <Switch.Control />
+                                            <Switch.Label>Chord Mode</Switch.Label>
+                                        </Switch.Root>
+                                        <Select.Root collection={rootNoteOptions} size="sm" width="320px" onChange={handleSelectRootNote}>
+                                            <Select.HiddenSelect />
+                                            <Select.Label>Root Note</Select.Label>
+                                            <Select.Control>
+                                                <Select.Trigger>
+                                                <Select.ValueText placeholder={rootNote} />
+                                                </Select.Trigger>
+                                                <Select.IndicatorGroup>
+                                                <Select.Indicator />
+                                                </Select.IndicatorGroup>
+                                            </Select.Control>
+                                                <Select.Content>
+                                                    {rootNoteOptions.items.map((option) => (
+                                                    <Select.Item item={option} key={option.value}>
+                                                        {option.label}
+                                                        <Select.ItemIndicator />
+                                                    </Select.Item>
+                                                    ))}
+                                                </Select.Content>
+                                        </Select.Root>
+                                        {!chordMode && <Select.Root collection={scaleOptions} size="sm" width="320px" onChange={handleSelectScale}>
+                                            <Select.HiddenSelect />
+                                            <Select.Label>Scale</Select.Label>
+                                            <Select.Control>
+                                                <Select.Trigger>
+                                                <Select.ValueText placeholder={scale} />
+                                                </Select.Trigger>
+                                                <Select.IndicatorGroup>
+                                                <Select.Indicator />
+                                                </Select.IndicatorGroup>
+                                            </Select.Control>
+                                                <Select.Content>
+                                                    {scaleOptions.items.map((option) => (
+                                                    <Select.Item item={option} key={option.value}>
+                                                        {option.label}
+                                                        <Select.ItemIndicator />
+                                                    </Select.Item>
+                                                    ))}
+                                                </Select.Content>
+                                        </Select.Root>}
+                                        {chordMode && <Select.Root collection={qualityOptions} size="sm" width="320px" onChange={handleSelectQuality}>
+                                            <Select.HiddenSelect />
+                                            <Select.Label>Chord</Select.Label>
+                                            <Select.Control>
+                                                <Select.Trigger>
+                                                <Select.ValueText placeholder={quality} />
+                                                </Select.Trigger>
+                                                <Select.IndicatorGroup>
+                                                <Select.Indicator />
+                                                </Select.IndicatorGroup>
+                                            </Select.Control>
+                                                <Select.Content>
+                                                    {qualityOptions.items.map((option) => (
+                                                    <Select.Item item={option} key={option.value}>
+                                                        {option.label}
+                                                        <Select.ItemIndicator />
+                                                    </Select.Item>
+                                                    ))}
+                                                </Select.Content>
+                                        </Select.Root>}
+                                </Collapsible.Content>
+                            </Collapsible.Root>
+                        </form>
+                        </Dialog.Body>
+                        <Dialog.Footer display="flex" justifyContent="center">
+                            <Dialog.CloseTrigger asChild>
+                                <Button colorPalette='teal' variant="outline">Cancel</Button>
+                            </Dialog.CloseTrigger>
+                            <Button colorPalette='teal' onClick={() => handleSubmit()}>Submit</Button>
+                        </Dialog.Footer>
+                    </Dialog.Content>
+                    </Dialog.Positioner>
+                    </Dialog.Root>
 
-            <Stack gap="6" direction="row" wrap="wrap" animation="fade-in 300ms ease-out">
-                {variants.map((variant, index) => {
-                    const gradientClasses = ['gradient-aurora', 'gradient-neon', 'gradient-darkwave', 'gradient-sunset', 'gradient-ocean', 'gradient-forest'];
-                    const gradientClass = variant.name === 'Custom' ? 'gradient-custom' : gradientClasses[index % gradientClasses.length];
+                <Stack gap="6" direction="row" wrap="wrap" animation="fade-in 300ms ease-out">
+                    {variants.map((variant, index) => {
+                        const gradientClasses = ['gradient-aurora', 'gradient-neon', 'gradient-darkwave', 'gradient-sunset', 'gradient-ocean', 'gradient-forest'];
+                        const gradientClass = variant.name === 'Custom' ? 'gradient-custom' : gradientClasses[index % gradientClasses.length];
 
-                    return (
-                    <div key={variant.name} onClick={() => handleClick(variant)} style={{ cursor: 'pointer', width: 200 }}>
-                        <StyleCard title={variant.name} gradientClass={gradientClass} isCustom={variant.name === 'Custom'}/>
-                    </div>
-                    );
-                })}
-            </Stack>
-        </Box>
-
+                        return (
+                        <div key={variant.name} onClick={() => handleClick(variant)} style={{ cursor: 'pointer', width: 200 }}>
+                            <StyleCard title={variant.name} gradientClass={gradientClass} isCustom={variant.name === 'Custom'}/>
+                        </div>
+                        );
+                    })}
+                </Stack>
+            </Box>
+        </PageContainer>
     )
 }

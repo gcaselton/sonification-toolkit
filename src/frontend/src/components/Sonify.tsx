@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import { useLocation } from 'react-router-dom';
-// import ReactAudioPlayer from 'react-audio-player';
-// If you want to use a simple audio player, use the HTML <audio> element below.
 import LoadingMessage from "./LoadingMessage";
+import BackButton from "./BackButton";
+import PageContainer from "./PageContainer";
 import {
   Box,
   Button,
@@ -11,6 +11,7 @@ import {
   Heading,
   Input,
   Text,
+  Flex,
   VStack,
   Select
 } from "@chakra-ui/react";
@@ -93,58 +94,63 @@ export default function Sonify() {
   };
 
   return (
-    <Box>
-      <Heading size="4xl">Sonify</Heading>
-      <br />
-      <Text textStyle='lg'>Set the length of the sonification and specify the audio system you intend to play it on.</Text>
-      <br />
-      <form onSubmit={handleSubmit}>
-          <VStack gap="5">
-            <Field.Root width="320px">
-              <Field.Label>Duration (seconds)</Field.Label>
-              <Input
-                placeholder="Duration (seconds)"
-                type="number"
-                value={length}
-                onChange={(e) => setLength(Number(e.target.value))}
-              />
-            </Field.Root>
-            <Select.Root collection={audioSystemOptions} size="sm" width="320px" value={audioSystem} onValueChange={(e) => setAudioSystem(e.value)} variant='outline'>
-                <Select.HiddenSelect />
-                <Select.Label>Audio System</Select.Label>
-                <Select.Control>
-                    <Select.Trigger>
-                      <Select.ValueText placeholder="Select audio system" />
-                    </Select.Trigger>
-                    <Select.IndicatorGroup>
-                    <Select.Indicator />
-                    </Select.IndicatorGroup>
-                </Select.Control>
-                    <Select.Content>
-                        {audioSystemOptions.items.map((option) => (
-                          <Select.Item item={option} key={option.value}>
-                              {option.label}
-                              <Select.ItemIndicator />
-                          </Select.Item>
-                        ))}
-                    </Select.Content>
-            </Select.Root>
-            <Button type="submit" colorPalette="teal" width="320px">
-              Generate
-            </Button>
-          </VStack>
-      </form>
-      {loading && <LoadingMessage msg="Generating Sonification..."/>}
-      {!loading && soniReady && (
-        <Box mt={4} animation="fade-in" animationDuration="0.3s">
-          <audio
-            src={`http://localhost:8000/audio/${audioFilepath}`}
-            controls
-            style={{ width: "100%" }}
-          />
+    <PageContainer>
+      <Box position='relative'>
+        <Box position='absolute' left='-75px'>
+          <BackButton fallbackPath="/style" />
         </Box>
-      )}
-      
-    </Box>
+        <Heading size="4xl">Sonify</Heading>
+        <br />
+        <Text textStyle='lg'>Set the length of the sonification and specify the audio system you intend to play it on.</Text>
+        <br />
+        <form onSubmit={handleSubmit}>
+            <VStack gap="5">
+              <Field.Root width="320px">
+                <Field.Label>Duration (seconds)</Field.Label>
+                <Input
+                  placeholder="Duration (seconds)"
+                  type="number"
+                  value={length}
+                  onChange={(e) => setLength(Number(e.target.value))}
+                />
+              </Field.Root>
+              <Select.Root collection={audioSystemOptions} size="sm" width="320px" value={audioSystem} onValueChange={(e) => setAudioSystem(e.value)} variant='outline'>
+                  <Select.HiddenSelect />
+                  <Select.Label>Audio System</Select.Label>
+                  <Select.Control>
+                      <Select.Trigger>
+                        <Select.ValueText placeholder="Select audio system" />
+                      </Select.Trigger>
+                      <Select.IndicatorGroup>
+                      <Select.Indicator />
+                      </Select.IndicatorGroup>
+                  </Select.Control>
+                      <Select.Content>
+                          {audioSystemOptions.items.map((option) => (
+                            <Select.Item item={option} key={option.value}>
+                                {option.label}
+                                <Select.ItemIndicator />
+                            </Select.Item>
+                          ))}
+                      </Select.Content>
+              </Select.Root>
+              <Button type="submit" colorPalette="teal" width="320px">
+                Generate
+              </Button>
+            </VStack>
+        </form>
+        {loading && <LoadingMessage msg="Generating Sonification..."/>}
+        {!loading && soniReady && (
+          <Box mt={4} animation="fade-in" animationDuration="0.3s">
+            <audio
+              src={`http://localhost:8000/audio/${audioFilepath}`}
+              controls
+              style={{ width: "100%" }}
+            />
+          </Box>
+        )}
+        
+      </Box>
+    </PageContainer>
   );
 }
