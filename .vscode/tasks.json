@@ -21,8 +21,12 @@
     },
     {
       "label": "Start Full Stack App",
-      "dependsOn": ["Run Backend", "Run Frontend"],
-      "dependsOrder": "parallel"
+      "dependsOn": [
+        "Run Backend",
+        "Run Frontend"
+      ],
+      "dependsOrder": "parallel",
+      "problemMatcher": []
     }
   ]
 }

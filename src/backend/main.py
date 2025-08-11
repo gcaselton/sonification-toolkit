@@ -10,7 +10,7 @@ app = FastAPI()
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 frontend_path = os.path.abspath(os.path.join(BASE_DIR, "../frontend/dist"))
 
-app.mount("/", StaticFiles(directory=frontend_path, html=True), name="static")
+# app.mount("/", StaticFiles(directory=frontend_path, html=True), name="static")
 
 
 origins = [
@@ -42,6 +42,6 @@ def get_status():
     """
     return {'message': 'Hello! The server is up and running.'}
 
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="127.0.0.1", port=8000)
+# if __name__ == "__main__":
+#     import uvicorn
+#     uvicorn.run(app, host="127.0.0.1", port=8000)

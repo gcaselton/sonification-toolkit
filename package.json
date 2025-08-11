@@ -3,6 +3,8 @@
     "@chakra-ui/icons": "^2.2.4",
     "@chakra-ui/react": "^3.24.1",
     "@emotion/react": "^11.14.0",
+    "concurrently": "^9.2.0",
+    "electron": "^37.2.6",
     "ldrs": "^1.1.7"
   }
 }

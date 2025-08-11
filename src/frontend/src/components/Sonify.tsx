@@ -96,7 +96,7 @@ export default function Sonify() {
     <Box>
       <Heading size="4xl">Sonify</Heading>
       <br />
-      <Text>Set the length of the sonification and specify the audio system you intend to play it on.</Text>
+      <Text textStyle='lg'>Set the length of the sonification and specify the audio system you intend to play it on.</Text>
       <br />
       <form onSubmit={handleSubmit}>
           <VStack gap="5">
