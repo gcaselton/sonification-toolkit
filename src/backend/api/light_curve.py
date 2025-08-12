@@ -6,7 +6,9 @@ from pathlib import Path
 from paths import TMP_DIR, STYLE_FILES_DIR, SUGGESTED_DATA_DIR
 from strauss.sources import param_lim_dict
 from style_schemas import sound_names
+from config import GITHUB_USER, GITHUB_REPO
 import logging
+import httpx
 
 import lightkurve as lk
 import matplotlib.pyplot as plt
@@ -207,6 +209,23 @@ async def get_styles():
 async def get_sound_names():
     return sound_names()
 
+async def fetch_online_assets():
+    """Fetch sound asset names from the latest release on GitHub."""
+
+    url = f"https://api.github.com/repos/{GITHUB_USER}/{GITHUB_REPO}/releases"
+    async with httpx.AsyncClient() as client:
+        resp = await client.get(url)
+        resp.raise_for_status()
+        releases = resp.json()
+
+    # Filter to only pre-releases with asset files
+    online_assets = []
+    for rel in releases:
+        if rel.get("prerelease"):
+            for asset in rel.get("assets", []):
+                online_assets.append(asset["name"])
+            break  # Only take the latest pre-release
+    return online_assets
 
 
 @router.post('/sonify-lightcurve/')
