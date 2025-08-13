@@ -2,16 +2,31 @@ from fastapi import FastAPI
 from api import light_curve
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from paths import clear_tmp_dir
+from paths import clear_tmp_dir, SYNTHS_DIR, SAMPLES_DIR
+from sounds import cache_online_assets
+from contextlib import asynccontextmanager
+from config import GITHUB_USER, GITHUB_REPO
 import os
-
-app = FastAPI()
+import httpx
+import asyncio
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 frontend_path = os.path.abspath(os.path.join(BASE_DIR, "../frontend/dist"))
 
-# app.mount("/", StaticFiles(directory=frontend_path, html=True), name="static")
+@asynccontextmanager
+async def lifespan(app: FastAPI):
 
+    # # Startup logic
+    asyncio.create_task(cache_online_assets())
+
+    # Clear tmp directory on startup
+    clear_tmp_dir()
+
+    yield
+
+
+
+app = FastAPI(lifespan=lifespan)
 
 origins = [
     "http://localhost:5173",
@@ -27,11 +42,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Clear tmp directory on startup
-clear_tmp_dir()
-
 # Import API endpoints
 app.include_router(light_curve.router)
+
+# app.mount("/", StaticFiles(directory=frontend_path, html=True), name="static")
 
 @app.get("/")
 def get_status():

@@ -190,13 +190,26 @@ export default function Style() {
         }
     }
 
-    const handleSubmit  = async () => {
+    const handleSubmit = async () => {
+    try {
+        // ensure the sound is available by downloading if necessary
+        await fetch("http://localhost:8000/ensure-sound-available/", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ sound_name: sound }),
+        });
+
+        // save sound settings
         saveSoundSettings().then((filepath) => {
             console.log("Saved sound settings to:", filepath);
-            // Navigate to the Sonify page with the settings
+            // navigate
             navigate('/sonify', { state: { filepath, dataFilepath } });
         });
-    };
+    } catch (err) {
+        console.error("Error saving style settings:", err);
+    }
+};
+
 
     const handleChangeFilterCutoff = (details: { checked: boolean | "indeterminate" }) => {
         setFilterCutoff(details.checked);

@@ -13,6 +13,8 @@ from lightkurve import LightCurveFile
 import numpy as np
 import matplotlib.pyplot as plt
 import os
+from pprint import pprint
+import asyncio
 from pathlib import Path
 
 # x_axis = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
@@ -48,13 +50,13 @@ from pathlib import Path
 # y /= y.max()*1.2
 # y += 0.15
 
-s_type = 'light_curve'
+# s_type = 'light_curve'
 
-data_path = Path('src', 'backend', 'tmp', '2070bf69d1291ba08e67a3191f511107.fits')
-style_path = Path('src', 'backend','style_files', s_type, 'twinkle.yml')
+# data_path = Path('src', 'backend', 'tmp', '2070bf69d1291ba08e67a3191f511107.fits')
+# style_path = Path('src', 'backend','style_files', s_type, 'twinkle.yml')
 
-s = sonify(data_path, style_path, s_type)
-s.hear()
+# s = sonify(data_path, style_path, s_type)
+# s.hear()
 
 # generator = Synthesizer()
 # generator.modify_preset({'filter':'on'})
@@ -78,4 +80,6 @@ s.hear()
 # soni = Sonification(score, sources, generator, 'stereo')
 # soni.render()
 # soni.hear()
+
+
 

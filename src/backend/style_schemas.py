@@ -4,6 +4,7 @@ from paths import *
 from strauss.sources import param_lim_dict
 from pychord import Chord
 from musical_scales import scale as parse_scale
+from sounds import all_sound_names
 
 defaults = {
         'light_curve': {
@@ -35,7 +36,7 @@ class BaseStyle(BaseModel):
     @classmethod
     def validate_sound(cls, value: Optional[str]):
 
-        valid_sounds = sound_names()
+        valid_sounds = all_sound_names()
         
         if '.' in value:
              value = value.split('.')[0]
@@ -115,13 +116,6 @@ class BaseStyle(BaseModel):
 
         return self
 
-def sound_names():
 
-      synths = [f.stem for f in SYNTHS_DIR.iterdir() if f.is_file()]
-      samples = [f.stem for f in SAMPLES_DIR.iterdir()]
-
-      all_sounds = synths + samples
-      
-      return all_sounds
 # create child classes for different style/sonification types?
 

@@ -3,9 +3,9 @@ from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from extensions import sonify
 from pathlib import Path
-from paths import TMP_DIR, STYLE_FILES_DIR, SUGGESTED_DATA_DIR
+from paths import TMP_DIR, STYLE_FILES_DIR, SUGGESTED_DATA_DIR, SAMPLES_DIR
 from strauss.sources import param_lim_dict
-from style_schemas import sound_names
+from sounds import all_sound_names, online_sound_names, local_sound_names, asset_cache, format_name
 from config import GITHUB_USER, GITHUB_REPO
 import logging
 import httpx
@@ -19,6 +19,8 @@ import base64
 from io import BytesIO
 import hashlib
 import uuid
+import aiofiles
+import zipfile
 import json
 
 router = APIRouter()
@@ -37,6 +39,11 @@ class StarQuery(BaseModel):
 
 class DownloadRequest(BaseModel):
     data_uri: str
+
+    
+class SoundRequest(BaseModel):
+    sound_name: str
+
 
 class SonificationRequest(BaseModel):
     data_filepath: str
@@ -207,25 +214,7 @@ async def get_styles():
 
 @router.get('/sound_names/')
 async def get_sound_names():
-    return sound_names()
-
-async def fetch_online_assets():
-    """Fetch sound asset names from the latest release on GitHub."""
-
-    url = f"https://api.github.com/repos/{GITHUB_USER}/{GITHUB_REPO}/releases"
-    async with httpx.AsyncClient() as client:
-        resp = await client.get(url)
-        resp.raise_for_status()
-        releases = resp.json()
-
-    # Filter to only pre-releases with asset files
-    online_assets = []
-    for rel in releases:
-        if rel.get("prerelease"):
-            for asset in rel.get("assets", []):
-                online_assets.append(asset["name"])
-            break  # Only take the latest pre-release
-    return online_assets
+    return all_sound_names()
 
 
 @router.post('/sonify-lightcurve/')
@@ -254,8 +243,57 @@ async def get_audio(filename: str):
     filepath = TMP_DIR / filename
     return FileResponse(filepath, media_type="audio/wav")
 
+async def download_online_asset(target_name: str):
 
+    target_asset = None
+
+    for asset in asset_cache:
+        asset_name = asset.get('name', '')
+        asset_name = format_name(asset_name)
+
+        if asset_name.lower() == target_name.lower():
+            target_asset = asset
+            break
+
+    if not target_asset:
+        return {"status": "error", "message": "Asset not found in online cache."}
     
+    
+    file_name = target_asset['name']
+    local_path = Path(SAMPLES_DIR) / target_name
+
+    # Skip download if file exists
+    if local_path.exists():
+        return {"status": "skipped", "message": "File already exists locally."}
+    
+    # Define local path
+    write_path = Path(TMP_DIR) / file_name
+    
+    # Download the file
+    async with httpx.AsyncClient() as client:
+        resp = await client.get(target_asset["url"])
+        resp.raise_for_status()
+        async with aiofiles.open(write_path, "wb") as f:
+            await f.write(resp.content)
+    
+    if file_name.endswith('.zip'):
+        with zipfile.ZipFile(write_path, 'r') as zip_ref:
+            zip_ref.extractall(SAMPLES_DIR)
+
+    # Delete the zip file after extraction
+    write_path.unlink(missing_ok=True)
+
+    return {"status": "success", "message": f"Downloaded and extracted {file_name}"}
+
+
+@router.post('/ensure-sound-available/')
+async def ensure_sound_available(request: SoundRequest):
+
+    if request.sound_name not in local_sound_names():
+        await download_online_asset(request.sound_name)
+    else: print('Sound already exists in local dir')
+
+
 @router.post('/save-sound-settings/')
 async def save_sound_settings(settings: SoundSettings):
     """
