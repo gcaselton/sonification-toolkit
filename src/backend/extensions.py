@@ -92,6 +92,11 @@ def find_sound(sound_name):
         raise ValueError(f'"{sound_name}" not found in the sound_assets directory.')
 
 
+def get_filepath(directory):
+      name = os.listdir(directory)[0]
+      return os.path.join(directory, name)
+
+
 def setup_strauss(data_filepath, style: BaseStyle, sonify_type, length):
 
       # Read and find sound to create Generator
@@ -103,7 +108,8 @@ def setup_strauss(data_filepath, style: BaseStyle, sonify_type, length):
             generator.load_preset(path_stem)
       else:
             path = str(path)
-            generator = Sampler(path, sf_preset=19) if path.endswith(".sf2") else Sampler(path)
+            inner_file = get_filepath(path)
+            generator = Sampler(inner_file, sf_preset=19) if inner_file.endswith('.sf2') else Sampler(path)
             
             if style.scale:
                   generator.load_preset('staccato')
@@ -137,8 +143,9 @@ def setup_strauss(data_filepath, style: BaseStyle, sonify_type, length):
       elif style.chord_mode == 'off' and style.scale:
 
             root, quality = style.scale.split(' ', 1)
-            notes = parse_scale(root, quality, 3) # 3 octave range as default, could give users the option?
+            notes = parse_scale(root, quality, 1) # 3 octave range as default, could give users the option?
             notes = [[str(note) for note in notes]]
+            print(notes)
       else:
             notes = [['A3']]
       

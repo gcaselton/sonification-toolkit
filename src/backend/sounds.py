@@ -69,4 +69,4 @@ def all_sound_names():
     local = local_sound_names()
     online = online_sound_names()
 
-    return local + online
+    return set(local + online)

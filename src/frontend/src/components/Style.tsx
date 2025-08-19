@@ -190,15 +190,18 @@ export default function Style() {
         }
     }
 
-    const handleSubmit = async () => {
-    try {
+    const ensureSoundAvailable = async (soundName: string) => {
         // ensure the sound is available by downloading if necessary
         await fetch("http://localhost:8000/ensure-sound-available/", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ sound_name: sound }),
+            body: JSON.stringify({ sound_name: soundName }),
         });
+    }
 
+    const handleSubmit = async () => {
+    try {
+        ensureSoundAvailable(sound)
         // save sound settings
         saveSoundSettings().then((filepath) => {
             console.log("Saved sound settings to:", filepath);

@@ -245,6 +245,8 @@ async def get_audio(filename: str):
 
 async def download_online_asset(target_name: str):
 
+    print(target_name)
+
     target_asset = None
 
     for asset in asset_cache:
@@ -268,10 +270,12 @@ async def download_online_asset(target_name: str):
     
     # Define local path
     write_path = Path(TMP_DIR) / file_name
+
+    print(write_path)
     
     # Download the file
     async with httpx.AsyncClient() as client:
-        resp = await client.get(target_asset["url"])
+        resp = await client.get(target_asset["url"], follow_redirects=True)
         resp.raise_for_status()
         async with aiofiles.open(write_path, "wb") as f:
             await f.write(resp.content)

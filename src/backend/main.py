@@ -18,6 +18,7 @@ async def lifespan(app: FastAPI):
 
     # # Startup logic
     asyncio.create_task(cache_online_assets())
+    print("cache complete")
 
     # Clear tmp directory on startup
     clear_tmp_dir()
