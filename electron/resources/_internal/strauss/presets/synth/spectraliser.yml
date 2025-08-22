@@ -1,0 +1,28 @@
+# preset name
+name: "spectraliser"
+
+description: >-
+  preset for 'spectralising' data i.e. generating a sound with an
+  audio frequency power spectrum that representa the data. This requires
+  using pure sine waves with randomised phases.
+
+# oscillator information
+oscillators:
+  osc1:
+    form: 'sine'
+    level: 1.
+    detune: 0.
+    phase: 'random'
+
+_meta:
+  name: preset name
+  description: full description
+  oscillators: >-
+    Oscillator information
+  oscillators:
+    osc1:
+      form: waveform, choose from ['saw', 'square', 'sine', 'tri', 'noise']
+      level: intrinsic volume
+      detune: change in tuning as a percentage of the input frequency
+      phase: phase
+ 

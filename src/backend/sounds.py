@@ -9,7 +9,7 @@ async def cache_online_assets():
 
     url = f"https://api.github.com/repos/{GITHUB_USER}/{GITHUB_REPO}/releases"
     async with httpx.AsyncClient() as client:
-        resp = await client.get(url)
+        resp = await client.get(url, follow_redirects=True)
         resp.raise_for_status()
         releases = resp.json()
 

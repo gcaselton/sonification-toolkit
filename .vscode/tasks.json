@@ -22,7 +22,6 @@
     {
       "label": "Start Full Stack App",
       "dependsOn": [
-        "Activate venv",
         "Run Backend",
         "Run Frontend"
       ],

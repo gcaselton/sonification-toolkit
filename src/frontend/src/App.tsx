@@ -1,7 +1,7 @@
 import { ChakraProvider, defaultSystem } from '@chakra-ui/react'
 import { Flex } from '@chakra-ui/react'
 import ReactDOM from "react-dom/client";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { HashRouter, Routes, Route } from "react-router-dom";
 import Header from "./components/Header";
 import Lightcurves from './components/Lightcurves';
 import Style from './components/Style';
@@ -13,13 +13,13 @@ function App() {
   return (
     <ChakraProvider value={defaultSystem}>
       <Flex direction="column" align="center" justify="flex-start" minH="100vh" p={8}>
-        <BrowserRouter>
+        <HashRouter>
           <Routes>
             <Route path="/" element={<Lightcurves />} />
             <Route path="/style" element={<Style />} />
             <Route path="/sonify" element={<Sonify />} />
           </Routes>
-        </BrowserRouter>
+        </HashRouter>
       </Flex>
     </ChakraProvider>
   )

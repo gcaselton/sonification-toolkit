@@ -1,0 +1,10 @@
+name: "Windy"
+
+description: This style combines a white noise generator with a cutoff filter, creating a 'windy' sound.
+
+sound: "White Noise"
+
+parameters:
+  cutoff: [0.3, 0.9]
+
+chord_mode: "off"

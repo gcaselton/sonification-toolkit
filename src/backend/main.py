@@ -10,18 +10,21 @@ import os
 import httpx
 import asyncio
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-frontend_path = os.path.abspath(os.path.join(BASE_DIR, "../frontend/dist"))
+
+async def safe_cache_assets():
+    try:
+        await cache_online_assets()
+        print("Cache complete")
+    except Exception as e:
+        print("Error caching assets:", e)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    await asyncio.to_thread(clear_tmp_dir)
+    print("TMP cleared")
 
-    # # Startup logic
-    asyncio.create_task(cache_online_assets())
-    print("cache complete")
-
-    # Clear tmp directory on startup
-    clear_tmp_dir()
+    # Run caching in background
+    asyncio.create_task(safe_cache_assets())
 
     yield
 
@@ -46,7 +49,6 @@ app.add_middleware(
 # Import API endpoints
 app.include_router(light_curve.router)
 
-# app.mount("/", StaticFiles(directory=frontend_path, html=True), name="static")
 
 @app.get("/")
 def get_status():
@@ -57,6 +59,6 @@ def get_status():
     """
     return {'message': 'Hello! The server is up and running.'}
 
-# if __name__ == "__main__":
-#     import uvicorn
-#     uvicorn.run(app, host="127.0.0.1", port=8000)
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="127.0.0.1", port=8000)

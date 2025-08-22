@@ -272,7 +272,7 @@ export default function Lightcurves() {
               {variants.map((variant) => (
                 <Card.Root width="200px" key={variant.name}>
                   <LinkOverlay as={Link} onClick={() => {handleClickStar(variant)}}>
-                    <img src={`/assets/${variant.name}.jpg`} alt={variant.name} style={{ width: "100%", borderRadius: "8px" }} />
+                    <img src={`./assets/${variant.name}.jpg`} alt={variant.name} style={{ width: "100%", borderRadius: "8px" }} />
                   </LinkOverlay>
                   <Card.Body gap="2">
                     <Card.Title mb="2">{variant.name}</Card.Title>

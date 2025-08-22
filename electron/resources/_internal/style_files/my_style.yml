@@ -1,0 +1,17 @@
+name: 'Test'
+
+description: 'This style file is meant to test the robustness of the style-reading code.'
+
+sound: 'default_synth'
+
+# data_mode: 'continuous'
+
+parameters:
+  cutoff: [0,1]
+
+chord_mode: 'on'
+
+chord: 'random'
+
+# scale: 'C major'
+

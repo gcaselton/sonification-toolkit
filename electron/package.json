@@ -1,21 +1,56 @@
 {
   "name": "sonification-toolkit",
-  "version": "1.0.0",
-  "description": "",
-  "main": "main.cjs",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "concurrently \"npm run start-backend\" \"npm run start-frontend\" \"npm run start-electron\"",
-    "start-backend": "cd ../src/backend && uvicorn main:app --reload --host localhost --port 8000",
-    "start-frontend": "cd ../src/frontend && npm run dev",
-    "start-electron": "electron main.cjs"
-  },
-  "keywords": [],
+  "version": "0.1.0",
+  "description": "Desktop app with FastAPI backend and React frontend",
   "author": "George Caselton",
   "license": "ISC",
-  "type": "commonjs",
+  "main": "main.cjs",
+  "scripts": {
+    "start": "electron .",
+    "build-frontend": "cd ../src/frontend && npm run build",
+    "build-backend": "cd ../src/backend && pyinstaller --onefile --name backend main.py",
+    "copy-files": "cp -r ../src/frontend/dist build && mkdir -p resources && cp ../src/backend/dist/backend* resources/",
+    "dist": "electron-builder"
+  },
   "dependencies": {
-    "concurrently": "^7.6.0",
-    "electron": "^37.2.6"
+    "electron-squirrel-startup": "^1.0.1",
+    "tree-kill": "^1.2.2",
+    "wait-on": "^8.0.4"
+  },
+  "devDependencies": {
+    "electron": "^37.3.1",
+    "electron-builder": "^26.0.12"
+  },
+  "build": {
+    "appId": "com.georgecaselton.sonification-toolkit",
+    "productName": "Sonification Toolkit",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "main.cjs",
+      "preload.cjs",
+      "build/**/*",
+      "resources/**/*"
+    ],
+    "extraResources": [
+      {
+        "from": "resources/",
+        "to": "resources"
+      }
+    ],
+    "win": {
+      "target": "nsis"
+    },
+    "mac": {
+      "target": "dmg"
+    },
+    "linux": {
+      "target": "AppImage"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    }
   }
 }

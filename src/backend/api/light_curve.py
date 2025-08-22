@@ -167,6 +167,7 @@ async def select_lightcurve(request: DownloadRequest):
 
 @router.get('/suggested-stars/')
 async def get_stars():
+    print('Stars dir: ' + str(STARS_DIR))
     if not STARS_DIR.exists():
         raise HTTPException(status_code=404, detail='Suggested stars directory not found')
     
