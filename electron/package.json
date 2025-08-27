@@ -30,13 +30,17 @@
     "files": [
       "main.cjs",
       "preload.cjs",
-      "build/**/*",
-      "resources/**/*"
+      "splash.html",
+      "build/**/*"
     ],
     "extraResources": [
       {
-        "from": "resources/",
-        "to": "resources"
+        "from": "resources/backend.exe",
+        "to": "backend.exe"
+      },
+      {
+        "from": "resources/_internal",
+        "to": "_internal"
       }
     ],
     "win": {

@@ -10,8 +10,40 @@ console.log('__dirname:', __dirname);
 console.log('process.env.NODE_ENV:', process.env.NODE_ENV);
 
 let mainWindow = null;
+let splashWindow = null;
 let backendProcess = null;
 let isQuitting = false;
+
+const getBackendPath = () => {
+    if (isDev) {
+        // Development: run Python directly
+        return {
+            command: 'python',
+            args: ['main.py'],
+            cwd: path.join(__dirname, '../src/backend')
+        };
+    } else {
+        // Pre-packaging prod test (backend.exe exists in project resources)
+        const prepackPath = path.join(__dirname, 'resources', 'backend.exe');
+        if (!app.isPackaged && require('fs').existsSync(prepackPath)) {
+            return {
+                command: prepackPath,
+                args: [],
+                cwd: path.dirname(prepackPath)
+            };
+        }
+
+        // Packaged app (installed)
+        const packagedPath = path.join(process.resourcesPath, 'backend.exe');
+        return {
+            command: packagedPath,
+            args: [],
+            cwd: path.dirname(packagedPath)
+        };
+    }
+};
+
+
 
 // Improved cleanup function
 const cleanup = async () => {
@@ -128,30 +160,33 @@ async function waitForBackend(maxAttempts = 60, port = 8000) {  // Increased to 
 function startBackend() {
     return new Promise(async (resolve, reject) => {
         try {
-            if (isDev) {
-                // Development: Run Python directly
-                console.log('Starting backend in development mode...');
-                backendProcess = spawn('python', ['main.py'], {
-                    cwd: path.join(__dirname, '../src/backend'),
-                    shell: true
-                });
-            } else {
-                // Production: Run bundled executable
-                const backendExePath = path.join(__dirname, 'resources/backend.exe');
-                console.log('Starting backend from:', backendExePath);
-                
-                // Check if executable exists
+            const backendConfig = getBackendPath();
+            
+            console.log('Starting backend from:', backendConfig.command);
+            console.log('Working directory:', backendConfig.cwd);
+            console.log('Arguments:', backendConfig.args);
+            
+            // Check if executable exists (for production)
+            if (!isDev) {
                 const fs = require('fs');
-                if (!fs.existsSync(backendExePath)) {
-                    throw new Error(`Backend executable not found: ${backendExePath}`);
+                if (!fs.existsSync(backendConfig.command)) {
+                    throw new Error(`Backend executable not found: ${backendConfig.command}`);
                 }
-                
                 console.log('Backend executable exists, spawning process...');
-                backendProcess = spawn(backendExePath, [], { 
-                    shell: true,
-                    stdio: ['pipe', 'pipe', 'pipe']  // Ensure we can capture output
-                });
             }
+            
+            // Spawn the backend process
+            const spawnOptions = {
+                cwd: backendConfig.cwd,
+                stdio: ['pipe', 'pipe', 'pipe']
+            };
+            
+            // Add shell: true only for development Python execution
+            if (isDev) {
+                spawnOptions.shell = true;
+            }
+            
+            backendProcess = spawn(backendConfig.command, backendConfig.args, spawnOptions);
 
             backendProcess.stdout.on('data', (data) => {
                 console.log('Backend:', data.toString());
@@ -190,6 +225,53 @@ function startBackend() {
         } catch (error) {
             reject(error);
         }
+    });
+}
+
+function createSplashWindow() {
+    splashWindow = new BrowserWindow({
+        width: 400,
+        height: 300,
+        frame: false, // Remove window frame for a cleaner look
+        alwaysOnTop: true,
+        center: true,
+        resizable: false,
+        webPreferences: {
+            nodeIntegration: false,
+            contextIsolation: true
+        }
+    });
+
+    // Load the splash screen
+    const splashPath = path.join(__dirname, 'splash.html');
+    console.log('Loading splash screen from:', splashPath);
+    
+    // Check if splash file exists
+    const fs = require('fs');
+    if (fs.existsSync(splashPath)) {
+        splashWindow.loadFile(splashPath);
+        console.log('Splash screen loaded successfully');
+    } else {
+        console.log('Splash file not found, creating basic splash');
+        // Fallback: create a simple splash screen
+        splashWindow.loadURL(`data:text/html,
+            <html>
+                <body style="margin:0; padding:40px; font-family:Arial; text-align:center; background:#2c3e50; color:white;">
+                    <h2>Sonification Toolkit</h2>
+                    <p>Loading backend...</p>
+                    <div style="margin:20px auto; width:200px; height:4px; background:#34495e; border-radius:2px;">
+                        <div style="height:100%; background:#3498db; border-radius:2px; animation:pulse 1.5s ease-in-out infinite;"></div>
+                    </div>
+                    <style>
+                        @keyframes pulse { 0%, 100% { opacity:0.5; } 50% { opacity:1; } }
+                    </style>
+                </body>
+            </html>
+        `);
+    }
+
+    splashWindow.on('closed', () => {
+        splashWindow = null;
     });
 }
 
@@ -259,8 +341,13 @@ function createWindow() {
 
     // Show only when ready, and maximize
     mainWindow.once('ready-to-show', () => {
+        // Close splash window and show main window
+        if (splashWindow) {
+            splashWindow.close();
+        }
         mainWindow.maximize();
         mainWindow.show();
+        console.log('Main window displayed, splash closed');
     });
 
     // Handle external links
@@ -273,17 +360,36 @@ function createWindow() {
 // Start backend first, then create window
 app.whenReady().then(async () => {
     try {
+        // Show splash screen immediately
+        createSplashWindow();
+        
+        // Start backend in background
+        console.log('Starting backend...');
         await startBackend();
-        console.log('Backend is ready, creating window...');
+        console.log('Backend is ready, creating main window...');
+        
+        // Create main window (splash will close when main window is ready)
         createWindow();
     } catch (error) {
         console.error('Failed to start backend:', error);
+        
+        // Close splash on error
+        if (splashWindow) {
+            splashWindow.close();
+        }
+        
+        // Show error dialog or just quit
         app.quit();
     }
 });
 
 app.on('window-all-closed', async () => {
     console.log('All windows closed, cleaning up...');
+    
+    // Close splash if it's still open
+    if (splashWindow) {
+        splashWindow.close();
+    }
     
     if (!isQuitting) {
         isQuitting = true;
