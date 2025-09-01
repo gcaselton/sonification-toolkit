@@ -7,9 +7,6 @@
   "main": "main.cjs",
   "scripts": {
     "start": "electron .",
-    "build-frontend": "cd ../src/frontend && npm run build",
-    "build-backend": "cd ../src/backend && pyinstaller --onefile --name backend main.py",
-    "copy-files": "cp -r ../src/frontend/dist build && mkdir -p resources && cp ../src/backend/dist/backend* resources/",
     "dist": "electron-builder"
   },
   "dependencies": {
@@ -44,10 +41,12 @@
       }
     ],
     "win": {
-      "target": "nsis"
+      "target": "nsis",
+      "sign": false
     },
     "mac": {
-      "target": "dmg"
+      "target": "dmg",
+      "identity": null
     },
     "linux": {
       "target": "AppImage"

@@ -23,8 +23,24 @@ const getBackendPath = () => {
             cwd: path.join(__dirname, '../src/backend')
         };
     } else {
-        // Pre-packaging prod test (backend.exe exists in project resources)
-        const prepackPath = path.join(__dirname, 'resources', 'backend.exe');
+        // Determine backend executable name based on platform
+        let backendExecutable;
+        switch (process.platform) {
+            case 'win32':
+                backendExecutable = 'backend.exe';
+                break;
+            case 'darwin':
+                backendExecutable = 'backend';
+                break;
+            case 'linux':
+                backendExecutable = 'backend';
+                break;
+            default:
+                throw new Error(`Unsupported platform: ${process.platform}`);
+        }
+
+        // Pre-packaging prod test (backend executable exists in project resources)
+        const prepackPath = path.join(__dirname, 'resources', backendExecutable);
         if (!app.isPackaged && require('fs').existsSync(prepackPath)) {
             return {
                 command: prepackPath,
@@ -34,7 +50,7 @@ const getBackendPath = () => {
         }
 
         // Packaged app (installed)
-        const packagedPath = path.join(process.resourcesPath, 'backend.exe');
+        const packagedPath = path.join(process.resourcesPath, backendExecutable);
         return {
             command: packagedPath,
             args: [],
@@ -78,6 +94,7 @@ const cleanup = async () => {
 };
 
 // Platform-specific force kill as last resort
+// Platform-specific force kill as last resort
 const forceKillByPlatform = () => {
     console.log('Using platform-specific force kill...');
     
@@ -103,7 +120,13 @@ const forceKillByPlatform = () => {
     } else {
         // Unix/Linux/macOS
         try {
+            // Kill by process name
             spawn('pkill', ['-f', 'backend'], {
+                stdio: 'ignore'
+            });
+            
+            // Also try killing Python processes running FastAPI
+            spawn('pkill', ['-f', 'python.*main.py'], {
                 stdio: 'ignore'
             });
         } catch (error) {
@@ -232,7 +255,7 @@ function createSplashWindow() {
     splashWindow = new BrowserWindow({
         width: 400,
         height: 300,
-        frame: false, // Remove window frame for a cleaner look
+        frame: false,
         alwaysOnTop: true,
         center: true,
         resizable: false,
