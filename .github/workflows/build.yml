@@ -78,9 +78,7 @@ jobs:
 
       # Install frontend dependencies and build
       - name: Install frontend dependencies
-        run: |
-          cd src/frontend
-          npm ci
+        run: npm ci
 
       - name: Build React frontend
         run: |
