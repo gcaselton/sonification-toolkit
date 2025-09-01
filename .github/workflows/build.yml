@@ -1,0 +1,176 @@
+name: Build Multi-Platform App
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to build (e.g., v1.0.0)'
+        required: false
+        default: ''
+      create_release:
+        description: 'Create GitHub release'
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+  build:
+    name: Build for ${{ matrix.platform }}
+    runs-on: ${{ matrix.os }}
+    
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            platform: linux
+            electron_targets: AppImage,deb,rpm
+          - os: windows-latest
+            platform: windows
+            electron_targets: nsis,portable
+          - os: macos-latest
+            platform: macos
+            electron_targets: dmg,zip
+
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Setup Python
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.13.5'
+          cache: 'pip'
+          cache-dependency-path: 'src/backend/requirements.txt'
+
+      # Setup Node.js
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      # Install Python dependencies
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r src/backend/requirements.txt
+          pip install pyinstaller
+
+      # Build Python backend with PyInstaller (platform-specific)
+      - name: Build Python backend
+        run: |
+          cd src/backend
+          pyinstaller backend.spec --clean --noconfirm
+        shell: bash
+
+      # Install frontend dependencies and build
+      - name: Install frontend dependencies
+        run: |
+          cd src/frontend
+          npm ci
+
+      - name: Build React frontend
+        run: |
+          cd src/frontend
+          npm run build
+        env:
+          NODE_ENV: production
+
+      # Install electron dependencies
+      - name: Install electron dependencies
+        run: |
+          cd electron
+          npm ci
+
+      # Copy backend executable to electron resources
+      - name: Setup backend for electron
+        run: |
+          cd electron
+          mkdir -p resources
+          cp -r ../src/backend/dist/* resources/
+        shell: bash
+
+      # Copy frontend build to electron
+      - name: Setup frontend for electron
+        run: |
+          cd electron
+          mkdir -p build
+          cp -r ../src/frontend/dist/* build/
+        shell: bash
+
+      # Set version for release
+      - name: Set version
+        id: version
+        run: |
+          if [ -n "${{ github.event.inputs.version }}" ]; then
+            echo "version=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+          else
+            echo "version=dev-$(date +'%Y%m%d-%H%M%S')" >> $GITHUB_OUTPUT
+          fi
+        shell: bash
+
+      # Package with electron-builder
+      - name: Package Electron app
+        run: |
+          cd electron
+          npm run dist -- --${{ matrix.platform }} --${{ matrix.electron_targets }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+
+      # Upload platform-specific artifacts
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ matrix.platform }}-packages
+          path: |
+            electron/dist/*.exe
+            electron/dist/*.msi
+            electron/dist/*.dmg
+            electron/dist/*.zip
+            electron/dist/*.AppImage
+            electron/dist/*.deb
+            electron/dist/*.rpm
+            electron/dist/*.tar.gz
+          retention-days: 30
+
+  release:
+    name: Create Release
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.event.inputs.create_release == 'true'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download all platform packages
+        uses: actions/download-artifact@v3
+        with:
+          path: ./packages
+
+      # Get version from any of the build jobs (they all output the same version)
+      - name: Get version
+        id: get_version
+        run: |
+          if [ -n "${{ github.event.inputs.version }}" ]; then
+            echo "version=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+          else
+            echo "version=dev-$(date +'%Y%m%d-%H%M%S')" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ steps.get_version.outputs.version }}
+          name: Release ${{ steps.get_version.outputs.version }}
+          files: |
+            packages/**/*
+          draft: false
+          prerelease: ${{ contains(steps.get_version.outputs.version, 'dev') }}
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
