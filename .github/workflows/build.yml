@@ -126,7 +126,7 @@ jobs:
       - name: Package Electron app
         run: |
           cd electron
-          npm run dist -- --${{ matrix.platform }} ${{ matrix.electron_targets }}
+          npm run dist -- --${{ matrix.platform }} ${{ matrix.electron_targets }} --publish never 
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         shell: bash
