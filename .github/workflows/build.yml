@@ -23,13 +23,13 @@ jobs:
         include:
           - os: ubuntu-latest
             platform: linux
-            electron_targets: AppImage,deb,rpm
+            electron_targets: "deb tar.xz"
           - os: windows-latest
             platform: windows
-            electron_targets: nsis,portable
+            electron_targets: "nsis portable"
           - os: macos-latest
             platform: macos
-            electron_targets: dmg,zip
+            electron_targets: "dmg zip"
 
     outputs:
       version: ${{ steps.version.outputs.version }}
@@ -126,7 +126,7 @@ jobs:
       - name: Package Electron app
         run: |
           cd electron
-          npm run dist -- --${{ matrix.platform }} --${{ matrix.electron_targets }}
+          npm run dist -- --${{ matrix.platform }} ${{ matrix.electron_targets }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         shell: bash
