@@ -26,6 +26,8 @@
     "appId": "com.georgecaselton.sonification-toolkit",
     "productName": "Sonification Toolkit",
     "forceCodeSigning": false,
+    "publish": null,
+    "generateUpdatesFilesForAllChannels": false,
     "directories": {
       "output": "dist"
     },
