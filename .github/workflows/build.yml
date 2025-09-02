@@ -101,7 +101,7 @@ jobs:
           cd electron
           mkdir -p resources
           rm -rf resources/backend* resources/_internal
-          cp ../src/backend/dist/backend* resources/
+          cp -r ../src/backend/dist/backend* resources/
           cp -r ../src/backend/dist/_internal resources/
         shell: bash
 
