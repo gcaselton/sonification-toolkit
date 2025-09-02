@@ -53,7 +53,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '24'
+          node-version: '22'
 
       # Install Python dependencies
       - name: Install Python dependencies
@@ -78,7 +78,9 @@ jobs:
 
       # Install frontend dependencies and build
       - name: Install frontend dependencies
-        run: npm ci
+        run: | 
+          cd src/frontend
+          npm ci
 
       - name: Build React frontend
         run: |
