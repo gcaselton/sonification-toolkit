@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import LoadingMessage from './LoadingMessage';
 import { LuX, LuChartSpline, LuAudioLines } from "react-icons/lu";
 import PageContainer from "./PageContainer";
+import { NavDrawer } from "./NavDrawer";
 
 import {
   Box,
@@ -224,6 +225,9 @@ export default function Lightcurves() {
 
   return (
     <PageContainer>
+      <header>
+        <NavDrawer />
+      </header>
       <Box>
         <Heading size="4xl">Light Curves</Heading>
         <br />
