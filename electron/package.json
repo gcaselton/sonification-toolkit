@@ -21,6 +21,7 @@
   "build": {
     "appId": "com.georgecaselton.sonification-toolkit",
     "productName": "Sonification Toolkit",
+    "forceCodeSigning": false,
     "directories": {
       "output": "dist"
     },
@@ -40,17 +41,6 @@
         "to": "_internal"
       }
     ],
-    "win": {
-      "target": "nsis",
-      "sign": false
-    },
-    "mac": {
-      "target": "dmg",
-      "identity": null
-    },
-    "linux": {
-      "target": "AppImage"
-    },
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true
