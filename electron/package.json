@@ -1,8 +1,12 @@
 {
   "name": "sonification-toolkit",
   "version": "0.1.0",
-  "description": "Desktop app with FastAPI backend and React frontend",
-  "author": "George Caselton",
+  "description": "Desktop app for the sonification of astronomical phenomena.",
+  "homepage": "https://github.com/gcaselton/sonification-toolkit",
+  "author": {
+    "name": "George Caselton",
+    "email": "george.caselton@newcastle.ac.uk"
+  },
   "license": "ISC",
   "main": "main.cjs",
   "scripts": {
