@@ -100,13 +100,16 @@ jobs:
         run: |
           cd electron
           mkdir -p resources
-          cp -r ../src/backend/dist/* resources/
+          rm -rf resources/backend.exe resources/_internal
+          cp ../src/backend/dist/backend.exe resources/
+          cp -r ../src/backend/dist/_internal resources/
         shell: bash
 
       # Copy frontend build to electron
       - name: Setup frontend for electron
         run: |
           cd electron
+          rm -rf build
           mkdir -p build
           cp -r ../src/frontend/dist/* build/
         shell: bash
