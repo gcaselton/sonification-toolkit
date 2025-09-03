@@ -7,6 +7,7 @@ import Lightcurves from './components/Lightcurves';
 import Style from './components/Style';
 import Sidebar from './components/Sidebar';
 import Sonify from './components/Sonify';
+import Help from './components/Help';
 
 function App() {
 
@@ -18,6 +19,7 @@ function App() {
             <Route path="/" element={<Lightcurves />} />
             <Route path="/style" element={<Style />} />
             <Route path="/sonify" element={<Sonify />} />
+            <Route path='/help' element={<Help />} />
           </Routes>
         </HashRouter>
       </Flex>

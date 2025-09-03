@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useLocation } from 'react-router-dom';
 import LoadingMessage from "./LoadingMessage";
-import BackButton from "./BackButton";
+import {BackButton} from "./Buttons";
 import PageContainer from "./PageContainer";
 import {
   Box,

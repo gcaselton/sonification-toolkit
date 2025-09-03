@@ -18,11 +18,13 @@ import {
   HelpCircle 
 } from "lucide-react"
 
+import { Link } from 'react-router-dom';
+
 export function NavDrawer() {
   const navItems = [
-    { icon: Home, label: "Home", href: "/" },
-    { icon: Settings, label: "Settings", href: "/settings" },
-    { icon: HelpCircle, label: "Help", href: "/help" },
+    { icon: Home, label: "Home", to: "/" },
+    { icon: Settings, label: "Settings", to: "/settings" },
+    { icon: HelpCircle, label: "Help", to: "/help" },
   ]
 
   return (
@@ -53,20 +55,22 @@ export function NavDrawer() {
               </HStack>
             </Drawer.Header>
             <Drawer.Body>
-              <VStack align="start" spacing={2}>
+              <VStack align="start">
                 {navItems.map((item) => (
-                  <Button
-                    key={item.label}
-                    variant="ghost"
-                    justifyContent="flex-start"
-                    w="full"
-                    colorPalette='teal'
-                  >
-                    <HStack>
-                      <item.icon size={18} />
-                      <Text>{item.label}</Text>
-                    </HStack>
-                  </Button>
+                  <Link to={item.to} style={{width: '100%'}}>
+                    <Button
+                      key={item.label}
+                      variant="ghost"
+                      justifyContent="flex-start"
+                      w="full"
+                      colorPalette='teal'
+                    >
+                      <HStack>
+                        <item.icon size={18} />
+                        <Text>{item.label}</Text>
+                      </HStack>
+                    </Button>
+                  </Link>
                 ))}
               </VStack>
             </Drawer.Body>

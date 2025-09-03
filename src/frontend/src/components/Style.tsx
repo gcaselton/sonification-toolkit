@@ -1,7 +1,7 @@
 import React, { useEffect, useState, createContext, ChangeEvent, useRef } from "react";
 import { data, useLocation, useNavigate } from 'react-router-dom';
 import StyleCard from "./StyleCard";
-import BackButton from "./BackButton";
+import {BackButton} from "./Buttons";
 import PageContainer from "./PageContainer";
 
 import {

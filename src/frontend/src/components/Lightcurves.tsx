@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import LoadingMessage from './LoadingMessage';
 import { LuX, LuChartSpline, LuAudioLines } from "react-icons/lu";
 import PageContainer from "./PageContainer";
+import { SonifyButton, PlotButton } from "./Buttons";
 
 import {
   Box,
@@ -23,7 +24,7 @@ import {
   chakra,
 } from "@chakra-ui/react";
 
-interface Lightcurve {
+ export interface Lightcurve {
   id: string;
   mission: string;
   exposure: number;
@@ -292,7 +293,7 @@ export default function Lightcurves() {
           <>
           <Heading>Search results for {searchTerm}:</Heading>
           <br />
-          <Table.Root size="sm">
+          <Table.Root size="sm" interactive>
             <Table.Header>
               <Table.Row>
                 <Table.ColumnHeader>Mission</Table.ColumnHeader>
@@ -315,9 +316,7 @@ export default function Lightcurves() {
                   <Table.Cell>
                     <Dialog.Root lazyMount open={open} onOpenChange={(details) => setOpen(details.open)}>
                       <Dialog.Trigger asChild>
-                        <Button colorPalette="teal" onClick={() => handleClickPlot(item)}>
-                          <LuChartSpline /> View Plot
-                        </Button>
+                        <PlotButton onClick={handleClickPlot} item={item}/>
                       </Dialog.Trigger>
                       <Dialog.Backdrop />
                       <Dialog.Positioner>
@@ -343,9 +342,7 @@ export default function Lightcurves() {
                     </Dialog.Root>
                   </Table.Cell>
                   <Table.Cell>
-                    <Button colorPalette="teal" onClick={() => handleClickSonify(item.dataURI)}>
-                      <LuAudioLines /> Sonify
-                    </Button>
+                    <SonifyButton onClick={handleClickSonify} dataURI={item.dataURI}/>
                   </Table.Cell>
                 </Table.Row>
               ))}
