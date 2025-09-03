@@ -39,14 +39,34 @@
     ],
     "extraResources": [
       {
-        "from": "resources/backend.exe",
-        "to": "backend.exe"
-      },
-      {
         "from": "resources/_internal",
         "to": "_internal"
       }
     ],
+    "win": {
+      "extraResources": [
+        {
+          "from": "resources/backend.exe",
+          "to": "backend.exe"
+        }
+      ]
+    },
+    "mac": {
+      "extraResources": [
+        {
+          "from": "resources/backend",
+          "to": "backend"
+        }
+      ]
+    },
+    "linux": {
+      "extraResources": [
+        {
+          "from": "resources/backend",
+          "to": "backend"
+        }
+      ]
+    },
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true

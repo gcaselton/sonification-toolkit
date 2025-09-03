@@ -12,24 +12,65 @@ on:
         required: false
         default: false
         type: boolean
+      target_os:
+        description: 'Operating systems to build for'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+          - 'all'
+          - 'windows'
+          - 'macos'
+          - 'linux'
 
 jobs:
+  # Job to determine which platforms to build
+  setup:
+    name: Setup Build Matrix
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - name: Set build matrix
+        id: set-matrix
+        run: |
+          case "${{ github.event.inputs.target_os }}" in
+            "all")
+              matrix='[
+                {"os": "ubuntu-latest", "platform": "linux", "electron_targets": "deb tar.xz"},
+                {"os": "windows-latest", "platform": "windows", "electron_targets": "nsis portable"},
+                {"os": "macos-latest", "platform": "macos", "electron_targets": "dmg zip"}
+              ]'
+              ;;
+            "windows")
+              matrix='[
+                {"os": "windows-latest", "platform": "windows", "electron_targets": "nsis portable"}
+              ]'
+              ;;
+            "macos")
+              matrix='[
+                {"os": "macos-latest", "platform": "macos", "electron_targets": "dmg zip"}
+              ]'
+              ;;
+            "linux")
+              matrix='[
+                {"os": "ubuntu-latest", "platform": "linux", "electron_targets": "deb tar.xz"}
+              ]'
+              ;;
+          esac
+          
+          echo "matrix=$(echo $matrix | jq -c .)" >> $GITHUB_OUTPUT
+          echo "Selected platforms: ${{ github.event.inputs.target_os }}"
+          echo "Matrix: $matrix"
+
   build:
     name: Build for ${{ matrix.platform }}
     runs-on: ${{ matrix.os }}
+    needs: setup
     
     strategy:
       matrix:
-        include:
-          - os: ubuntu-latest
-            platform: linux
-            electron_targets: "deb tar.xz"
-          - os: windows-latest
-            platform: windows
-            electron_targets: "nsis portable"
-          - os: macos-latest
-            platform: macos
-            electron_targets: "dmg zip"
+        include: ${{ fromJson(needs.setup.outputs.matrix) }}
 
     outputs:
       version: ${{ steps.version.outputs.version }}

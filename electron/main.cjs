@@ -24,20 +24,7 @@ const getBackendPath = () => {
         };
     } else {
         // Determine backend executable name based on platform
-        let backendExecutable;
-        switch (process.platform) {
-            case 'win32':
-                backendExecutable = 'backend.exe';
-                break;
-            case 'darwin':
-                backendExecutable = 'backend';
-                break;
-            case 'linux':
-                backendExecutable = 'backend';
-                break;
-            default:
-                throw new Error(`Unsupported platform: ${process.platform}`);
-        }
+        const backendExecutable = process.platform === 'win32' ? 'backend.exe' : 'backend';
 
         // Pre-packaging prod test (backend executable exists in project resources)
         const prepackPath = path.join(__dirname, 'resources', backendExecutable);

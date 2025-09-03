@@ -141,21 +141,14 @@ export default function Style() {
     });
     const parameters = ["Filter Cutoff", "Pitch", "Volume", "Left/Right Pan", "Up/Down Pan", "Vibrato"] as const;
 
-    /*const settings: Settings = {
-        Sound: "Sci-Fi",
-        FilterCutoff: false,
-        Pitch: false,
-        Volume: false,
-        LeftRightPan: false,
-        UpDownPan: false,
-        Vibrato: false,
-    };*/
-    //const [settings, setSettings] = useState([])
     const location = useLocation();
     const dataFilepath = location.state;
     console.log("Filepath of Selected Lightcurve:", dataFilepath);
+    
     const saveSoundSettings = async () => {
+
         const save_sound_settings_url = "http://localhost:8000/save-sound-settings/";
+
         const response = await fetch(save_sound_settings_url, {
             method: 'POST',
             headers: {
@@ -173,7 +166,9 @@ export default function Style() {
                 "quality": quality 
             }),
         });
+
         const data = await response.json();
+
         return data.filepath;
     }
 

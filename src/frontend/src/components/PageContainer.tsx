@@ -1,5 +1,5 @@
-// PageContainer.tsx
-import { Box } from "@chakra-ui/react";
+import { Box, Flex, Heading } from "@chakra-ui/react";
+import { NavDrawer } from "./NavDrawer";
 
 export default function PageContainer({ children }: { children: React.ReactNode }) {
   return (
@@ -10,6 +10,9 @@ export default function PageContainer({ children }: { children: React.ReactNode 
       py={4}          // top/bottom spacing
       width='100%'
     >
+      <Flex as="header" justify="space-between" align="center" mb={6}>
+        <NavDrawer />
+      </Flex>
       {children}
     </Box>
   );

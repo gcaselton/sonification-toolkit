@@ -26,10 +26,10 @@ export function NavDrawer() {
   ]
 
   return (
-    <Drawer.Root placement='start'>
+    <Drawer.Root placement='start' size='xs'>
       <Drawer.Trigger asChild>
         <IconButton
-          variant="outline"
+          variant="ghost"
           aria-label="Open menu"
         >
           <Menu size={20} />
@@ -40,15 +40,17 @@ export function NavDrawer() {
         <Drawer.Positioner>
           <Drawer.Content>
             <Drawer.Header>
-              <Drawer.CloseTrigger asChild>
-              <IconButton
-                size="sm"
-                variant="ghost"
-                aria-label="Close menu"
-                >
-                <X size={16} />
-              </IconButton>
-            </Drawer.CloseTrigger>
+              <HStack justify="flex-end">
+                <Drawer.CloseTrigger asChild>
+                  <IconButton
+                    size="sm"
+                    variant="ghost"
+                    aria-label="Close menu"
+                    >
+                    <X size={16} />
+                  </IconButton>
+                </Drawer.CloseTrigger>
+              </HStack>
             </Drawer.Header>
             <Drawer.Body>
               <VStack align="start" spacing={2}>

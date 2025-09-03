@@ -82,5 +82,3 @@ from sounds import asset_cache
 # soni.render()
 # soni.hear()
 
-print(asset_cache)
-
