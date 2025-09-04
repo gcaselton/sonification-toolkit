@@ -2,12 +2,10 @@ import { ChakraProvider, defaultSystem } from '@chakra-ui/react'
 import { Flex } from '@chakra-ui/react'
 import ReactDOM from "react-dom/client";
 import { HashRouter, Routes, Route } from "react-router-dom";
-import Header from "./components/Header";
-import Lightcurves from './components/Lightcurves';
-import Style from './components/Style';
-import Sidebar from './components/Sidebar';
-import Sonify from './components/Sonify';
-import Help from './components/Help';
+import Lightcurves from './components/pages/Lightcurves';
+import Style from './components/pages/Style';
+import Sonify from './components/pages/Sonify';
+import Help from './components/pages/Help';
 
 function App() {
 
