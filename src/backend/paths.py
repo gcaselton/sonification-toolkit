@@ -43,6 +43,7 @@ BACKEND_DIR, SRC_DIR = get_base_paths()
 # Define all paths
 STYLE_FILES_DIR = BACKEND_DIR / "style_files"
 SUGGESTED_DATA_DIR = BACKEND_DIR / "suggested_data"
+SETTINGS_FILE = BACKEND_DIR / "settings" / "settings.yml"
 SOUND_ASSETS_DIR = BACKEND_DIR / "sound_assets"
 SYNTHS_DIR = SOUND_ASSETS_DIR / "synths"
 SAMPLES_DIR = SOUND_ASSETS_DIR / "samples"

@@ -1,4 +1,4 @@
-from extensions import sonify, read_style_file
+from extensions import sonify
 from paths import STYLE_FILES_DIR
 
 from strauss.sonification import Sonification
@@ -17,6 +17,7 @@ from pprint import pprint
 import asyncio
 from pathlib import Path
 from sounds import asset_cache
+import musical_scales
 
 # x_axis = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
 # y_axis = [2, 4, 19, 1, 11, 21, 15, 4, 6, 22, 20, 18]
@@ -82,3 +83,11 @@ from sounds import asset_cache
 # soni.render()
 # soni.hear()
 
+
+
+notes = musical_scales.scale('D', 'major', 3)
+
+notes = [[str(note - 12) for note in notes]]
+        
+
+print(notes)

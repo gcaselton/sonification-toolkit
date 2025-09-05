@@ -1,7 +1,7 @@
 # -*- mode: python ; coding: utf-8 -*-
 from PyInstaller.utils.hooks import collect_all
 
-# List of packages you want to bundle fully
+# List of packages to bundle fully
 packages_to_collect = [
     "strauss",
     "astroquery",
@@ -17,11 +17,12 @@ for pkg in packages_to_collect:
     all_binaries += binaries
     all_hiddenimports += hiddenimports
 
-# Your own assets
+# App assets
 own_datas = [
     ('style_files', 'style_files'),
     ('suggested_data', 'suggested_data'),
     ('sound_assets', 'sound_assets'),
+    ('settings', 'settings')
 ]
 
 a = Analysis(

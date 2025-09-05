@@ -19,21 +19,21 @@ from pathlib import Path
 import os
 import yaml
 
-def read_style_file(filepath):
+def read_YAML_file(filepath):
     
     filepath = Path(filepath)
     with filepath.open(mode='r') as fdata:
         try:
-            style_dict = yaml.safe_load(fdata)
+            YAML_dict = yaml.safe_load(fdata)
         except yaml.YAMLError as err:
               raise ValueError("Error reading YAML file, please check the filepath and ensure correct YAML syntax.") from err
     
-    return style_dict
+    return YAML_dict
 
 def sonify(data_filepath, style_filepath, sonify_type, length=15, system='stereo'):
 
       # Load user and default styles
-      user_style = read_style_file(style_filepath)
+      user_style = read_YAML_file(style_filepath)
       default_style = defaults[sonify_type]
 
       # Merge the user and default styles, overwriting defaults with user's where present
@@ -109,7 +109,7 @@ def setup_strauss(data_filepath, style: BaseStyle, sonify_type, length):
       else:
             path = str(path)
             inner_file = get_filepath(path)
-            generator = Sampler(inner_file, sf_preset=19) if inner_file.endswith('.sf2') else Sampler(path)
+            generator = Sampler(inner_file, sf_preset=1) if inner_file.endswith('.sf2') else Sampler(path)
             
             if style.scale:
                   generator.load_preset('staccato')
@@ -128,10 +128,8 @@ def setup_strauss(data_filepath, style: BaseStyle, sonify_type, length):
             generator.modify_preset({'filter': 'on'})
 
       # Set up the data and Sources
-      args = data_filepath, style.parameters, style.chord_mode, style.data_mode, style.scale
-
       if sonify_type == 'light_curve':
-            sources = light_curve_sources(*args)
+            sources = light_curve_sources(data_filepath, style, length)
 
       # Handle chord or scale
       if style.chord_mode == 'on':
@@ -143,8 +141,8 @@ def setup_strauss(data_filepath, style: BaseStyle, sonify_type, length):
       elif style.chord_mode == 'off' and style.scale:
 
             root, quality = style.scale.split(' ', 1)
-            notes = parse_scale(root, quality, 1) # 3 octave range as default, could give users the option?
-            notes = [[str(note) for note in notes]]
+            notes = parse_scale(root, quality, 3) # 3 octave range as default, could give users the option?
+            notes = [[str(note - 12) for note in notes]] # -12 so it starts on 2nd octave
             print(notes)
       else:
             notes = [['A3']]
@@ -156,10 +154,15 @@ def setup_strauss(data_filepath, style: BaseStyle, sonify_type, length):
 def univariate_sources(xy_data: tuple, params, chord_mode, data_mode):
       pass
 
-def scale_events(x, y, params):
+def scale_events(x, y, params, length):
 
-      data = {'pitch': y,
-              'time': x}
+      user_settings = read_YAML_file(SETTINGS_FILE)
+      resolution = user_settings['data_resolution']
+
+      new_x, new_y = downsample_data(x, y, length, resolution)
+
+      data = {'pitch': new_y,
+              'time': new_x}
 
       m_lims = {'time': ('0%','101%'),
               'pitch': ('0%','100%')}
@@ -168,7 +171,7 @@ def scale_events(x, y, params):
 
       for p in params:
             if p not in data:
-                  data[p] = y
+                  data[p] = new_y
                   m_lims[p] = ('0%', '100%')
                   p_lims[p] = tuple(params[p])
       
@@ -178,7 +181,7 @@ def scale_events(x, y, params):
 
       return sources
 
-def light_curve_sources(data_filepath, params, chord_mode, data_mode, scale):
+def light_curve_sources(data_filepath, style, length):
 
       lc = lk.read(data_filepath)
       lc = lc.remove_nans()
@@ -187,39 +190,46 @@ def light_curve_sources(data_filepath, params, chord_mode, data_mode, scale):
       x = np.asarray(lc.time.value)
       y = np.asarray(lc.flux)
 
-      pitches = [0,1,2,3] if chord_mode == 'on' else [0]
+      pitches = [0,1,2,3] if style.chord_mode == 'on' else [0]
 
-      if 'pitch' in params:
+      if 'pitch' in style.parameters:
 
-            if scale:
-                  return scale_events(x, y, params)
+            if style.scale:
+                  return scale_events(x, y, style.parameters, length)
             else:
                   # Change pitch for pitch_shift if we want Objects type
-                  lims = params.pop('pitch')
-                  params['pitch_shift'] = lims
-
-      if data_mode == 'discrete':
-            time, upper_lim = 'time', '101%'
-      else:
-            time, upper_lim = 'time_evo', '100%'
+                  lims = style.parameters.pop('pitch')
+                  style.parameters['pitch_shift'] = lims
      
       data = {'pitch': pitches, 
-              time: [x]*len(pitches)}
-      m_lims = {time: ('0%', upper_lim)}
+              'time_evo': [x]*len(pitches)}
+      m_lims = {'time_evo': ('0%', '100%')}
       p_lims = {}
 
-      for p in params:
+      for p in style.parameters:
             data[p] = [y]*len(pitches)
             m_lims[p] = ('0%', '100%')
-            p_lims[p] = tuple(params[p])
+            p_lims[p] = tuple(style.parameters[p])
 
-      # We want discrete notes (Events) if data mode is discrete
-      # sources = Events(data.keys()) if data_mode == 'discrete' else Objects(data.keys())
       sources = Objects(data.keys())
       sources.fromdict(data)
       sources.apply_mapping_functions(map_lims=m_lims, param_lims=p_lims)
 
       return sources
+
+def downsample_data(x, y, length_in_sec, resolution):
+    
+    old_n = len(x)
+    new_n = int(resolution * length_in_sec)
+
+    if old_n <= new_n:
+        return x, y
+
+    bins = np.array_split(y, new_n)
+    downsampled_y = [np.mean(b) for b in bins]
+    downsampled_x = np.linspace(x[0], x[-1], len(downsampled_y))
+
+    return downsampled_x, downsampled_y
 
 
 def normalise(array):
