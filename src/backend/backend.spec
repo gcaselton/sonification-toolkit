@@ -17,6 +17,13 @@ for pkg in packages_to_collect:
     all_binaries += binaries
     all_hiddenimports += hiddenimports
 
+# Add local api module
+try:
+    api_hiddenimports = collect_submodules('api')
+    all_hiddenimports += api_hiddenimports
+except Exception:
+    all_hiddenimports += ['api']
+
 # App assets
 own_datas = [
     ('style_files', 'style_files'),

@@ -212,7 +212,7 @@ export default function Style() {
     } catch (err) {
         console.error("Error saving style settings:", err);
     }
-};
+    };
 
 
     const handleChangeFilterCutoff = (details: { checked: boolean | "indeterminate" }) => {
@@ -222,9 +222,19 @@ export default function Style() {
     };
 
     const handleChangePitch = (details: { checked: boolean | "indeterminate" }) => {
-        setPitch(details.checked === true);
-        //setSettings((prev) => ({ ...prev, Pitch: details.checked === true }));
-        console.log("Pitch:", details.checked);
+    console.log("handleChangePitch called with:", details);
+    console.log("details.checked === false:", details.checked === false);
+    console.log("Current scale before:", scale);
+    
+    setPitch(details.checked === true);
+    
+    if (details.checked === false) {
+        console.log("Setting scale to None");
+        setScale('None');
+        console.log('Scale: ' + scale)
+    }
+    
+    console.log("Pitch:", details.checked);
     };
 
     const handleChangeVolume = (details: { checked: boolean | "indeterminate" }) => {
@@ -263,8 +273,6 @@ export default function Style() {
         const target = event.target as HTMLSelectElement;
         setScale(target.value);
         setPitch(target.value !== 'None');
-        // If scale is selected, enable pitch
-        //setSettings((prev) => ({ ...prev, Scale: target.value }));
         console.log("Selected Scale:", target.value);
     };
 
@@ -428,26 +436,34 @@ export default function Style() {
                                                     ))}
                                                 </Select.Content>
                                         </Select.Root>
-                                        {!chordMode && <Select.Root collection={scaleOptions} size="sm" width="320px" onChange={handleSelectScale} mb={3}>
-                                            <Select.HiddenSelect />
-                                            <Select.Label>Scale</Select.Label>
-                                            <Select.Control>
-                                                <Select.Trigger>
-                                                <Select.ValueText placeholder={scale} />
-                                                </Select.Trigger>
-                                                <Select.IndicatorGroup>
-                                                <Select.Indicator />
-                                                </Select.IndicatorGroup>
-                                            </Select.Control>
-                                                <Select.Content>
-                                                    {scaleOptions.items.map((option) => (
-                                                    <Select.Item item={option} key={option.value}>
-                                                        {option.label}
-                                                        <Select.ItemIndicator />
-                                                    </Select.Item>
-                                                    ))}
-                                                </Select.Content>
-                                        </Select.Root>}
+                                        {!chordMode &&
+                                        <Tooltip content='Pitch must be selected to use a scale.' openDelay={100} closeDelay={100} disabled={pitch}>
+                                            <Box>
+                                                <Select.Root collection={scaleOptions} size="sm" width="320px" onChange={handleSelectScale} mb={3} disabled={!pitch}>
+                                                    <Select.HiddenSelect />
+                                                    <Select.Label>Scale</Select.Label>
+                                                    
+                                                        <Select.Control>
+                                                            <Select.Trigger>
+                                                            <Select.ValueText placeholder={scale} />
+                                                            </Select.Trigger>
+                                                            <Select.IndicatorGroup>
+                                                            <Select.Indicator />
+                                                            </Select.IndicatorGroup>
+                                                        </Select.Control>
+                                                    
+                                                        <Select.Content>
+                                                            {scaleOptions.items.map((option) => (
+                                                            <Select.Item item={option} key={option.value}>
+                                                                {option.label}
+                                                                <Select.ItemIndicator />
+                                                            </Select.Item>
+                                                            ))}
+                                                        </Select.Content>
+                                                </Select.Root>
+                                            </Box>
+                                        </Tooltip>
+                                        }
                                         {chordMode && <Select.Root collection={qualityOptions} size="sm" width="320px" onChange={handleSelectQuality} mb={3}>
                                             <Select.HiddenSelect />
                                             <Select.Label>Chord</Select.Label>

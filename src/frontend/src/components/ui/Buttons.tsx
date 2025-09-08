@@ -1,6 +1,7 @@
 import { IconButton, Button } from "@chakra-ui/react";
 import { useNavigate } from "react-router-dom";
 import { LuArrowLeft, LuAudioLines, LuChartSpline } from "react-icons/lu";
+import { Home } from "lucide-react";
 import { Lightcurve } from "../pages/Lightcurves";
 
 interface BackButtonProps {
@@ -26,6 +27,21 @@ export function BackButton({ fallbackPath }: BackButtonProps) {
       aria-label="Go back"
     >
       <LuArrowLeft strokeWidth={2.5}/>
+    </IconButton>
+  );
+}
+
+export function HomeButton() {
+  const navigate = useNavigate();
+
+  return (
+    <IconButton
+      size="lg"
+      variant="ghost"
+      onClick={() => navigate('/')}
+      aria-label="Home button"
+    >
+      <Home strokeWidth={2.5}/>
     </IconButton>
   );
 }

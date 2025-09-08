@@ -36,7 +36,7 @@ export default function Help() {
  
 
   return (
-    <PageContainer hideBackButton>
+    <PageContainer hideBackButton showHome>
       <Box>
         <Heading size="4xl">Help</Heading>
         <br />

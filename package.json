@@ -1,7 +1,7 @@
 {
   "dependencies": {
     "@chakra-ui/icons": "^2.2.4",
-    "@chakra-ui/react": "^3.24.1",
+    "@chakra-ui/react": "^3.26.0",
     "@emotion/react": "^11.14.0",
     "concurrently": "^9.2.0",
     "electron": "^37.2.6",

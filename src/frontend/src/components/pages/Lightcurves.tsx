@@ -234,7 +234,7 @@ export default function Lightcurves() {
   };
 
   return (
-    <PageContainer hideBackButton>
+    <PageContainer>
       <Box>
         <Heading size="4xl">Light Curves</Heading>
         <br />
@@ -281,11 +281,11 @@ export default function Lightcurves() {
             <br />
             <Stack gap="4" direction="row" wrap="wrap">
               {variants.map((variant) => (
-                <Card.Root width="200px" key={variant.name}>
+                <Card.Root width="200px" key={variant.name} variant='elevated' _hover={{transform: "scale(1.05)"}} transition="transform 0.2s ease">
                   <LinkOverlay as={Link} onClick={() => {handleClickStar(variant)}}>
                     <img src={`./assets/${variant.name}.jpg`} alt={variant.name} style={{ width: "100%", borderRadius: "8px" }} />
                   </LinkOverlay>
-                  <Card.Body gap="2">
+                  <Card.Body>
                     <Card.Title mb="2">{variant.name}</Card.Title>
                     <Card.Description>{variant.description}</Card.Description>
                   </Card.Body>
