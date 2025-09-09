@@ -132,17 +132,30 @@ async def plot_lightcurve(request: DownloadRequest):
     Download the target light curve (if not already downloaded) and convert it to a png image.
     This function saves the plot to the memory buffer, to increase speed and avoid saving multiple images to disk.
 
-    - **request**: The URI of the light curve.
+    - **request**: The URI (or local filepath) of the light curve.
     - Returns: The image as a base64 string.
     """
 
-    # Download the lightcurve to the tmp directory, and load it as a LightCurve object
-    filepath = download_lightcurve(request.data_uri)
+    # Check if the requested light curve is from a search (with data URI) or a suggested (local) file.
+    if (request.data_uri.startswith('mast:')):
+        filepath = download_lightcurve(request.data_uri)
+    else:
+        filepath = request.data_uri
+
     lc = lk.read(filepath)
 
-    # Plot and send bytes to buffer
+    # Plot and format
     fig, ax = plt.subplots()
-    lc.plot(ax=ax)
+    lc.plot(ax=ax, color="#008080", linewidth=1.2, alpha=0.9)
+
+    legend = ax.get_legend()
+    if legend:
+        legend.remove()
+
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+
+    # send bytes to buffer
     buf = BytesIO()
     plt.savefig(buf, format="png")
     plt.close(fig)

@@ -85,9 +85,3 @@ import musical_scales
 
 
 
-notes = musical_scales.scale('D', 'major', 3)
-
-notes = [[str(note - 12) for note in notes]]
-        
-
-print(notes)

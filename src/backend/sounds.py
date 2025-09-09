@@ -50,8 +50,8 @@ def format_name(file_name: str):
     # Remove last underscore + file type ('_wav')
     base = base.rsplit('_', 1)[0]
 
-    # Replace hyphens and remaining dots with spaces
-    name = base.replace('-', ' ').replace('.', ' ')
+    # Replace remaining dots with spaces
+    name = base.replace('.', ' ')
 
     return name
 

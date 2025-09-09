@@ -1,8 +1,0 @@
-chord: null
-chord_mode: 'off'
-parameters:
-  cutoff:
-  - 0.1
-  - 0.9
-scale: null
-sound: Default Synth

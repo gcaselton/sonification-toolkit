@@ -3,7 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import LoadingMessage from '../ui/LoadingMessage';
 import { LuX, LuChartSpline, LuAudioLines } from "react-icons/lu";
 import PageContainer from "../ui/PageContainer";
-import { SonifyButton, PlotButton } from "../ui/Buttons";
+import { SonifyButton, PlotButton} from "../ui/Buttons";
+import { PlotDialog } from "../ui/PlotDialog";
+import { Tooltip } from "../ui/Tooltip";
 
 import {
   Box,
@@ -21,7 +23,7 @@ import {
   Table,
   Text,
   IconButton,
-  chakra,
+  chakra
 } from "@chakra-ui/react";
 
  export interface Lightcurve {
@@ -34,7 +36,7 @@ import {
   dataURI: string;
 }
 
-interface Variant {
+export interface Variant {
   name: string;
   description: string;
   filepath: string;
@@ -138,7 +140,7 @@ export default function Lightcurves() {
     }
   }
 
-  const plotLightcurve = async (dataURI: string) => {
+  const plotLightcurve = async (filepath: string) => {
 
     const url_plot = "http://localhost:8000/plot-lightcurve"
     const response = await fetch(url_plot, {
@@ -147,12 +149,12 @@ export default function Lightcurves() {
         Accept: 'application/json',
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ 'data_uri': dataURI })
+      body: JSON.stringify({ 'data_uri': filepath })
     });
     const plotData = await response.json();
     const image = plotData.image; // Assuming the response contains an image in base64 format
     // Handle the plot data as needed
-    console.log("Data URI:", dataURI);
+    console.log("Data URI:", filepath);
     console.log("Image:", image);
     console.log("src:", "data:image/png;base64,"+ image);
     return image; // Assuming the response contains an image in base64 format
@@ -207,23 +209,38 @@ export default function Lightcurves() {
     });
   };
 
-  const handleClickPlot = async (item: Lightcurve) => {
-  
+  const handleClickPlot = async (item: Lightcurve | Variant) => {
+
     console.log("Plot button clicked for star:", selectedStar);
-    console.log("Data URI:", item.dataURI);
+
+    let filepath, plotTitle
+
+    if ('dataURI' in item) {
+      filepath = item.dataURI
+      plotTitle = `${item.period}, ${item.pipeline}, ${item.year}`
+    }
+    else {
+      filepath = item.filepath
+      plotTitle = item.name
+    }
+    
+    setTitle(`Light Curve Graph for ${plotTitle}`);
     setLoadingPlot(true);
+    setOpen(true);
+    
     try {
       setImage("");
-      const image = await plotLightcurve(item.dataURI);
+      const image = await plotLightcurve(filepath);
 
       if (image) {
         setImage("data:image/png;base64," + image);
-        setTitle(`Lightcurve Graph for ${item.period}, ${item.pipeline}, ${item.year}`);
-        setOpen(true);
         setLoadingPlot(false);
       }
     } catch (err) {
       console.error("Error plotting light curve:", err)
+    }
+    finally{
+      setLoadingPlot(false); 
     }
   };
 
@@ -274,6 +291,13 @@ export default function Lightcurves() {
         </form>
         {loading && <LoadingMessage msg={`Searching the Universe for ${searchTerm}...`} icon='pulsar'/>}
         <br />
+        <PlotDialog 
+                      open={open}
+                      setOpen={setOpen}
+                      title={title}
+                      loadingPlot={loadingPlot}
+                      image={image}
+        />
         {!searched && (
           <Box animation="fade-in 300ms ease-out">
             <Heading size="2xl">Suggested</Heading>
@@ -281,10 +305,38 @@ export default function Lightcurves() {
             <br />
             <Stack gap="4" direction="row" wrap="wrap">
               {variants.map((variant) => (
-                <Card.Root width="200px" key={variant.name} variant='elevated' _hover={{transform: "scale(1.05)"}} transition="transform 0.2s ease">
-                  <LinkOverlay as={Link} onClick={() => {handleClickStar(variant)}}>
-                    <img src={`./assets/${variant.name}.jpg`} alt={variant.name} style={{ width: "100%", borderRadius: "8px" }} />
-                  </LinkOverlay>
+                <Card.Root
+                width="200px" 
+                key={variant.name} 
+                variant='elevated' 
+                _hover={{transform: "scale(1.05)"}} 
+                transition="transform 0.2s ease"
+                cursor='pointer'
+                onClick={() => handleClickStar(variant)}>
+                  <Box position="relative">
+                      <img
+                        src={`./assets/${variant.name}.jpg`}
+                        alt={variant.name}
+                        style={{ width: "100%", borderRadius: "8px" }}
+                      />
+                  
+                    <Box
+                      position="absolute"
+                      top="0.5rem"
+                      left="0.5rem"
+                      zIndex={10}
+                      onClick={(e) => {
+                        e.stopPropagation() // prevent the card click
+                        handleClickPlot(variant)
+                      }}
+                    >
+                      <Tooltip content='View plot'>
+                        <Button colorPalette='gray' variant='solid' size='xs'>
+                          <LuChartSpline/>
+                        </Button>
+                      </Tooltip>
+                    </Box>
+                  </Box>
                   <Card.Body>
                     <Card.Title mb="2">{variant.name}</Card.Title>
                     <Card.Description>{variant.description}</Card.Description>
@@ -320,32 +372,7 @@ export default function Lightcurves() {
                   <Table.Cell>{item.year}</Table.Cell>
                   <Table.Cell>{item.period}</Table.Cell>
                   <Table.Cell>
-                    <Dialog.Root lazyMount open={open} onOpenChange={(details) => setOpen(details.open)}>
-                      <Dialog.Trigger asChild>
-                        <PlotButton onClick={handleClickPlot} item={item}/>
-                      </Dialog.Trigger>
-                      <Dialog.Backdrop />
-                      <Dialog.Positioner>
-                        <Dialog.Content>
-                          <Dialog.CloseTrigger asChild>
-                            <IconButton size="sm"
-                              variant="ghost"
-                              position="absolute"
-                              top="0.5rem"
-                              right="0.5rem"
-                              aria-label="Close">
-                              <LuX />
-                            </IconButton>
-                          </Dialog.CloseTrigger>
-                          <Dialog.Header>
-                            <Dialog.Title>{title}</Dialog.Title>
-                          </Dialog.Header>
-                          <Dialog.Body>
-                            {loadingPlot ? (<LoadingMessage msg="" icon="pulsar"/>) : (<Image src={image} />)}
-                          </Dialog.Body>                    
-                        </Dialog.Content>
-                      </Dialog.Positioner>
-                    </Dialog.Root>
+                    <PlotButton onClick={handleClickPlot} item={item}/>
                   </Table.Cell>
                   <Table.Cell>
                     <SonifyButton onClick={handleClickSonify} dataURI={item.dataURI} loading={item.dataURI === loadingId}/>

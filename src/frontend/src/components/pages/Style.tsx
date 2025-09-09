@@ -114,7 +114,7 @@ export default function Style() {
             { label: "Romani", value: "romani" },
             { label: "Harmonic Major", value: "harmonic major" },
             { label: "Harmonic Minor", value: "harmonic minor" },
-            { label: "Hijaroshi", value: "hijaroshi" },
+            { label: "Hirajoshi", value: "hijaroshi" },
             { label: "Locrian", value: "locrian" },
             { label: "Lydian", value: "lydian" },
             { label: "Mixolydian", value: "mixolydian" },
