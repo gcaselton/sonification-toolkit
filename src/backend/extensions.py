@@ -116,7 +116,7 @@ def setup_strauss(data_filepath, style: BaseStyle, sonify_type, length):
                   generator.modify_preset({'volume_envelope': {'use':'on', 'R':0.2}})
             else:
                   generator.load_preset('sustain')
-                  generator.modify_preset({'looping': 'forward', 'loop_start': 0., 'loop_end': 5.})
+                  generator.modify_preset({'looping': 'forwardback', 'loop_start': 0.2, 'loop_end': 5.})
             
       
       # generator = Synthesizer() if folder == 'synths' else Sampler()

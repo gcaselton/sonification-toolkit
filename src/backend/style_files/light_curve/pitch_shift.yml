@@ -1,8 +1,8 @@
-name: "Pitch Shift"
+name: "Power Hum"
 
-description: Triangle wave synth with the star's brightness mapped to continuous pitch shift.
+description: Drone synth with the star's brightness mapped to continuous pitch shift.
 
-sound: "Tri Synth"
+sound: "Drone"
 
 parameters:
   pitch: [3, 15]
