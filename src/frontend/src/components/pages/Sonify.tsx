@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useLocation } from 'react-router-dom';
 import LoadingMessage from "../ui/LoadingMessage";
 import {BackButton} from "../ui/Buttons";
@@ -9,12 +9,34 @@ import {
   createListCollection,
   Field,
   Heading,
+  Image,
   Input,
   Text,
   Flex,
   VStack,
-  Select
+  Select,
+  HStack
 } from "@chakra-ui/react";
+import { plotLightcurve } from "./Lightcurves";
+
+
+export function LightcurveViewer({ filepath }: { filepath: string }) {
+  const [imageSrc, setImageSrc] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function fetchPlot() {
+      const base64 = await plotLightcurve(filepath);
+      setImageSrc(`data:image/png;base64,${base64}`);
+    }
+    fetchPlot();
+  }, [filepath]);
+
+  if (!imageSrc) {
+    return <LoadingMessage msg="" icon="pulsar" />;
+  }
+
+  return <Image src={imageSrc} alt="Lightcurve plot" />;
+}
 
 export default function Sonify() {
 
@@ -93,6 +115,11 @@ export default function Sonify() {
     });
   };
 
+
+  
+
+
+
   return (
     <PageContainer>
       <Box position='relative'>
@@ -100,6 +127,7 @@ export default function Sonify() {
         <br />
         <Text textStyle='lg'>Set the length of the sonification and specify the audio system you intend to play it on.</Text>
         <br />
+        <HStack>
         <form onSubmit={handleSubmit}>
             <VStack gap="5">
               <Field.Root width="320px">
@@ -136,6 +164,9 @@ export default function Sonify() {
               </Button>
             </VStack>
         </form>
+        <LightcurveViewer filepath={dataFilepath}/>
+        </HStack>
+        <br/>
         {loading && <LoadingMessage msg="Generating Sonification..."/>}
         {!loading && soniReady && (
           <Box mt={4} animation="fade-in" animationDuration="0.3s">

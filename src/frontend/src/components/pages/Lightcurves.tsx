@@ -50,7 +50,25 @@ function capitaliseWords(str: string) {
   return str.replace(/\b\w/g, char => char.toUpperCase());
 }
 
+export const plotLightcurve = async (filepath: string) => {
 
+  const url_plot = "http://localhost:8000/plot-lightcurve"
+  const response = await fetch(url_plot, {
+    method: 'POST',
+    headers: {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ 'data_uri': filepath })
+  });
+  const plotData = await response.json();
+  const image = plotData.image; // Assuming the response contains an image in base64 format
+  // Handle the plot data as needed
+  console.log("Data URI:", filepath);
+  console.log("Image:", image);
+  console.log("src:", "data:image/png;base64,"+ image);
+  return image; // Assuming the response contains an image in base64 format
+}
 
 export default function Lightcurves() {
   const navigate = useNavigate();
@@ -140,25 +158,7 @@ export default function Lightcurves() {
     }
   }
 
-  const plotLightcurve = async (filepath: string) => {
-
-    const url_plot = "http://localhost:8000/plot-lightcurve"
-    const response = await fetch(url_plot, {
-      method: 'POST',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ 'data_uri': filepath })
-    });
-    const plotData = await response.json();
-    const image = plotData.image; // Assuming the response contains an image in base64 format
-    // Handle the plot data as needed
-    console.log("Data URI:", filepath);
-    console.log("Image:", image);
-    console.log("src:", "data:image/png;base64,"+ image);
-    return image; // Assuming the response contains an image in base64 format
-  }
+  
 
   const selectLightcurve = async (dataURI: string) => {
     // Call the API endpoint to select the lightcurve and get the filepath
