@@ -3,10 +3,12 @@ import { useLocation } from 'react-router-dom';
 import LoadingMessage from "../ui/LoadingMessage";
 import {BackButton} from "../ui/Buttons";
 import PageContainer from "../ui/PageContainer";
+import ErrorMsg from "../ui/ErrorMsg";
 import {
   Box,
   Button,
   createListCollection,
+  Checkbox,
   Field,
   Heading,
   Image,
@@ -19,25 +21,6 @@ import {
 } from "@chakra-ui/react";
 import { plotLightcurve } from "./Lightcurves";
 
-
-export function LightcurveViewer({ filepath }: { filepath: string }) {
-  const [imageSrc, setImageSrc] = useState<string | null>(null);
-
-  useEffect(() => {
-    async function fetchPlot() {
-      const base64 = await plotLightcurve(filepath);
-      setImageSrc(`data:image/png;base64,${base64}`);
-    }
-    fetchPlot();
-  }, [filepath]);
-
-  if (!imageSrc) {
-    return <LoadingMessage msg="" icon="pulsar" />;
-  }
-
-  return <Image src={imageSrc} alt="Lightcurve plot" />;
-}
-
 export default function Sonify() {
 
   const [length, setLength] = useState(15);
@@ -48,8 +31,25 @@ export default function Sonify() {
   const dataFilepath = location.state.dataFilepath;
   const [soniReady, setSoniReady] = useState(false)
   const [loading, setLoading] = useState(false)
-  console.log("Filepath of Selected Lightcurve:", dataFilepath);
-  console.log("Settings filepath:", settingsFilepath);
+  const [showPlot, setShowPlot] = useState(false)
+
+  const [imageSrc, setImageSrc] = useState<string | null>(null);
+  const [imageLoading, setImageLoading] = useState(true);
+
+  // Generate the plot once when component mounts
+  useEffect(() => {
+    async function fetchPlot() {
+      try {
+        const base64 = await plotLightcurve(dataFilepath);
+        setImageSrc(`data:image/png;base64,${base64}`);
+      } catch (error) {
+        console.error("Error generating plot:", error);
+      } finally {
+        setImageLoading(false);
+      }
+    }
+    fetchPlot();
+  }, [dataFilepath]);
 
   const audioSystemOptions = createListCollection({
     items: [
@@ -59,11 +59,6 @@ export default function Sonify() {
       { label: "7.1 Surround", value: "7.1" },
     ],
   });
-
-  // const handleAudioSystemChange = (value: string) => {
-  //   console.log("Selected Audio System:", value);
-  //   setAudioSystem(value);
-  // };
 
   const requestSonification = async () => {
     const url_sonification = "http://localhost:8000/sonify-lightcurve";
@@ -117,67 +112,80 @@ export default function Sonify() {
 
 
   
-
-
-
   return (
     <PageContainer>
       <Box position='relative'>
-        <Heading size="4xl">Sonify</Heading>
+        <Heading size="4xl">Step 3: Sonify</Heading>
         <br />
         <Text textStyle='lg'>Set the length of the sonification and specify the audio system you intend to play it on.</Text>
         <br />
-        <HStack>
-        <form onSubmit={handleSubmit}>
-            <VStack gap="5">
-              <Field.Root width="320px">
-                <Field.Label>Duration (seconds)</Field.Label>
-                <Input
-                  placeholder="Duration (seconds)"
-                  type="number"
-                  value={length}
-                  onChange={(e) => setLength(Number(e.target.value))}
-                />
-              </Field.Root>
-              <Select.Root collection={audioSystemOptions} size="sm" width="320px" value={audioSystem} onValueChange={(e) => setAudioSystem(e.value)} variant='outline'>
-                  <Select.HiddenSelect />
-                  <Select.Label>Audio System</Select.Label>
-                  <Select.Control>
-                      <Select.Trigger>
-                        <Select.ValueText placeholder="Select audio system" />
-                      </Select.Trigger>
-                      <Select.IndicatorGroup>
-                      <Select.Indicator />
-                      </Select.IndicatorGroup>
-                  </Select.Control>
-                      <Select.Content>
-                          {audioSystemOptions.items.map((option) => (
-                            <Select.Item item={option} key={option.value}>
-                                {option.label}
-                                <Select.ItemIndicator />
-                            </Select.Item>
-                          ))}
-                      </Select.Content>
-              </Select.Root>
-              <Button type="submit" colorPalette="teal" width="320px">
-                Generate
-              </Button>
-            </VStack>
-        </form>
-        <LightcurveViewer filepath={dataFilepath}/>
+        <HStack gap='4' align='start' justify='center'>
+        <Box width='50%'>
+          <form onSubmit={handleSubmit}>
+              <VStack gap="5">
+                <Field.Root>
+                  <Field.Label>Duration (seconds)</Field.Label>
+                  <Input
+                    placeholder="Duration (seconds)"
+                    type="number"
+                    value={length}
+                    onChange={(e) => setLength(Number(e.target.value))}
+                  />
+                </Field.Root>
+                <Select.Root collection={audioSystemOptions} size="sm" value={audioSystem} onValueChange={(e) => setAudioSystem(e.value)} variant='outline'>
+                    <Select.HiddenSelect />
+                    <Select.Label>Audio System</Select.Label>
+                    <Select.Control>
+                        <Select.Trigger>
+                          <Select.ValueText placeholder="Select audio system" />
+                        </Select.Trigger>
+                        <Select.IndicatorGroup>
+                        <Select.Indicator />
+                        </Select.IndicatorGroup>
+                    </Select.Control>
+                        <Select.Content>
+                            {audioSystemOptions.items.map((option) => (
+                              <Select.Item item={option} key={option.value}>
+                                  {option.label}
+                                  <Select.ItemIndicator />
+                              </Select.Item>
+                            ))}
+                        </Select.Content>
+                </Select.Root>
+                <Checkbox.Root checked={showPlot} onCheckedChange={(details) => setShowPlot(details.checked === true)}>
+                  <Checkbox.HiddenInput />
+                  <Checkbox.Control />
+                  <Checkbox.Label>View plot</Checkbox.Label>
+                </Checkbox.Root>
+                <Button type="submit" colorPalette="teal" width='50%'>
+                  Generate
+                </Button>
+              </VStack>
+          </form>
+          <br/>
+          {loading && <LoadingMessage msg="Generating Sonification..."/>}
+          {!loading && soniReady && (
+            <Box mt={4} animation="fade-in" animationDuration="0.3s">
+              <audio
+                src={`http://localhost:8000/audio/${audioFilepath}`}
+                controls
+                style={{ width: "100%" }}
+              />
+            </Box>
+          )}
+        </Box>
+        {showPlot && (
+            <Box width='50%'>
+              {imageLoading ? (
+                <LoadingMessage msg="" icon="pulsar" />
+              ) : imageSrc ? (
+                <Image src={imageSrc} alt="Lightcurve plot" />
+              ) : (
+                <ErrorMsg message="Unable to plot data."/>
+              )}
+            </Box>
+          )}
         </HStack>
-        <br/>
-        {loading && <LoadingMessage msg="Generating Sonification..."/>}
-        {!loading && soniReady && (
-          <Box mt={4} animation="fade-in" animationDuration="0.3s">
-            <audio
-              src={`http://localhost:8000/audio/${audioFilepath}`}
-              controls
-              style={{ width: "100%" }}
-            />
-          </Box>
-        )}
-        
       </Box>
     </PageContainer>
   );

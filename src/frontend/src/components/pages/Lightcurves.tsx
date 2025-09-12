@@ -6,6 +6,7 @@ import PageContainer from "../ui/PageContainer";
 import { SonifyButton, PlotButton} from "../ui/Buttons";
 import { PlotDialog } from "../ui/PlotDialog";
 import { Tooltip } from "../ui/Tooltip";
+import ErrorMsg from "../ui/ErrorMsg";
 
 import {
   Box,
@@ -278,14 +279,7 @@ export default function Lightcurves() {
               <Button type="submit" colorPalette="teal" width="100%">
                 Search
               </Button>
-              {errorMessage && (
-                <Alert.Root status='error' animation="fade-in 300ms ease-out">
-                  <Alert.Indicator />
-                  <Alert.Content>
-                    <Alert.Title>{errorMessage}</Alert.Title>
-                  </Alert.Content>
-                </Alert.Root>
-              )}
+              {errorMessage && <ErrorMsg message={errorMessage}/>}
             </VStack>
           </Box>
         </form>

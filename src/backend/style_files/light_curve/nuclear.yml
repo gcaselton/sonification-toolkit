@@ -1,8 +1,8 @@
 name: "Nuclear"
 
-description: Low bass note and burning sound + filter cutoff.
+description: "Deep Crackle + Filter Cutoff."
 
-sound: "Nuclear"
+sound: "Deep Crackle"
 
 parameters:
   cutoff: [0.3, 1]

@@ -1,8 +1,8 @@
 name: 'Twinkle'
 
-description: 'Twinkle sound + filter cutoff.'
+description: 'Bright Mallets + Filter Cutoff.'
 
-sound: 'Twinkle'
+sound: 'Bright Mallets'
 
 parameters:
   cutoff: [0.3, 1]

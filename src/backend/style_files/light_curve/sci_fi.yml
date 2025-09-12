@@ -1,8 +1,8 @@
 name: "Sci-Fi"
 
-description: Sci-Fi sound + filter cutoff.
+description: "Space Strings + Filter Cutoff."
 
-sound: "Sci-Fi"
+sound: "Space Strings"
 
 parameters:
   cutoff: [0.3, 1]

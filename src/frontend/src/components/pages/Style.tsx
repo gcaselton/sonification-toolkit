@@ -324,7 +324,7 @@ export default function Style() {
     return (
         <PageContainer>
             <Box position='relative'>
-                <Heading size="4xl">Style</Heading>
+                <Heading size="4xl">  Step 2: Style</Heading>
                 <br />
                 <Text textStyle="lg">Choose from the styles below, or configure your own.</Text>
                 <br />
@@ -373,28 +373,28 @@ export default function Style() {
                             
                             <br />
                             <Stack gap="4" direction="row" wrap="wrap">
-                                <Checkbox.Root key={parameters[0]} checked={filterCutoff} onCheckedChange={handleChangeFilterCutoff}>
+                                <Checkbox.Root key={parameters[0]} checked={filterCutoff} onCheckedChange={handleChangeFilterCutoff} colorPalette='teal'>
                                     <Checkbox.HiddenInput />
                                     <Checkbox.Control>
                                         <Checkbox.Indicator />
                                     </Checkbox.Control>
                                     <Checkbox.Label>{parameters[0]}</Checkbox.Label>
                                 </Checkbox.Root>
-                                <Checkbox.Root key={parameters[1]} checked={pitch} onCheckedChange={handleChangePitch}>
+                                <Checkbox.Root key={parameters[1]} checked={pitch} onCheckedChange={handleChangePitch} colorPalette='teal'>
                                     <Checkbox.HiddenInput />
                                     <Checkbox.Control>
                                         <Checkbox.Indicator />
                                     </Checkbox.Control>
                                     <Checkbox.Label>{parameters[1]}</Checkbox.Label>
                                 </Checkbox.Root>
-                                <Checkbox.Root key={parameters[2]} checked={volume} onCheckedChange={handleChangeVolume}>
+                                <Checkbox.Root key={parameters[2]} checked={volume} onCheckedChange={handleChangeVolume} colorPalette='teal'>
                                     <Checkbox.HiddenInput />
                                     <Checkbox.Control>
                                         <Checkbox.Indicator />
                                     </Checkbox.Control>
                                     <Checkbox.Label>{parameters[2]}</Checkbox.Label>
                                 </Checkbox.Root>
-                                <Checkbox.Root key={parameters[3]} defaultChecked={leftRightPan} onCheckedChange={handleChangeLeftRightPan}>
+                                <Checkbox.Root key={parameters[3]} defaultChecked={leftRightPan} onCheckedChange={handleChangeLeftRightPan} colorPalette='teal'>
                                     <Checkbox.HiddenInput />
                                     <Checkbox.Control>
                                         <Checkbox.Indicator />
@@ -408,7 +408,7 @@ export default function Style() {
                                     <Text color='teal' fontWeight='medium' cursor='pointer' mb={3}>Musical Settings</Text>
                                 </Collapsible.Trigger>
                                 <Collapsible.Content>
-                                        <Switch.Root defaultChecked={chordMode} onCheckedChange={handleChordMode} mb={3}>
+                                        <Switch.Root defaultChecked={chordMode} onCheckedChange={handleChordMode} mb={3} colorPalette='teal'>
                                             <Switch.HiddenInput />
                                             <Switch.Control />
                                             <HStack>
