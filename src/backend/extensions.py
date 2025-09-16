@@ -106,6 +106,8 @@ def setup_strauss(data_filepath, style: BaseStyle, sonify_type, length):
             generator = Synthesizer()
             path_stem = str(path.with_suffix(""))
             generator.load_preset(path_stem)
+
+            # NOTE To do: Modify preset for ADSR if using scale
       else:
             path = str(path)
             inner_file = get_filepath(path)
