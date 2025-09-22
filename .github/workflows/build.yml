@@ -38,8 +38,8 @@ jobs:
             "all")
               matrix='[
                 {"os": "ubuntu-latest", "platform": "linux", "electron_targets": "deb tar.xz"},
-                {"os": "windows-latest", "platform": "windows", "electron_targets": "nsis portable"},
-                {"os": "macos-latest", "platform": "macos", "electron_targets": "dmg zip"}
+                {"os": "windows-latest", "platform": "windows", "electron_targets": "nsis"},
+                {"os": "macos-latest", "platform": "macos", "electron_targets": "dmg"}
               ]'
               ;;
             "windows")
