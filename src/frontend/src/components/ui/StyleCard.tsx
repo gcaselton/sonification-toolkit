@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import './StyleCard.css';
 import { Text, IconButton, Box } from "@chakra-ui/react";
 import { Volume2, VolumeOff } from 'lucide-react';
+import { getAudio } from '../../utils/assets';
 
 interface StyleCardProps {
   title: string;
@@ -37,7 +38,7 @@ export default function StyleCard({ title, gradientClass, isCustom = false }: St
     }
 
     // Start this one
-    const audio = new Audio(`/previews/${title}.mp3`);
+    const audio = new Audio(getAudio(title));
     audio.play().catch((err) => console.error("Error playing preview:", err));
 
     currentAudio = audio;

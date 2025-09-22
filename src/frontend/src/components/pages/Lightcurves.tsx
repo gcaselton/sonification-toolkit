@@ -7,6 +7,7 @@ import { SonifyButton, PlotButton} from "../ui/Buttons";
 import { PlotDialog } from "../ui/PlotDialog";
 import { Tooltip } from "../ui/Tooltip";
 import ErrorMsg from "../ui/ErrorMsg";
+import { getImage } from "../../utils/assets";
 
 import {
   Box,
@@ -63,13 +64,15 @@ export const plotLightcurve = async (filepath: string) => {
     body: JSON.stringify({ 'data_uri': filepath })
   });
   const plotData = await response.json();
-  const image = plotData.image; // Assuming the response contains an image in base64 format
-  // Handle the plot data as needed
+  const image = plotData.image; 
+  
   console.log("Data URI:", filepath);
   console.log("Image:", image);
   console.log("src:", "data:image/png;base64,"+ image);
-  return image; // Assuming the response contains an image in base64 format
+  return image;
 }
+
+
 
 export default function Lightcurves() {
   const navigate = useNavigate();
@@ -309,7 +312,7 @@ export default function Lightcurves() {
                 onClick={() => handleClickStar(variant)}>
                   <Box position="relative">
                       <img
-                        src={`./assets/${variant.name}.jpg`}
+                        src={getImage(variant.name)}
                         alt={variant.name}
                         style={{ width: "100%", borderRadius: "8px" }}
                       />

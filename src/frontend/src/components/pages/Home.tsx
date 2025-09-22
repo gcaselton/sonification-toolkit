@@ -4,6 +4,7 @@ import LoadingMessage from '../ui/LoadingMessage';
 import { Upload } from "lucide-react";
 import PageContainer from "../ui/PageContainer";
 import { SonifyButton, PlotButton } from "../ui/Buttons";
+import { getImage } from "../../utils/assets";
 
 import {
   Box,
@@ -80,7 +81,7 @@ export default function Lightcurves() {
                 <Card.Root width="200px" key={astroType.name} variant='elevated' _hover={{transform: "scale(1.05)"}} transition="transform 0.2s ease">
                   <LinkOverlay as={Link} onClick={() => navigate(astroType.page)}>
                     <img 
-                    src={`./assets/${astroType.name}.jpg`} 
+                    src={getImage(astroType.name)} 
                     alt={astroType.name} 
                     style={{ width: "100%", height: '200px', objectFit: 'cover', borderRadius: "8px" }} />
                   </LinkOverlay>
