@@ -32,7 +32,7 @@ export default function Style() {
 
     const navigate = useNavigate();
 
-    type Option = { label: string; value: string };
+    interface BaseSound { label: string; value: string };
 
     // State to manage the dialog open/close
     const [open, setOpen] = useState(false);
@@ -64,7 +64,7 @@ export default function Style() {
                     label: name,
                     value: name,
                 }));
-                setSoundOptions(createListCollection<Option>({ items }));
+                setSoundOptions(createListCollection<BaseSound>({ items }));
             })
             .catch((err) => {
                 console.error("Failed to fetch sound names:", err);
@@ -82,7 +82,7 @@ export default function Style() {
     const [rootNote, setRootNote] = useState('C');
     const [scale, setScale] = useState('None');
     const [quality, setQuality] = useState('maj');
-    const [soundOptions, setSoundOptions] = useState(createListCollection<Option>({ items: [] }));
+    const [soundOptions, setSoundOptions] = useState(createListCollection<BaseSound>({ items: [] }));
 
     const rootNoteOptions = createListCollection({
         items: [

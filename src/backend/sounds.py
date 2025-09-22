@@ -1,6 +1,13 @@
 from paths import SYNTHS_DIR, SAMPLES_DIR
 from config import GITHUB_USER, GITHUB_REPO
 import httpx
+from pydantic import BaseModel
+
+class SoundInfo(BaseModel):
+    name: str
+    composable: bool
+    downloaded: bool
+    
 
 asset_cache = []
 
@@ -25,11 +32,9 @@ async def cache_online_assets():
             break  # Only take the latest asset release
 
 
-
-
 def online_sound_names():
 
-    names = []
+    sounds = []
 
     for asset in asset_cache:
         file_name = asset.get('name', '')
@@ -38,9 +43,9 @@ def online_sound_names():
 
         name = format_name(file_name)
 
-        names.append(name)
+        sounds.append(name)
        
-    return names
+    return sounds
 
 def format_name(file_name: str):
 

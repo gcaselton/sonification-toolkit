@@ -37,48 +37,44 @@ def get_base_paths():
     
     return backend_dir, src_dir
 
+def get_user_data_dir():
+    """Get user-specific data directory"""
+    if sys.platform == 'win32':  # Windows
+        return BACKEND_DIR
+    elif sys.platform == 'darwin':  # macOS
+        return Path.home() / 'Library' / 'Application Support' / 'Sonification Toolkit'
+    else:  # Linux and other Unix-like systems
+        return Path.home() / '.local' / 'share' / 'sonification-toolkit'
+    
+
+def get_tmp_dir():
+    """Get temporary directory in user space"""
+    user_data = get_user_data_dir()
+    tmp_dir = user_data / 'tmp'
+    tmp_dir.mkdir(parents=True, exist_ok=True)
+    return tmp_dir
+
+
 # Get the base paths
 BACKEND_DIR, SRC_DIR = get_base_paths()
 
 # Define all paths
 STYLE_FILES_DIR = BACKEND_DIR / "style_files"
 SUGGESTED_DATA_DIR = BACKEND_DIR / "suggested_data"
-SETTINGS_FILE = BACKEND_DIR / "settings" / "settings.yml"
+USER_DATA_DIR = get_user_data_dir()
+TMP_DIR = get_tmp_dir()
+SETTINGS_FILE = USER_DATA_DIR / "settings" / "settings.yml"
 SOUND_ASSETS_DIR = BACKEND_DIR / "sound_assets"
 SYNTHS_DIR = SOUND_ASSETS_DIR / "synths"
 SAMPLES_DIR = SOUND_ASSETS_DIR / "samples"
 SAMPLES_DIR.mkdir(exist_ok=True)
 
-# Temp directory for storing data files and sonifications
-TMP_DIR = BACKEND_DIR / "tmp"
-TMP_DIR.mkdir(exist_ok=True)
 
 def clear_tmp_dir():
-    """Delete all contents of the TMP_DIR on startup."""
-    for item in TMP_DIR.iterdir():
-        if item.is_dir():
-            shutil.rmtree(item)
-        else:
-            item.unlink()
-
-# Debug output (remove once working)
-print("=== PATH DEBUG INFO ===")
-print(f"sys.frozen: {getattr(sys, 'frozen', False)}")
-print(f"sys._MEIPASS: {getattr(sys, '_MEIPASS', 'Not set')}")
-print(f"BACKEND_DIR: {BACKEND_DIR}")
-print(f"SRC_DIR: {SRC_DIR}")
-print(f"STYLE_FILES_DIR: {STYLE_FILES_DIR} (exists: {STYLE_FILES_DIR.exists()})")
-print(f"SUGGESTED_DATA_DIR: {SUGGESTED_DATA_DIR} (exists: {SUGGESTED_DATA_DIR.exists()})")
-print(f"SOUND_ASSETS_DIR: {SOUND_ASSETS_DIR} (exists: {SOUND_ASSETS_DIR.exists()})")
-print(f"TMP_DIR: {TMP_DIR} (exists: {TMP_DIR.exists()})")
-
-# List contents of bundle directory in production for debugging
-if getattr(sys, 'frozen', False):
-    print(f"Contents of {BACKEND_DIR}:")
+    """Clear temporary directory"""
     try:
-        for item in BACKEND_DIR.iterdir():
-            print(f"  {item.name} {'(dir)' if item.is_dir() else '(file)'}")
-    except Exception as e:
-        print(f"  Error listing contents: {e}")
-
-print("=== END PATH DEBUG ===")
+        for file_path in TMP_DIR.glob('*'):
+            if file_path.is_file():
+                file_path.unlink()
+    except PermissionError as e:
+        print(f"Warning: Could not clear tmp directory: {e}")

@@ -1,4 +1,4 @@
-const { app, BrowserWindow, Menu } = require('electron');
+const { app, BrowserWindow, Menu, nativeTheme } = require('electron');
 const { spawn } = require('child_process');
 const path = require('path');
 const kill = require('tree-kill');
@@ -8,6 +8,9 @@ const isDev = process.argv.includes('--dev') || (process.env.NODE_ENV === 'devel
 console.log('isDev:', isDev);
 console.log('__dirname:', __dirname);
 console.log('process.env.NODE_ENV:', process.env.NODE_ENV);
+
+// Enforce light mode colour scheme
+nativeTheme.themeSource = 'light'
 
 let mainWindow = null;
 let splashWindow = null;
