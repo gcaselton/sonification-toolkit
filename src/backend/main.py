@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from api import light_curve
+from light_curve import router as light_curve_router
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from paths import clear_tmp_dir, SYNTHS_DIR, SAMPLES_DIR
@@ -47,7 +47,7 @@ app.add_middleware(
 )
 
 # Import API endpoints
-app.include_router(light_curve.router)
+app.include_router(light_curve_router)
 
 
 @app.get("/")
