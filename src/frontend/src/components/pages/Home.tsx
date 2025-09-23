@@ -5,6 +5,7 @@ import { Upload } from "lucide-react";
 import PageContainer from "../ui/PageContainer";
 import { SonifyButton, PlotButton } from "../ui/Buttons";
 import { getImage } from "../../utils/assets";
+import { Tooltip } from "../ui/Tooltip";
 
 import {
   Box,
@@ -72,14 +73,17 @@ export default function Lightcurves() {
         <br />
         <HStack>
             <Text textStyle="lg">Select a data source to sonify, or </Text>
-            <Button colorPalette='teal'>Upload your own<Upload /></Button>
+            <Tooltip content='Coming soon!' openDelay={100}>
+              <Button cursor='disabled' colorPalette='teal'>Upload your own<Upload /></Button>
+            </Tooltip>
+            
         </HStack>
         <br />
         <br />
         <Stack gap="4" direction="row" wrap="wrap" animation="fade-in 300ms ease-out">
               {astroTypes.map((astroType) => (
                 <Card.Root width="200px" key={astroType.name} variant='elevated' _hover={{transform: "scale(1.05)"}} transition="transform 0.2s ease">
-                  <LinkOverlay as={Link} onClick={() => navigate(astroType.page)}>
+                  <LinkOverlay as={Link} onClick={() => navigate(astroType.page)} cursor={astroType.page === '/' ? 'disabled' : 'pointer'}>
                     <img 
                     src={getImage(astroType.name)} 
                     alt={astroType.name} 

@@ -123,7 +123,7 @@ export default function Settings() {
               Data Resolution: <b>{dataResolution}</b>
             </Field.Label>
             <Field.HelperText mb={3}>
-              This is the number of data points played per second when mapping to a scale. (1 = lowest, 20 = highest)
+              This is the number of data points played per second when mapping to a musical scale. (1 = lowest, 20 = highest)
             </Field.HelperText>
             <Slider.Root 
               value={[dataResolution]}

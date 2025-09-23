@@ -5,7 +5,7 @@ from extensions import sonify
 from pathlib import Path
 from paths import TMP_DIR, STYLE_FILES_DIR, SUGGESTED_DATA_DIR, SAMPLES_DIR, SETTINGS_FILE
 from strauss.sources import param_lim_dict
-from sounds import all_sound_names, online_sound_names, local_sound_names, asset_cache, format_name
+from sounds import all_sounds, online_sounds, local_sounds, asset_cache, format_name
 from config import GITHUB_USER, GITHUB_REPO
 import logging
 import httpx
@@ -229,9 +229,9 @@ async def get_styles():
 
     return styles
 
-@router.get('/sound_names/')
-async def get_sound_names():
-    return all_sound_names()
+@router.get('/sound_info/')
+async def get_sound_info():
+    return all_sounds()
 
 
 @router.post('/sonify-lightcurve/')
@@ -310,7 +310,7 @@ async def download_online_asset(target_name: str):
 @router.post('/ensure-sound-available/')
 async def ensure_sound_available(request: SoundRequest):
 
-    if request.sound_name not in local_sound_names():
+    if request.sound_name not in [s.name for s in local_sounds()]:
         await download_online_asset(request.sound_name)
     else: print('Sound already exists in local dir')
 

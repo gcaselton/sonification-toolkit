@@ -41,7 +41,7 @@ export default function Help() {
         <Heading size="4xl">Help</Heading>
         <br />
         <Text textStyle='lg'>
-            Welcome to the Sonification Toolkit! Here you’ll find answers, tips, and guidance for using the app.
+            Welcome to the Sonification Toolkit! Here you’ll find help and guidance for using the app.
         </Text>
         <br />
 
@@ -64,7 +64,8 @@ export default function Help() {
             <List.Item>The characteristics of the sound (parameters) that are controlled by the data.</List.Item>
             <List.Item>Any musical elements, such as chords or scales.</List.Item>
         </List.Root>
-        <Text textStyle='lg' mb={6}>Some preset styles have been provided for you to get started quickly, or you can click <b>Custom</b> to configure your own.</Text>
+        <Text textStyle='lg' mb={2}>Some preset styles have been provided for you to get started quickly, or you can click <b>Custom</b> to configure your own.</Text>
+        <Text textStyle='lg' mb={6}>When configuring a custom style, you'll notice some of the base sounds have a 🎹 icon next to them. This indicates they are 'composable', which means they can be used with musical chords and scales.</Text>
 
         <Heading size="2xl" mb={3}>Step 3: Sonify</Heading>
         <List.Root as='ol' mb={6} textStyle='lg' gap={2}>

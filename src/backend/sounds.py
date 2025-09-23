@@ -32,9 +32,9 @@ async def cache_online_assets():
             break  # Only take the latest asset release
 
 
-def online_sound_names():
+def online_sounds():
 
-    sounds = []
+    online_sounds = []
 
     for asset in asset_cache:
         file_name = asset.get('name', '')
@@ -42,10 +42,11 @@ def online_sound_names():
             continue
 
         name = format_name(file_name)
+        sound = SoundInfo(name=name, composable=False, downloaded=False)
 
-        sounds.append(name)
+        online_sounds.append(sound)
        
-    return sounds
+    return online_sounds
 
 def format_name(file_name: str):
 
@@ -60,18 +61,32 @@ def format_name(file_name: str):
 
     return name
 
-def local_sound_names():
-
-      synths = [f.stem for f in SYNTHS_DIR.iterdir() if f.is_file()]
-      samples = [f.stem for f in SAMPLES_DIR.iterdir()]
-
-      local_sounds = synths + samples
+def local_sounds():
       
-      return local_sounds
+    local_sounds = []
 
-def all_sound_names():
+    for f in SYNTHS_DIR.iterdir():
+        if f.is_file():
+            composable = f.stem != 'White Noise'
+            sound = SoundInfo(name=f.stem, composable=composable, downloaded=True)
+            local_sounds.append(sound)
 
-    local = local_sound_names()
-    online = online_sound_names()
+    for f in SAMPLES_DIR.iterdir():
+        if f.is_dir():
+            name = f.stem
+            composable = any(file.suffix == ".sf2" for file in f.iterdir())
 
-    return set(local + online)
+            sound = SoundInfo(name=name, composable=composable, downloaded=True)
+            local_sounds.append(sound)
+      
+    return local_sounds
+
+def all_sounds():
+
+    local = local_sounds()
+    online = online_sounds()
+
+    sounds = {s.name: s for s in online}
+    sounds.update({s.name: s for s in local})
+
+    return list(sounds.values())

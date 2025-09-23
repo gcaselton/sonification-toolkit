@@ -4,7 +4,7 @@ from paths import *
 from strauss.sources import param_lim_dict
 from pychord import Chord
 from musical_scales import scale as parse_scale
-from sounds import all_sound_names
+from sounds import all_sounds
 
 defaults = {
         'light_curve': {
@@ -36,7 +36,7 @@ class BaseStyle(BaseModel):
     @classmethod
     def validate_sound(cls, value: Optional[str]):
 
-        valid_sounds = all_sound_names()
+        valid_sounds = [s.name for s in all_sounds()]
         
         if '.' in value:
              value = value.split('.')[0]

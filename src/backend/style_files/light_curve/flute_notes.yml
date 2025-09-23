@@ -9,4 +9,4 @@ parameters:
 
 chord_mode: "off"
 
-scale: "C chromatic"
+scale: "C pentatonic minor"

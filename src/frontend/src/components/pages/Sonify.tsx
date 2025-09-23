@@ -15,6 +15,7 @@ import {
   Input,
   Text,
   Flex,
+  NumberInput,
   VStack,
   Select,
   HStack
@@ -24,7 +25,7 @@ import { plotLightcurve } from "./Lightcurves";
 export default function Sonify() {
 
   const [length, setLength] = useState(15);
-  const [audioSystem, setAudioSystem] = useState<string[]>(["stereo"])
+  const [audioSystem, setAudioSystem] = useState<string[]>(["mono"])
   const [audioFilepath, setAudioFilepath] = useState("");
   const location = useLocation();
   const settingsFilepath = location.state.filepath;
@@ -32,6 +33,7 @@ export default function Sonify() {
   const [soniReady, setSoniReady] = useState(false)
   const [loading, setLoading] = useState(false)
   const [showPlot, setShowPlot] = useState(false)
+  const [errorMessage, setErrorMessage] = useState<string>("");
 
   const [imageSrc, setImageSrc] = useState<string | null>(null);
   const [imageLoading, setImageLoading] = useState(true);
@@ -61,6 +63,9 @@ export default function Sonify() {
   });
 
   const requestSonification = async () => {
+
+    setErrorMessage("")
+    
     const url_sonification = "http://localhost:8000/sonify-lightcurve";
   
     const data = {
@@ -80,6 +85,7 @@ export default function Sonify() {
     try {
       const response = await fetch(url_sonification, config);
       if (!response.ok) {
+        setErrorMessage("Error generating sonification. Please try again with different Style settings.")
         throw new Error("Network response was not ok");
       }
       const result = await response.json();
@@ -128,6 +134,7 @@ export default function Sonify() {
                   <Input
                     placeholder="Duration (seconds)"
                     type="number"
+                    max={60}
                     value={length}
                     onChange={(e) => setLength(Number(e.target.value))}
                   />
@@ -164,6 +171,7 @@ export default function Sonify() {
           </form>
           <br/>
           {loading && <LoadingMessage msg="Generating Sonification..."/>}
+          {errorMessage && <ErrorMsg message={errorMessage}/>}
           {!loading && soniReady && (
             <Box mt={4} animation="fade-in" animationDuration="0.3s">
               <audio

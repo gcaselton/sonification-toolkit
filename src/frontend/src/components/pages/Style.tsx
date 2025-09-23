@@ -23,7 +23,7 @@ import {
   Select,
   Stack,
   Switch,
-  Text,  
+  Text  
 } from "@chakra-ui/react";
 
 
@@ -32,7 +32,17 @@ export default function Style() {
 
     const navigate = useNavigate();
 
-    interface BaseSound { label: string; value: string };
+    interface BaseSound { 
+        name: string
+        composable: boolean
+        downloaded: boolean
+    };
+
+    const defaultSound: BaseSound = {
+        name: 'Default Synth 🎹',
+        composable: true,
+        downloaded: true
+    }
 
     // State to manage the dialog open/close
     const [open, setOpen] = useState(false);
@@ -57,23 +67,40 @@ export default function Style() {
     }, []);
 
     useEffect(() => {
-        fetch("http://localhost:8000/sound_names/")
-            .then((res) => res.json())
-            .then((data: string[]) => {
-                const items = data.map((name) => ({
-                    label: name,
-                    value: name,
-                }));
-                setSoundOptions(createListCollection<BaseSound>({ items }));
-            })
-            .catch((err) => {
-                console.error("Failed to fetch sound names:", err);
-            });
+
+        setLoadingSounds(true)
+
+        const fetchSounds = async () => {
+            try {
+                const response = await fetch("http://localhost:8000/sound_info/")
+
+                if (!response.ok) {
+                    throw new Error('Failed to fetch sounds');
+                    }
+                const soundsData: BaseSound[] = await response.json();
+
+                const collection = createListCollection({
+                    items: soundsData.map(sound => ({
+                        ...sound,
+                        label: `${sound.name}${sound.composable ? ' 🎹' : ''}`,  // Add piano emoji for composable sounds
+                        value: sound.name
+                    }))
+                });
+                setSoundOptions(collection);
+            } catch (error) {
+                console.error('Error fetching sounds:', error);
+            } finally {
+                setLoadingSounds(false);
+            }
+        }
+
+        fetchSounds();
     }, []);
 
 
+
     // Sound parameters for sonification
-    const [sound, setSound] = useState('Default Synth');
+    const [sound, setSound] = useState<BaseSound>(defaultSound);
     const [filterCutoff, setFilterCutoff] = useState<boolean | 'indeterminate'>(false);
     const [pitch, setPitch] = useState(false);
     const [volume, setVolume] = useState(false);
@@ -81,8 +108,11 @@ export default function Style() {
     const [chordMode, setChordMode] = useState(false);
     const [rootNote, setRootNote] = useState('C');
     const [scale, setScale] = useState('None');
-    const [quality, setQuality] = useState('maj');
-    const [soundOptions, setSoundOptions] = useState(createListCollection<BaseSound>({ items: [] }));
+    const [quality, setQuality] = useState('Major');
+    const [soundOptions, setSoundOptions] = useState(
+        createListCollection<BaseSound & { label: string; value: string }>({ items: [] })
+    );
+    const [loadingSounds, setLoadingSounds] = useState(true);
 
     const rootNoteOptions = createListCollection({
         items: [
@@ -128,24 +158,24 @@ export default function Style() {
     const qualityOptions = createListCollection({
         //maj, min, maj7, maj9, 5, 6, 7, 9, m7, m9, sus2, sus4, 7sus4, add9, madd9
         items: [
-            { label: "maj", value: "maj" },
-            { label: "min", value: "min" },
-            { label: "maj7", value: "maj7" },
-            { label: "maj9", value: "maj9" },
+            { label: "Major", value: "maj" },
+            { label: "Minor", value: "min" },
+            { label: "Major 7", value: "maj7" },
+            { label: "Major 9", value: "maj9" },
             { label: "5", value: "5" },
             { label: "6", value: "6" },
             { label: "7", value: "7" },
             { label: "9", value: "9" },
-            { label: "m7", value: "m7" },
-            { label: "m9", value: "m9" },
-            { label: "sus2", value: "sus2" },
-            { label: "sus4", value: "sus4" },
+            { label: "Minor 7", value: "m7" },
+            { label: "Minor 9", value: "m9" },
+            { label: "Sus2", value: "sus2" },
+            { label: "Sus4", value: "sus4" },
             { label: "7sus4", value: "7sus4" },
-            { label: "add9", value: "add9" },
-            { label: "madd9", value: "madd9" },
+            { label: "Add9", value: "add9" },
+            { label: "Minor Add9", value: "madd9" },
         ],
     });
-    const parameters = ["Filter Cutoff", "Pitch", "Volume", "Left/Right Pan", "Up/Down Pan", "Vibrato"] as const;
+    const parameters = ["Filter Cutoff", "Pitch", "Volume", "Left/Right Pan"] as const;
 
     const location = useLocation();
     const dataFilepath = location.state;
@@ -161,7 +191,7 @@ export default function Style() {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({ 
-                "sound": sound,
+                "sound": sound.name.replace(/\s*🎹$/, ""),
                 "filterCutOff": filterCutoff,
                 "pitch": pitch,
                 "volume": volume,
@@ -202,7 +232,7 @@ export default function Style() {
 
     const handleSubmit = async () => {
     try {
-        ensureSoundAvailable(sound)
+        ensureSoundAvailable(sound.name)
         // save sound settings
         saveSoundSettings().then((filepath) => {
             console.log("Saved sound settings to:", filepath);
@@ -249,11 +279,18 @@ export default function Style() {
         console.log("Left/Right Pan:", details.checked);
     };
 
-    const handleSelectSound = (event: React.FormEvent<HTMLDivElement>) => {
-        const target = event.target as HTMLSelectElement;
-        setSound(target.value);
-        //setSettings((prev) => ({ ...prev, Sound: target.value }));
-        console.log("Selected Sound:", target.value);
+    const handleSelectSound = (details: { value: string[] }) => {
+        if (details.value && details.value.length > 0) {
+            const selectedSoundName = details.value[0];
+            
+            // Find the full object from soundOptions
+            const selectedSoundItem = soundOptions.items.find(item => item.value === selectedSoundName);
+            
+            if (selectedSoundItem) {
+                setSound(selectedSoundItem);
+                console.log("Selected Sound:", selectedSoundItem);
+            }
+        }
     };
 
     const handleChordMode = (details: { checked: boolean | "indeterminate" }) => {
@@ -342,15 +379,15 @@ export default function Style() {
                             </Tooltip>
                             <form>
                             <br />
-                            <Select.Root collection={soundOptions} size="sm" width="320px" onChange={handleSelectSound}>
+                            <Select.Root collection={soundOptions} size="sm" width="320px" onValueChange={handleSelectSound}>
                                 <Select.HiddenSelect />
                                 <HStack>
                                     <Select.Label>Base Sound</Select.Label>
-                                    <InfoTip content='This is the underlying sound (or instrument) that is used as a basis for the sonification.' positioning={{placement:'right'}}/>
+                                    <InfoTip content="This is the underlying sound (or instrument) that is used as a basis for the sonification." positioning={{placement:'right'}}/>
                                 </HStack>
                                 <Select.Control>
                                     <Select.Trigger>
-                                    <Select.ValueText placeholder={sound} />
+                                    <Select.ValueText placeholder={sound.name} />
                                     </Select.Trigger>
                                     <Select.IndicatorGroup>
                                     <Select.Indicator />
@@ -394,98 +431,100 @@ export default function Style() {
                                     </Checkbox.Control>
                                     <Checkbox.Label>{parameters[2]}</Checkbox.Label>
                                 </Checkbox.Root>
-                                <Checkbox.Root key={parameters[3]} defaultChecked={leftRightPan} onCheckedChange={handleChangeLeftRightPan} colorPalette='teal'>
+                                {/* <Checkbox.Root key={parameters[3]} defaultChecked={leftRightPan} onCheckedChange={handleChangeLeftRightPan} colorPalette='teal'>
                                     <Checkbox.HiddenInput />
                                     <Checkbox.Control>
                                         <Checkbox.Indicator />
                                     </Checkbox.Control>
                                     <Checkbox.Label>{parameters[3]}</Checkbox.Label>
-                                </Checkbox.Root>
+                                </Checkbox.Root> */}
                             </Stack>
                             <br />
-                            <Collapsible.Root>
-                                <Collapsible.Trigger>
-                                    <Text color='teal' fontWeight='medium' cursor='pointer' mb={3}>Musical Settings</Text>
-                                </Collapsible.Trigger>
-                                <Collapsible.Content>
-                                        <Switch.Root defaultChecked={chordMode} onCheckedChange={handleChordMode} mb={3} colorPalette='teal'>
-                                            <Switch.HiddenInput />
-                                            <Switch.Control />
-                                            <HStack>
-                                                <Switch.Label>Chord Mode</Switch.Label>
-                                                <InfoTip content='This determines whether a full chord is held, or a single note.' positioning={{placement: 'right'}}/>
-                                            </HStack>
-                                        </Switch.Root>
-                                        <Select.Root collection={rootNoteOptions} size="sm" width="320px" onChange={handleSelectRootNote} mb={3}>
-                                            <Select.HiddenSelect />
-                                            <Select.Label>Root Note</Select.Label>
-                                            <Select.Control>
-                                                <Select.Trigger>
-                                                <Select.ValueText placeholder={rootNote} />
-                                                </Select.Trigger>
-                                                <Select.IndicatorGroup>
-                                                <Select.Indicator />
-                                                </Select.IndicatorGroup>
-                                            </Select.Control>
-                                                <Select.Content>
-                                                    {rootNoteOptions.items.map((option) => (
-                                                    <Select.Item item={option} key={option.value}>
-                                                        {option.label}
-                                                        <Select.ItemIndicator />
-                                                    </Select.Item>
-                                                    ))}
-                                                </Select.Content>
-                                        </Select.Root>
-                                        {!chordMode &&
-                                        <Tooltip content='Pitch must be selected to use a scale.' openDelay={100} closeDelay={100} disabled={pitch}>
-                                            <Box>
-                                                <Select.Root collection={scaleOptions} size="sm" width="320px" onChange={handleSelectScale} mb={3} disabled={!pitch}>
-                                                    <Select.HiddenSelect />
-                                                    <Select.Label>Scale</Select.Label>
-                                                    
-                                                        <Select.Control>
-                                                            <Select.Trigger>
-                                                            <Select.ValueText placeholder={scale} />
-                                                            </Select.Trigger>
-                                                            <Select.IndicatorGroup>
-                                                            <Select.Indicator />
-                                                            </Select.IndicatorGroup>
-                                                        </Select.Control>
-                                                    
-                                                        <Select.Content>
-                                                            {scaleOptions.items.map((option) => (
-                                                            <Select.Item item={option} key={option.value}>
-                                                                {option.label}
-                                                                <Select.ItemIndicator />
-                                                            </Select.Item>
-                                                            ))}
-                                                        </Select.Content>
-                                                </Select.Root>
-                                            </Box>
-                                        </Tooltip>
-                                        }
-                                        {chordMode && <Select.Root collection={qualityOptions} size="sm" width="320px" onChange={handleSelectQuality} mb={3}>
-                                            <Select.HiddenSelect />
-                                            <Select.Label>Chord</Select.Label>
-                                            <Select.Control>
-                                                <Select.Trigger>
-                                                <Select.ValueText placeholder={quality} />
-                                                </Select.Trigger>
-                                                <Select.IndicatorGroup>
-                                                <Select.Indicator />
-                                                </Select.IndicatorGroup>
-                                            </Select.Control>
-                                                <Select.Content>
-                                                    {qualityOptions.items.map((option) => (
-                                                    <Select.Item item={option} key={option.value}>
-                                                        {option.label}
-                                                        <Select.ItemIndicator />
-                                                    </Select.Item>
-                                                    ))}
-                                                </Select.Content>
-                                        </Select.Root>}
-                                </Collapsible.Content>
-                            </Collapsible.Root>
+                            {sound.composable && 
+                                <Collapsible.Root transition="opacity 0.3s ease-in-out">
+                                    <Collapsible.Trigger>
+                                        <Text color='teal' fontWeight='medium' cursor='pointer' mb={3}>Musical Settings 🎹</Text>
+                                    </Collapsible.Trigger>
+                                    <Collapsible.Content>
+                                            <Switch.Root defaultChecked={chordMode} onCheckedChange={handleChordMode} mb={3} colorPalette='teal'>
+                                                <Switch.HiddenInput />
+                                                <Switch.Control />
+                                                <HStack>
+                                                    <Switch.Label>Chord Mode</Switch.Label>
+                                                    <InfoTip content='This determines whether a full chord is held, or a single note.' positioning={{placement: 'right'}}/>
+                                                </HStack>
+                                            </Switch.Root>
+                                            <Select.Root collection={rootNoteOptions} size="sm" width="320px" onChange={handleSelectRootNote} mb={3}>
+                                                <Select.HiddenSelect />
+                                                <Select.Label>Root Note</Select.Label>
+                                                <Select.Control>
+                                                    <Select.Trigger>
+                                                    <Select.ValueText placeholder={rootNote} />
+                                                    </Select.Trigger>
+                                                    <Select.IndicatorGroup>
+                                                    <Select.Indicator />
+                                                    </Select.IndicatorGroup>
+                                                </Select.Control>
+                                                    <Select.Content>
+                                                        {rootNoteOptions.items.map((option) => (
+                                                        <Select.Item item={option} key={option.value}>
+                                                            {option.label}
+                                                            <Select.ItemIndicator />
+                                                        </Select.Item>
+                                                        ))}
+                                                    </Select.Content>
+                                            </Select.Root>
+                                            {!chordMode &&
+                                            <Tooltip content='Pitch must be selected to use a scale.' openDelay={100} closeDelay={100} disabled={pitch}>
+                                                <Box>
+                                                    <Select.Root collection={scaleOptions} size="sm" width="320px" onChange={handleSelectScale} mb={3} disabled={!pitch}>
+                                                        <Select.HiddenSelect />
+                                                        <Select.Label>Scale</Select.Label>
+                                                        
+                                                            <Select.Control>
+                                                                <Select.Trigger>
+                                                                <Select.ValueText placeholder={scale} />
+                                                                </Select.Trigger>
+                                                                <Select.IndicatorGroup>
+                                                                <Select.Indicator />
+                                                                </Select.IndicatorGroup>
+                                                            </Select.Control>
+                                                        
+                                                            <Select.Content>
+                                                                {scaleOptions.items.map((option) => (
+                                                                <Select.Item item={option} key={option.value}>
+                                                                    {option.label}
+                                                                    <Select.ItemIndicator />
+                                                                </Select.Item>
+                                                                ))}
+                                                            </Select.Content>
+                                                    </Select.Root>
+                                                </Box>
+                                            </Tooltip>
+                                            }
+                                            {chordMode && <Select.Root collection={qualityOptions} size="sm" width="320px" onChange={handleSelectQuality} mb={3}>
+                                                <Select.HiddenSelect />
+                                                <Select.Label>Chord</Select.Label>
+                                                <Select.Control>
+                                                    <Select.Trigger>
+                                                    <Select.ValueText placeholder={quality} />
+                                                    </Select.Trigger>
+                                                    <Select.IndicatorGroup>
+                                                    <Select.Indicator />
+                                                    </Select.IndicatorGroup>
+                                                </Select.Control>
+                                                    <Select.Content>
+                                                        {qualityOptions.items.map((option) => (
+                                                        <Select.Item item={option} key={option.value}>
+                                                            {option.label}
+                                                            <Select.ItemIndicator />
+                                                        </Select.Item>
+                                                        ))}
+                                                    </Select.Content>
+                                            </Select.Root>}
+                                    </Collapsible.Content>
+                                </Collapsible.Root>
+                            }
                         </form>
                         </Dialog.Body>
                         <Dialog.Footer display="flex" justifyContent="center">
