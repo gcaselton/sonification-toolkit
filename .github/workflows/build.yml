@@ -138,6 +138,13 @@ jobs:
           cd electron
           npm ci
 
+      # Clean electron build folders to remove old artifacts
+      - name: Clean Electron build directories
+        run: |
+          cd electron
+          rm -rf build/ resources/
+        shell: bash
+
       # Copy backend executable to electron resources
       - name: Setup backend for electron
         run: |
@@ -152,6 +159,12 @@ jobs:
           cd electron
           mkdir -p build
           cp -r ../src/frontend/dist/* build/
+        shell: bash
+
+      # List style_files to verify only current files exist
+      - name: List style_files before packaging
+        run: |
+          ls -R ../src/backend/style_files
         shell: bash
 
       # Set version for release
@@ -169,7 +182,7 @@ jobs:
       - name: Package Electron app
         run: |
           cd electron
-          npm run dist -- --${{ matrix.platform }} --${{ matrix.arch }} --publish never 
+          npm run dist -- --${{ matrix.platform }} --${{ matrix.arch }} --publish never
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         shell: bash
