@@ -1,4 +1,4 @@
-const { app, BrowserWindow, Menu, nativeTheme } = require('electron');
+const { app, BrowserWindow, Menu, nativeTheme, globalShortcut } = require('electron');
 const { spawn } = require('child_process');
 const path = require('path');
 const kill = require('tree-kill');
@@ -383,6 +383,14 @@ app.whenReady().then(async () => {
         
         // Create main window (splash will close when main window is ready)
         createWindow();
+
+        // Register global shortcut for DevTools
+        globalShortcut.register('CommandOrControl+Shift+I', () => {
+            if (mainWindow) {
+              mainWindow.webContents.toggleDevTools();
+            }
+        });
+
     } catch (error) {
         console.error('Failed to start backend:', error);
         
@@ -398,6 +406,9 @@ app.whenReady().then(async () => {
 
 app.on('window-all-closed', async () => {
     console.log('All windows closed, cleaning up...');
+
+    // Unregister all shortcuts
+    globalShortcut.unregisterAll();
     
     // Close splash if it's still open
     if (splashWindow) {
