@@ -37,24 +37,26 @@ jobs:
           case "${{ github.event.inputs.target_os }}" in
             "all")
               matrix='[
-                {"os": "ubuntu-latest", "platform": "linux", "electron_targets": "deb tar.xz"},
-                {"os": "windows-latest", "platform": "windows", "electron_targets": "nsis"},
-                {"os": "macos-latest", "platform": "macos", "electron_targets": "dmg"}
+                {"os": "ubuntu-latest", "platform": "linux", "arch": "x64", "electron_targets": "deb tar.xz"},
+                {"os": "windows-latest", "platform": "windows", "arch": "x64", "electron_targets": "nsis"},
+                {"os": "macos-latest", "platform": "macos", "arch": "x64", "electron_targets": "dmg zip"},
+                {"os": "macos-latest", "platform": "macos", "arch": "arm64", "electron_targets": "dmg zip"}
               ]'
               ;;
             "windows")
               matrix='[
-                {"os": "windows-latest", "platform": "windows", "electron_targets": "nsis"}
+                {"os": "windows-latest", "platform": "windows", "arch": "x64", "electron_targets": "nsis portable"}
               ]'
               ;;
             "macos")
               matrix='[
-                {"os": "macos-latest", "platform": "macos", "electron_targets": "dmg"}
+                {"os": "macos-latest", "platform": "macos", "arch": "x64", "electron_targets": "dmg zip"},
+                {"os": "macos-latest", "platform": "macos", "arch": "arm64", "electron_targets": "dmg zip"}
               ]'
               ;;
             "linux")
               matrix='[
-                {"os": "ubuntu-latest", "platform": "linux", "electron_targets": "deb tar.xz"}
+                {"os": "ubuntu-latest", "platform": "linux", "arch": "x64", "electron_targets": "deb tar.xz"}
               ]'
               ;;
           esac
@@ -64,7 +66,7 @@ jobs:
           echo "Matrix: $matrix"
 
   build:
-    name: Build for ${{ matrix.platform }}
+    name: Build for ${{ matrix.platform }}-${{ matrix.arch }}
     runs-on: ${{ matrix.os }}
     needs: setup
     
@@ -167,7 +169,7 @@ jobs:
       - name: Package Electron app
         run: |
           cd electron
-          npm run dist -- --publish never 
+          npm run dist -- --${{ matrix.platform }} --${{ matrix.arch }} --publish never 
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         shell: bash
@@ -176,7 +178,7 @@ jobs:
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.platform }}-packages
+          name: ${{ matrix.platform }}-${{ matrix.arch }}-packages
           path: |
             electron/dist/*.exe
             electron/dist/*.msi
