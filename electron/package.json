@@ -52,16 +52,7 @@
       ]
     },
     "mac": {
-      "target": [
-        {
-          "target": "default",
-          "arch": "x64"
-        },
-        {
-          "target": "default",
-          "arch": "arm64"
-        }
-      ],
+      "target": "default",
       "extraResources": [
         {
           "from": "resources/backend",
