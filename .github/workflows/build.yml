@@ -39,19 +39,19 @@ jobs:
               matrix='[
                 {"os": "ubuntu-latest", "platform": "linux", "arch": "x64", "electron_targets": "deb tar.xz"},
                 {"os": "windows-latest", "platform": "windows", "arch": "x64", "electron_targets": "nsis"},
-                {"os": "macos-13", "platform": "macos", "arch": "x64", "electron_targets": "dmg zip"},
-                {"os": "macos-14", "platform": "macos", "arch": "arm64", "electron_targets": "dmg zip"}
+                {"os": "macos-13", "platform": "macos", "arch": "x64", "electron_targets": "dmg"},
+                {"os": "macos-14", "platform": "macos", "arch": "arm64", "electron_targets": "dmg"}
               ]'
               ;;
             "windows")
               matrix='[
-                {"os": "windows-latest", "platform": "windows", "arch": "x64", "electron_targets": "nsis portable"}
+                {"os": "windows-latest", "platform": "windows", "arch": "x64", "electron_targets": "nsis"}
               ]'
               ;;
             "macos")
               matrix='[
-                {"os": "macos-13", "platform": "macos", "arch": "x64", "electron_targets": "dmg zip"},
-                {"os": "macos-14", "platform": "macos", "arch": "arm64", "electron_targets": "dmg zip"}
+                {"os": "macos-13", "platform": "macos", "arch": "x64", "electron_targets": "dmg"},
+                {"os": "macos-14", "platform": "macos", "arch": "arm64", "electron_targets": "dmg"}
               ]'
               ;;
             "linux")
