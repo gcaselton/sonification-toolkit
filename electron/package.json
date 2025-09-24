@@ -55,7 +55,11 @@
       "target": [
         {
           "target": "default",
-          "arch": ["x64", "arm64"]
+          "arch": "x64"
+        },
+        {
+          "target": "default",
+          "arch": "arm64"
         }
       ],
       "extraResources": [

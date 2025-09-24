@@ -44,12 +44,12 @@ jobs:
               ;;
             "windows")
               matrix='[
-                {"os": "windows-latest", "platform": "windows", "electron_targets": "nsis portable"}
+                {"os": "windows-latest", "platform": "windows", "electron_targets": "nsis"}
               ]'
               ;;
             "macos")
               matrix='[
-                {"os": "macos-latest", "platform": "macos", "electron_targets": "dmg zip"}
+                {"os": "macos-latest", "platform": "macos", "electron_targets": "dmg"}
               ]'
               ;;
             "linux")
