@@ -164,7 +164,7 @@ jobs:
       # List style_files to verify only current files exist
       - name: List style_files before packaging
         run: |
-          ls -R ../src/backend/style_files
+          ls -R src/backend/style_files/light_curve
         shell: bash
 
       # Set version for release
