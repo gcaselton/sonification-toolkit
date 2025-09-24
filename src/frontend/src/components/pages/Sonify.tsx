@@ -4,6 +4,7 @@ import LoadingMessage from "../ui/LoadingMessage";
 import {BackButton} from "../ui/Buttons";
 import PageContainer from "../ui/PageContainer";
 import ErrorMsg from "../ui/ErrorMsg";
+import { apiUrl } from "../../apiConfig";
 import {
   Box,
   Button,
@@ -66,7 +67,7 @@ export default function Sonify() {
 
     setErrorMessage("")
     
-    const url_sonification = "http://localhost:8000/sonify-lightcurve";
+    const url_sonification = `${apiUrl}/sonify-lightcurve`;
   
     const data = {
       "data_filepath": dataFilepath,
@@ -175,7 +176,7 @@ export default function Sonify() {
           {!loading && soniReady && (
             <Box mt={4} animation="fade-in" animationDuration="0.3s">
               <audio
-                src={`http://localhost:8000/audio/${audioFilepath}`}
+                src={`${apiUrl}/audio/${audioFilepath}`}
                 controls
                 style={{ width: "100%" }}
               />
