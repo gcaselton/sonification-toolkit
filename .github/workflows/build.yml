@@ -39,8 +39,8 @@ jobs:
               matrix='[
                 {"os": "ubuntu-latest", "platform": "linux", "arch": "x64", "electron_targets": "deb tar.xz"},
                 {"os": "windows-latest", "platform": "windows", "arch": "x64", "electron_targets": "nsis"},
-                {"os": "macos-latest", "platform": "macos", "arch": "x64", "electron_targets": "dmg zip"},
-                {"os": "macos-latest", "platform": "macos", "arch": "arm64", "electron_targets": "dmg zip"}
+                {"os": "macos-13", "platform": "macos", "arch": "x64", "electron_targets": "dmg zip"},
+                {"os": "macos-14", "platform": "macos", "arch": "arm64", "electron_targets": "dmg zip"}
               ]'
               ;;
             "windows")
@@ -50,8 +50,8 @@ jobs:
               ;;
             "macos")
               matrix='[
-                {"os": "macos-latest", "platform": "macos", "arch": "x64", "electron_targets": "dmg zip"},
-                {"os": "macos-latest", "platform": "macos", "arch": "arm64", "electron_targets": "dmg zip"}
+                {"os": "macos-13", "platform": "macos", "arch": "x64", "electron_targets": "dmg zip"},
+                {"os": "macos-14", "platform": "macos", "arch": "arm64", "electron_targets": "dmg zip"}
               ]'
               ;;
             "linux")
