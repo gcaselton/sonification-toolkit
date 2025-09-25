@@ -2,6 +2,7 @@ from pathlib import Path
 import shutil
 import sys
 import os
+import yaml
 
 def get_base_paths():
     """
@@ -54,6 +55,32 @@ def get_tmp_dir():
     tmp_dir.mkdir(parents=True, exist_ok=True)
     return tmp_dir
 
+def get_settings_dir():
+    """Get settings directory in user space"""
+    user_data = get_user_data_dir()
+    settings_dir = user_data / 'settings'
+    settings_dir.mkdir(parents=True, exist_ok=True)
+    return settings_dir
+
+
+def create_default_settings():
+    """Create default settings.yml file if it doesn't exist"""
+    settings_file = get_settings_dir() / 'settings.yml'
+    
+    if not settings_file.exists():
+       
+        default_settings = {
+            'data_resolution': 10
+        }
+        
+        try:
+            with open(settings_file, 'w') as f:
+                yaml.dump(default_settings, f, default_flow_style=False, indent=2)
+        except Exception as e:
+            print(f"Warning: Could not create settings file: {e}")
+    
+    return settings_file
+
 
 # Get the base paths
 BACKEND_DIR, SRC_DIR = get_base_paths()
@@ -63,7 +90,8 @@ STYLE_FILES_DIR = BACKEND_DIR / "style_files"
 SUGGESTED_DATA_DIR = BACKEND_DIR / "suggested_data"
 USER_DATA_DIR = get_user_data_dir()
 TMP_DIR = get_tmp_dir()
-SETTINGS_FILE = USER_DATA_DIR / "settings" / "settings.yml"
+SETTINGS_DIR = get_settings_dir()
+SETTINGS_FILE = create_default_settings()
 SOUND_ASSETS_DIR = BACKEND_DIR / "sound_assets"
 SYNTHS_DIR = SOUND_ASSETS_DIR / "synths"
 SAMPLES_DIR = SOUND_ASSETS_DIR / "samples"
