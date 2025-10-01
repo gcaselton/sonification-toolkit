@@ -8,6 +8,7 @@ import { PlotDialog } from "../ui/PlotDialog";
 import { Tooltip } from "../ui/Tooltip";
 import ErrorMsg from "../ui/ErrorMsg";
 import { getImage } from "../../utils/assets";
+import { apiUrl } from "../../apiConfig";
 
 import {
   Box,
@@ -54,7 +55,7 @@ function capitaliseWords(str: string) {
 
 export const plotLightcurve = async (filepath: string) => {
 
-  const url_plot = "http://localhost:8000/plot-lightcurve"
+  const url_plot = `${apiUrl}/plot-lightcurve`
   const response = await fetch(url_plot, {
     method: 'POST',
     headers: {
@@ -90,7 +91,7 @@ export default function Lightcurves() {
   const [loadingId, setLoadingId] = useState("fake ID")
   
   useEffect(() => {
-        fetch("http://localhost:8000/suggested-stars/")
+        fetch(`${apiUrl}/suggested-stars/`)
             .then((res) => res.json())
             .then((data) => {
                 setVariants(data);
@@ -111,7 +112,7 @@ export default function Lightcurves() {
     setLoading(true);
     setErrorMessage("");
 
-    const url_search = "http://localhost:8000/search-lightcurves"
+    const url_search = `${apiUrl}/search-lightcurves`
     const data = {
       "star_name": selectedStar
     };
@@ -166,7 +167,7 @@ export default function Lightcurves() {
 
   const selectLightcurve = async (dataURI: string) => {
     // Call the API endpoint to select the lightcurve and get the filepath
-    const url_selectlightcurve = "http://localhost:8000/select-lightcurve";
+    const url_selectlightcurve = `${apiUrl}/select-lightcurve`;
     const data = {
       "data_uri": dataURI
     }

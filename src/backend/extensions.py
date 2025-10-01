@@ -14,7 +14,6 @@ import lightkurve as lk
 import numpy as np
 import random
 import matplotlib.pyplot as plt
-import sounddevice as sd
 from pathlib import Path
 import os
 import yaml

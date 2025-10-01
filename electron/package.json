@@ -52,6 +52,7 @@
       ]
     },
     "mac": {
+      "target": "default",
       "extraResources": [
         {
           "from": "resources/backend",

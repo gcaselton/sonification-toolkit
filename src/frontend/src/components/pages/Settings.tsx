@@ -2,6 +2,7 @@ import React, { useEffect, useState, ChangeEvent } from "react";
 import { useNavigate } from 'react-router-dom';
 import LoadingMessage from '../ui/LoadingMessage';
 import PageContainer from "../ui/PageContainer";
+import { apiUrl } from "../../apiConfig";
 
 import {
   Box,
@@ -29,7 +30,7 @@ export default function Settings() {
 
   const loadSettings = async () => {
     try {
-      const response = await fetch('http://localhost:8000/load-settings');
+      const response = await fetch(`${apiUrl}/load-settings`);
       if (!response.ok) {
         throw new Error('Failed to load settings');
       }
@@ -49,7 +50,7 @@ export default function Settings() {
     setSuccessMessage("");
     
     try {
-      const response = await fetch('http://localhost:8000/save-settings', {
+      const response = await fetch(`${apiUrl}/save-settings`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -5,6 +5,7 @@ import {BackButton} from "../ui/Buttons";
 import PageContainer from "../ui/PageContainer";
 import { ToggleTip, InfoTip } from "../ui/ToggleTip";
 import { Tooltip } from "../ui/Tooltip";
+import { apiUrl } from "../../apiConfig";
 
 import {
   Box,
@@ -54,7 +55,7 @@ export default function Style() {
     const inputRef = useRef<HTMLInputElement | null>(null);
 
     useEffect(() => {
-        fetch("http://localhost:8000/styles/")
+        fetch(`${apiUrl}/styles/`)
             .then((res) => res.json())
             .then((data) => {
                 data.push({'name': 'Custom'})
@@ -72,7 +73,7 @@ export default function Style() {
 
         const fetchSounds = async () => {
             try {
-                const response = await fetch("http://localhost:8000/sound_info/")
+                const response = await fetch(`${apiUrl}/sound_info/`)
 
                 if (!response.ok) {
                     throw new Error('Failed to fetch sounds');
@@ -183,7 +184,7 @@ export default function Style() {
     
     const saveSoundSettings = async () => {
 
-        const save_sound_settings_url = "http://localhost:8000/save-sound-settings/";
+        const save_sound_settings_url = `${apiUrl}/save-sound-settings/`;
 
         const response = await fetch(save_sound_settings_url, {
             method: 'POST',
@@ -223,7 +224,7 @@ export default function Style() {
 
     const ensureSoundAvailable = async (soundName: string) => {
         // ensure the sound is available by downloading if necessary
-        await fetch("http://localhost:8000/ensure-sound-available/", {
+        await fetch(`${apiUrl}/ensure-sound-available/`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ sound_name: soundName }),
@@ -335,7 +336,7 @@ export default function Style() {
         formData.append("file", file);
 
         try {
-            const res = await fetch("http://localhost:8000/upload-yaml/", {
+            const res = await fetch(`${apiUrl}/upload-yaml/`, {
                 method: "POST",
                 body: formData,
             });
