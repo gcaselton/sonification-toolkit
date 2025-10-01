@@ -24,7 +24,7 @@ import { plotLightcurve } from "./Lightcurves";
 
 export default function Sonify() {
 
-  const [length, setLength] = useState(15);
+  const [length, setLength] = useState('15');
   const [audioSystem, setAudioSystem] = useState<string[]>(["mono"])
   const [audioFilepath, setAudioFilepath] = useState("");
   const location = useLocation();
@@ -116,6 +116,14 @@ export default function Sonify() {
     });
   };
 
+  const invalidLength = (
+    Number(length) > 60 ||
+    length === '0' || 
+    length.includes('.') ||
+    length.includes('-')
+  );
+
+
 
   
   return (
@@ -129,17 +137,16 @@ export default function Sonify() {
         <Box width='50%'>
           <form onSubmit={handleSubmit}>
               <VStack gap="5">
-                <Field.Root>
+                <Field.Root invalid={invalidLength}>
                   <Field.Label>Duration (seconds)</Field.Label>
-                  <Input
-                    placeholder="Duration (seconds)"
-                    type="number"
-                    max={60}
-                    value={length}
-                    onChange={(e) => setLength(Number(e.target.value))}
-                  />
+                  <NumberInput.Root value={length} onValueChange={(e) => setLength(e.value)} inputMode="numeric">
+                    <NumberInput.Control />
+                    <NumberInput.Input />
+                  </NumberInput.Root>
+                  {!invalidLength && <Field.HelperText>The sonification will compress or stretch to fit this length.</Field.HelperText>}
+                  <Field.ErrorText>Please enter a whole number up to 60 seconds.</Field.ErrorText>
                 </Field.Root>
-                <Select.Root collection={audioSystemOptions} size="sm" value={audioSystem} onValueChange={(e) => setAudioSystem(e.value)} variant='outline'>
+                <Select.Root collection={audioSystemOptions} value={audioSystem} onValueChange={(e) => setAudioSystem(e.value)} variant='outline'>
                     <Select.HiddenSelect />
                     <Select.Label>Audio System</Select.Label>
                     <Select.Control>
@@ -164,7 +171,7 @@ export default function Sonify() {
                   <Checkbox.Control />
                   <Checkbox.Label>View plot</Checkbox.Label>
                 </Checkbox.Root>
-                <Button type="submit" colorPalette="teal" width='50%'>
+                <Button type="submit" colorPalette="teal" width='50%' disabled={invalidLength || length === ''}>
                   Generate
                 </Button>
               </VStack>
