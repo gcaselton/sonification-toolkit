@@ -9,7 +9,14 @@ interface LoadingMessageProps {
 }
 
 const LoadingMessage = ({ msg, icon = 'waveform' }: LoadingMessageProps) => (
-  <Box textAlign="center" mt={4} animation="fade-in" animationDuration="0.3s">
+  <Box
+    textAlign="center" 
+    mt={4} 
+    animation="fade-in" 
+    animationDuration="0.3s"
+    role="status"
+    aria-live="polite"
+    >
     <br />
     {icon === 'waveform' ? (
       <Waveform size="35" stroke="3.5" speed="1" color='#14b8a6' />

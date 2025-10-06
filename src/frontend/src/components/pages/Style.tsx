@@ -361,7 +361,7 @@ export default function Style() {
 
     return (
         <PageContainer>
-            <Box position='relative'>
+            <Box position='relative' as="main" role="main">
                 <Heading size="4xl">  Step 2: Style</Heading>
                 <br />
                 <Text textStyle="lg">Choose from the styles below, or configure your own.</Text>
@@ -542,9 +542,21 @@ export default function Style() {
                         const gradientClass = variant.name === 'Custom' ? 'gradient-custom' : gradientClasses[index % gradientClasses.length];
 
                         return (
-                        <div key={variant.name} onClick={() => handleClick(variant)} style={{ cursor: 'pointer', width: 200 }}>
+                        <Box
+                            key={variant.name} 
+                            onClick={() => handleClick(variant)} 
+                            style={{ cursor: 'pointer', width: 200 }}
+                            tabIndex={0}
+                            role="button"
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter' || e.key === ' ') {
+                                    e.preventDefault();
+                                    handleClick(variant);
+                                }}
+                            }
+                            >
                             <StyleCard title={variant.name} gradientClass={gradientClass} isCustom={variant.name === 'Custom'}/>
-                        </div>
+                        </Box>
                         );
                     })}
                 </Stack>

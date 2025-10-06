@@ -257,7 +257,7 @@ export default function Lightcurves() {
 
   return (
     <PageContainer>
-      <Box>
+      <Box as='main' role="main">
         <Heading size="4xl">Light Curves</Heading>
         <br />
         <Text textStyle="lg">Search for a specific star or choose from the suggestions below.</Text>
@@ -310,11 +310,20 @@ export default function Lightcurves() {
                 _hover={{transform: "scale(1.05)"}} 
                 transition="transform 0.2s ease"
                 cursor='pointer'
-                onClick={() => handleClickStar(variant)}>
+                tabIndex={0}
+                role="button"
+                aria-label={`Sonify ${variant.name}: ${variant.description}`}
+                onClick={() => handleClickStar(variant)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    handleClickStar(variant);
+                  }
+                }}>
                   <Box position="relative">
                       <img
                         src={getImage(variant.name)}
-                        alt={variant.name}
+                        alt={`${variant.name} star`}
                         style={{ width: "100%", borderRadius: "8px" }}
                       />
                   
@@ -327,9 +336,21 @@ export default function Lightcurves() {
                         e.stopPropagation() // prevent the card click
                         handleClickPlot(variant)
                       }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          e.stopPropagation(); // prevent the card's keyboard handler
+                          handleClickPlot(variant);
+                        }
+                      }}
                     >
                       <Tooltip content='View plot'>
-                        <Button colorPalette='gray' variant='solid' size='xs'>
+                        <Button 
+                          colorPalette='gray' 
+                          variant='solid' 
+                          size='xs'
+                          aria-label={`View plot for ${variant.name}`}
+                        >
                           <LuChartSpline/>
                         </Button>
                       </Tooltip>

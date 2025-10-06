@@ -68,7 +68,7 @@ export default function Lightcurves() {
 
   return (
     <PageContainer hideBackButton>
-      <Box>
+      <Box as='main' role="main">
         <Heading size="4xl">Step 1: Data</Heading>
         <br />
         <HStack>
@@ -82,8 +82,26 @@ export default function Lightcurves() {
         <br />
         <Stack gap="4" direction="row" wrap="wrap" animation="fade-in 300ms ease-out">
               {astroTypes.map((astroType) => (
-                <Card.Root width="200px" key={astroType.name} variant='elevated' _hover={{transform: "scale(1.05)"}} transition="transform 0.2s ease">
-                  <LinkOverlay as={Link} onClick={() => navigate(astroType.page)} cursor={astroType.page === '/' ? 'disabled' : 'pointer'}>
+                <Card.Root 
+                  width="200px" 
+                  key={astroType.name} 
+                  variant='elevated' 
+                  _hover={{transform: "scale(1.05)"}} 
+                  transition="transform 0.2s ease"
+                  >
+                  <LinkOverlay 
+                    as={Link} 
+                    onClick={() => navigate(astroType.page)} 
+                    cursor={astroType.page === '/' ? 'disabled' : 'pointer'}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        navigate(astroType.page);
+                      }
+                    }}
+                    >
                     <img 
                     src={getImage(astroType.name)} 
                     alt={astroType.name} 

@@ -17,7 +17,7 @@ let currentSetIsPlaying: ((playing: boolean) => void) | null = null;
 export default function StyleCard({ title, gradientClass, isCustom = false }: StyleCardProps) {
   const [isPlaying, setIsPlaying] = useState(false);
 
-  const togglePreview = (e: React.MouseEvent) => {
+  const togglePreview = (e: React.MouseEvent | React.KeyboardEvent) => {
     e.stopPropagation();
 
     // If this card is already playing, stop
@@ -59,10 +59,18 @@ export default function StyleCard({ title, gradientClass, isCustom = false }: St
       {!isCustom &&
         <Box position="absolute" top="0.5rem" left="0.5rem" zIndex={10}>
           <IconButton
-            aria-label={isPlaying ? 'Stop Preview' : 'Preview Style'}
+            tabIndex={0}
+            aria-label={isPlaying ? 'Stop Preview' : `Preview ${title} Style`}
             variant="plain"
             color="white"
+            role='button'
             onClick={togglePreview}
+            onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    togglePreview(e);
+                  }
+                }}
           >
             {isPlaying ? <VolumeOff /> : <Volume2 />}
           </IconButton>

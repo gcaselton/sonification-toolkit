@@ -96,7 +96,7 @@ export default function Settings() {
 
   return (
     <PageContainer hideBackButton showHome>
-      <Box>
+      <Box as="main" role="main">
         <Heading size="4xl">Settings</Heading>
         <br />
         
