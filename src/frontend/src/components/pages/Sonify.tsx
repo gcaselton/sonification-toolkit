@@ -91,7 +91,7 @@ export default function Sonify() {
       }
       const result = await response.json();
       console.log("Sonification result:", result);
-      return result.filename; // Assuming the result contains the sonification data
+      return result.filename; 
     } catch (error) {
       console.error("Error fetching sonification:", error);
     }
