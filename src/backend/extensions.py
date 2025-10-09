@@ -29,7 +29,7 @@ def read_YAML_file(filepath):
     
     return YAML_dict
 
-def sonify(data_filepath, style_filepath, sonify_type, length=15, system='stereo'):
+def sonify(data, style_filepath, sonify_type, length=15, system='mono'):
 
       # Load user and default styles
       user_style = read_YAML_file(style_filepath)
@@ -42,7 +42,7 @@ def sonify(data_filepath, style_filepath, sonify_type, length=15, system='stereo
       validated_style = BaseStyle.model_validate(merged)
         
       # Set up Sonification elements
-      score, sources, generator = setup_strauss(data_filepath, validated_style, sonify_type, length)
+      score, sources, generator = setup_strauss(data, validated_style, sonify_type, length)
 
       # Render sonification
       sonification = Sonification(score, sources, generator, system)
@@ -53,7 +53,7 @@ def sonify(data_filepath, style_filepath, sonify_type, length=15, system='stereo
 
 
 
-def quick_sonify(x_data, y_data, sound='default', y_params=['cutoff'], chordal=True, length=15, system='stereo'):
+def quick_sonify(x_data, y_data, sound='default', y_params=['cutoff'], chordal=True, length=15, system='mono'):
 
       # NOTE - re-structure this function to use the new sonify function
 
@@ -96,7 +96,7 @@ def get_filepath(directory):
       return os.path.join(directory, name)
 
 
-def setup_strauss(data_filepath, style: BaseStyle, sonify_type, length):
+def setup_strauss(data, style: BaseStyle, sonify_type, length):
 
       # Read and find sound to create Generator
       folder, path = find_sound(style.sound)
@@ -130,7 +130,7 @@ def setup_strauss(data_filepath, style: BaseStyle, sonify_type, length):
 
       # Set up the data and Sources
       if sonify_type == 'light_curve':
-            sources = light_curve_sources(data_filepath, style, length)
+            sources = light_curve_sources(data, style, length)
 
       # Handle chord or scale
       if style.chord_mode == 'on':
@@ -182,14 +182,21 @@ def scale_events(x, y, params, length):
 
       return sources
 
-def light_curve_sources(data_filepath, style, length):
+def light_curve_sources(data, style, length):
 
-      lc = lk.read(data_filepath)
-      lc = lc.remove_nans()
+      if isinstance(data, tuple):
 
+            x = data[0]
+            y = data[1]
+      elif isinstance(data, str) and data.endswith('.fits'):
 
-      x = np.asarray(lc.time.value)
-      y = np.asarray(lc.flux)
+            lc = lk.read(data)
+            lc = lc.remove_nans()
+            x = lc.time.value
+            y = lc.flux
+
+      x = ensure_array(x)
+      y = ensure_array(y)
 
       pitches = [0,1,2,3] if style.chord_mode == 'on' else [0]
 
@@ -202,18 +209,18 @@ def light_curve_sources(data_filepath, style, length):
                   lims = style.parameters.pop('pitch')
                   style.parameters['pitch_shift'] = lims
      
-      data = {'pitch': pitches, 
+      data_dict = {'pitch': pitches, 
               'time_evo': [x]*len(pitches)}
       m_lims = {'time_evo': ('0%', '100%')}
       p_lims = {}
 
       for p in style.parameters:
-            data[p] = [y]*len(pitches)
+            data_dict[p] = [y]*len(pitches)
             m_lims[p] = ('0%', '100%')
             p_lims[p] = tuple(style.parameters[p])
 
-      sources = Objects(data.keys())
-      sources.fromdict(data)
+      sources = Objects(data_dict.keys())
+      sources.fromdict(data_dict)
       sources.apply_mapping_functions(map_lims=m_lims, param_lims=p_lims)
 
       return sources

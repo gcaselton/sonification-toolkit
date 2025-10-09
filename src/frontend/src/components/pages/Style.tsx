@@ -231,6 +231,38 @@ export default function Style() {
         });
     }
 
+    const handlePreviewStyle = async () => {
+        try {
+            ensureSoundAvailable(sound.name);
+
+            // Wait for sound settings to save and get filepath
+            const filepath = await saveSoundSettings();
+            console.log("Saved sound settings to:", filepath);
+
+            const preview_endpoint = `${apiUrl}/preview-style-settings/`;
+
+            const response = await fetch(preview_endpoint, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ 
+                    style_filepath: filepath 
+                }),
+            });
+
+            const data = await response.json();
+            const audioUrl = `${apiUrl}/audio/${data.filename}`;
+            const preview = new Audio(audioUrl);
+            preview.play()
+
+        } catch (err) {
+            console.error("Error previewing style settings:", err);
+        }
+    };
+
+
+
     const handleSubmit = async () => {
     try {
         ensureSoundAvailable(sound.name)
@@ -530,6 +562,7 @@ export default function Style() {
                         </Dialog.Body>
                         <Dialog.Footer display="flex" justifyContent="center">
                             <Button width='30%' colorPalette='teal' variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
+                            <Button width='30%' colorPalette='teal' variant="outline" onClick={() => handlePreviewStyle()}>Preview</Button>
                             <Button width='30%' colorPalette='teal' onClick={() => handleSubmit()}>Submit</Button>
                         </Dialog.Footer>
                     </Dialog.Content>

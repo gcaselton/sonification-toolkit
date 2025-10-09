@@ -7,21 +7,13 @@ from paths import TMP_DIR, STYLE_FILES_DIR, SUGGESTED_DATA_DIR, SAMPLES_DIR, SET
 from strauss.sources import param_lim_dict
 from sounds import all_sounds, online_sounds, local_sounds, asset_cache, format_name
 from config import GITHUB_USER, GITHUB_REPO
-import logging
-import httpx
+import logging, httpx, yaml, requests, os, base64, hashlib, uuid, aiofiles, zipfile, json
 
 import lightkurve as lk
+import numpy as np
 import matplotlib.pyplot as plt
-import yaml
-import requests
-import os
-import base64
 from io import BytesIO
-import hashlib
-import uuid
-import aiofiles
-import zipfile
-import json
+
 
 router = APIRouter()
 
@@ -50,6 +42,9 @@ class SonificationRequest(BaseModel):
     style_filepath: str
     duration: int
     system: str
+
+class StylePreviewRequest(BaseModel):
+    style_filepath: str
 
 class SoundSettings(BaseModel):
     sound: str
@@ -232,6 +227,29 @@ async def get_styles():
 @router.get('/sound_info/')
 async def get_sound_info():
     return all_sounds()
+
+@router.post('/preview-style-settings/')
+async def preview_style_settings(request: StylePreviewRequest):
+    style = Path(request.style_filepath)
+
+    # Generate simple ramp to sonify
+    x = np.arange(0, 100)
+    y = x.copy()
+
+    data = (x, y)
+
+    try:
+        soni = sonify(data, style, CATEGORY, length=5,  system='mono')
+
+        id = str(uuid.uuid4().hex)
+        ext = '.wav'
+        filename = f'{CATEGORY}_{id}{ext}'
+        filepath = os.path.join(TMP_DIR, filename)
+        soni.save(filepath)
+
+        return {'filename': filename}
+    except Exception as e:
+        raise HTTPException(status_code=404, detail=str(e))
 
 
 @router.post('/sonify-lightcurve/')
