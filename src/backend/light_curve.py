@@ -69,8 +69,10 @@ async def search_lightcurves(query: StarQuery):
     - Returns: JSON object containing a list of results
     """
 
+    authors = ('SPOC', 'Kepler', 'K2')
+
     # Search name in lightkurve
-    search_result = lk.search_lightcurve(query.star_name)
+    search_result = lk.search_lightcurve(target=query.star_name, limit=15)
 
     # Return 404 if no results
     if len(search_result) == 0:
