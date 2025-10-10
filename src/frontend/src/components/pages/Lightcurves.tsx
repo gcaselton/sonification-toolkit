@@ -1,7 +1,7 @@
 import React, { useEffect, useState, createContext, ChangeEvent } from "react";
 import { useNavigate } from 'react-router-dom';
 import LoadingMessage from '../ui/LoadingMessage';
-import { LuX, LuChartSpline, LuAudioLines } from "react-icons/lu";
+import { LuX, LuChartSpline, LuAudioLines, LuSearch, LuSlidersHorizontal } from "react-icons/lu";
 import PageContainer from "../ui/PageContainer";
 import { SonifyButton, PlotButton} from "../ui/Buttons";
 import { PlotDialog } from "../ui/PlotDialog";
@@ -15,10 +15,14 @@ import {
   Alert,
   Button,
   Card,
+  Checkbox,
+  Collapsible,
   LinkOverlay,
   Link,
-  Image, 
+  Image,
+  Field, 
   Input,
+  InputGroup,
   Dialog,
   Stack,
   Heading,
@@ -26,7 +30,8 @@ import {
   Table,
   Text,
   IconButton,
-  chakra
+  chakra,
+  HStack
 } from "@chakra-ui/react";
 
  export interface Lightcurve {
@@ -89,6 +94,10 @@ export default function Lightcurves() {
   const [loadingPlot, setLoadingPlot] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
   const [loadingId, setLoadingId] = useState("fake ID")
+  const [showFilters, setShowFilters] = useState(false);
+  const [tessChecked, setTessChecked] = useState(true);
+  const [keplerChecked, setKeplerChecked] = useState(true);
+  const [k2Checked, setK2Checked] = useState(true);
   
   useEffect(() => {
         fetch(`${apiUrl}/suggested-stars/`)
@@ -266,23 +275,63 @@ export default function Lightcurves() {
         <form onSubmit={handleSubmit}>
           <Box display="flex" justifyContent="center">
             <VStack gap={4} width="50%">
-              <Input
-                placeholder="Search for a star by name, KIC or EPIC identifier"
-                type="text"
-                name="star_name"
-                value={selectedStar}
-                onChange={ (e) => {
-                  const value = e.target.value;
-                  setSelectedStar(value);
-                  if (value.trim() === "") {
-                    setSearched(false); 
-                    setLightcurves([]);
-                  }
-                }}
-              />
-              <Button type="submit" colorPalette="teal" width="100%">
-                Search
-              </Button>
+              <HStack width='100%'>
+                <InputGroup startElement={<LuSearch />} width='100%'>
+                  <Input
+                    placeholder="Search for a star by name, KIC or EPIC identifier"
+                    type="text"
+                    name="star_name"
+                    value={selectedStar}
+                    onChange={ (e) => {
+                      const value = e.target.value;
+                      setSelectedStar(value);
+                      if (value.trim() === "") {
+                        setSearched(false); 
+                        setLightcurves([]);
+                      }
+                    }}
+                  />
+                </InputGroup>
+                <Button variant='outline' onClick={() => setShowFilters(!showFilters)}>
+                    <LuSlidersHorizontal/>
+                </Button>
+              </HStack>
+              {/* Collapsible filters */}
+              <Collapsible.Root open={showFilters}>
+                <Collapsible.Content>
+                  <Box borderWidth='1px' padding={3} borderRadius="md">
+                    <Text mb={3}>Missions</Text>
+                    <HStack align="start" gap={3}>
+                        <Checkbox.Root
+                          checked={tessChecked}
+                          onCheckedChange={(e) => setTessChecked(!!e.checked)}
+                        >
+                          <Checkbox.HiddenInput />
+                          <Checkbox.Control />
+                          <Checkbox.Label>TESS</Checkbox.Label>
+                        </Checkbox.Root>
+
+                        <Checkbox.Root
+                          checked={keplerChecked}
+                          onCheckedChange={(e) => setKeplerChecked(!!e.checked)}
+                        >
+                          <Checkbox.HiddenInput />
+                          <Checkbox.Control />
+                          <Checkbox.Label>Kepler</Checkbox.Label>
+                        </Checkbox.Root>
+
+                        <Checkbox.Root
+                          checked={k2Checked}
+                          onCheckedChange={(e) => setK2Checked(!!e.checked)}
+                        >
+                          <Checkbox.HiddenInput />
+                          <Checkbox.Control />
+                          <Checkbox.Label>K2</Checkbox.Label>
+                        </Checkbox.Root>
+                      </HStack>
+                  </Box>
+                </Collapsible.Content>
+              </Collapsible.Root>
               {errorMessage && <ErrorMsg message={errorMessage}/>}
             </VStack>
           </Box>

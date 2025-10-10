@@ -13,6 +13,7 @@ import lightkurve as lk
 import numpy as np
 import matplotlib.pyplot as plt
 from io import BytesIO
+from astroquery.simbad import Simbad
 
 
 router = APIRouter()
@@ -69,29 +70,59 @@ async def search_lightcurves(query: StarQuery):
     - Returns: JSON object containing a list of results
     """
 
-    authors = ('SPOC', 'Kepler', 'K2')
-
-    # Search name in lightkurve
-    search_result = lk.search_lightcurve(target=query.star_name, limit=15)
+    idents = get_identifiers(query.star_name)
+    print(idents)
 
     # Return 404 if no results
-    if len(search_result) == 0:
+    if len(idents) == 0:
         raise HTTPException(status_code=404, detail=f'No light curves found for {query.star_name}.')
-        
+    
     results_metadata = []
 
-    # Append selected metadata to a list of dictionaries
-    for row in search_result.table:
-        results_metadata.append({
-            "mission": str(row.get("project")),
-            "exposure": int(row.get("exptime")),
-            "pipeline": str(row.get("author")),
-            "year": int(row.get("year")),
-            "period": str(row.get("mission")),
-            "dataURI": str(row.get("dataURI"))
-        })
+    for ident in idents:
+        print(ident)
+
+        # Search lightkurve using all idents
+        search_result = lk.search_lightcurve(ident, limit=10)
+        print(search_result)
+
+        # Append selected metadata to a list of dictionaries
+        for row in search_result.table:
+            results_metadata.append({
+                "mission": str(row.get("project")),
+                "exposure": int(row.get("exptime")),
+                "pipeline": str(row.get("author")),
+                "year": int(row.get("year")),
+                "period": str(row.get("mission")),
+                "dataURI": str(row.get("dataURI"))
+            })
 
     return {'results': results_metadata}
+
+
+def get_identifiers(name):
+    """
+    Query SIMBAD for identifiers that are usable in Lightkurve:
+    KIC (Kepler), EPIC (K2), TIC (TESS).
+    """
+    try:
+        ids_table = Simbad.query_objectids(name)
+        print(ids_table)
+        if ids_table is None:
+            return []
+
+        # Convert to a list of plain strings
+        all_ids = ids_table["id"].tolist()
+
+        # Filter for relevant idents
+        prefixes = ["KIC", "TIC", "EPIC"]
+        result = [i for i in all_ids if any(i.startswith(p) for p in prefixes)]
+
+        return result
+    
+    except Exception as e:
+        print("SIMBAD query failed:", e)
+        return []
 
 
 def download_lightcurve(data_uri):
