@@ -29,6 +29,7 @@ LOG = logging.getLogger(__name__)
 # Define BaseModels for expected request types
 class StarQuery(BaseModel):
     star_name: str
+    filters: dict
 
 class DownloadRequest(BaseModel):
     data_uri: str
@@ -70,8 +71,7 @@ async def search_lightcurves(query: StarQuery):
     - Returns: JSON object containing a list of results
     """
 
-    idents = get_identifiers(query.star_name)
-    print(idents)
+    idents = get_identifiers(query)
 
     # Return 404 if no results
     if len(idents) == 0:
@@ -79,12 +79,18 @@ async def search_lightcurves(query: StarQuery):
     
     results_metadata = []
 
+    authors = {
+            'TIC': ('SPOC', 'QLP', 'TESS-SPOC'),
+            'KIC': 'Kepler',
+            'EPIC': 'K2SFF'
+        }
+
     for ident in idents:
-        print(ident)
+        
+        id_type = ident.split(' ')[0]
 
         # Search lightkurve using all idents
-        search_result = lk.search_lightcurve(ident, limit=10)
-        print(search_result)
+        search_result = lk.search_lightcurve(ident, author=authors[id_type])
 
         # Append selected metadata to a list of dictionaries
         for row in search_result.table:
@@ -100,23 +106,31 @@ async def search_lightcurves(query: StarQuery):
     return {'results': results_metadata}
 
 
-def get_identifiers(name):
+def get_identifiers(query: StarQuery):
     """
     Query SIMBAD for identifiers that are usable in Lightkurve:
-    KIC (Kepler), EPIC (K2), TIC (TESS).
+    KIC (Kepler), EPIC (K2), TIC (TESS). 
+    Filter this according to user-provided filters.
     """
     try:
-        ids_table = Simbad.query_objectids(name)
-        print(ids_table)
+        ids_table = Simbad.query_objectids(query.star_name)
         if ids_table is None:
             return []
 
         # Convert to a list of plain strings
         all_ids = ids_table["id"].tolist()
 
+        prefixes = {
+            "TESS": "TIC",
+            "Kepler": "KIC",
+            "K2": "EPIC"
+        }
+
+        missions = query.filters['mission']
+
         # Filter for relevant idents
-        prefixes = ["KIC", "TIC", "EPIC"]
-        result = [i for i in all_ids if any(i.startswith(p) for p in prefixes)]
+        filtered = [prefixes[m] for m in missions if missions[m] == True]
+        result = [i for i in all_ids if any(i.startswith(p) for p in filtered)]
 
         return result
     

@@ -121,10 +121,21 @@ export default function Lightcurves() {
     setLoading(true);
     setErrorMessage("");
 
+    // Dictionary of search filters
+    const filters = {
+      "mission": {
+        "TESS": tessChecked,
+        "Kepler": keplerChecked,
+        "K2": k2Checked
+      }
+    }
+
     const url_search = `${apiUrl}/search-lightcurves`
     const data = {
-      "star_name": selectedStar
+      "star_name": selectedStar,
+      "filters": filters
     };
+
     const config = {
       method: 'POST',
       headers: {

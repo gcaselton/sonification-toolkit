@@ -188,12 +188,12 @@ def light_curve_sources(data, style, length):
 
             x = data[0]
             y = data[1]
-      elif isinstance(data, str) and data.endswith('.fits'):
+      elif isinstance(data, Path) and data.suffix == '.fits':
 
             lc = lk.read(data)
             lc = lc.remove_nans()
             x = lc.time.value
-            y = lc.flux
+            y = lc.flux.value
 
       x = ensure_array(x)
       y = ensure_array(y)
