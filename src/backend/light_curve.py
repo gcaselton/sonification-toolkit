@@ -73,9 +73,21 @@ async def search_lightcurves(query: StarQuery):
 
     idents = get_identifiers(query)
 
-    # Return 404 if no results
+    mission_filters = query.filters['mission']
+    missions = [k for k in mission_filters.keys() if mission_filters[k] == True]
+
+    # Get the correct string formatting for the error message
+    match len(missions):
+        case 1:
+            formatted = missions[0]
+        case 2:
+            formatted = f'{missions[0]} or {missions[1]}'
+        case 3:
+            formatted = f'{missions[0]}, {missions[1]}, or {missions[2]}'
+
+    # Return 404 and error message if no results (for those filters)
     if len(idents) == 0:
-        raise HTTPException(status_code=404, detail=f'No light curves found for {query.star_name}.')
+        raise HTTPException(status_code=404, detail=f'No {formatted} light curves found for {query.star_name}.')
     
     results_metadata = []
 
@@ -90,7 +102,7 @@ async def search_lightcurves(query: StarQuery):
         id_type = ident.split(' ')[0]
 
         # Search lightkurve using all idents
-        search_result = lk.search_lightcurve(ident, author=authors[id_type])
+        search_result = lk.search_lightcurve(ident, author=authors[id_type], limit=15)
 
         # Append selected metadata to a list of dictionaries
         for row in search_result.table:
@@ -137,6 +149,21 @@ def get_identifiers(query: StarQuery):
     except Exception as e:
         print("SIMBAD query failed:", e)
         return []
+    
+@router.post('/upload-data/')
+async def uploadData(file: UploadFile):
+
+    ext = os.path.splitext(file.filename)[-1]
+    filename = f'{uuid.uuid4()}{ext}'
+    filepath = os.path.join(TMP_DIR, filename)
+
+    contents = await file.read()
+
+    with open(filepath, 'wb') as f:
+        f.write(contents)
+
+    return {'filepath': filepath}
+
 
 
 def download_lightcurve(data_uri):
@@ -180,6 +207,8 @@ async def plot_lightcurve(request: DownloadRequest):
     - **request**: The URI (or local filepath) of the light curve.
     - Returns: The image as a base64 string.
     """
+
+    # NOTE To do - Fix this so it plots CSV files as well.
 
     # Check if the requested light curve is from a search (with data URI) or a suggested (local) file.
     if (request.data_uri.startswith('mast:')):

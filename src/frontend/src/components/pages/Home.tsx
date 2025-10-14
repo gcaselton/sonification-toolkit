@@ -12,6 +12,7 @@ import {
   Alert,
   Button,
   Card,
+  FileUpload,
   LinkOverlay,
   Link,
   Image, 
@@ -26,6 +27,7 @@ import {
   chakra,
   HStack,
 } from "@chakra-ui/react";
+import { apiUrl } from "../../apiConfig";
 
 
 interface AstroType {
@@ -66,17 +68,44 @@ const astroTypes: AstroType[] = [
 export default function Lightcurves() {
   const navigate = useNavigate();
 
+  const handleFileAccept = async (files: FileList | File[]) => {
+    
+    const file = files[0]
+    if (!file) return;
+
+    console.log("Uploading:", file.name);
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const res = await fetch(`${apiUrl}/upload-data/`, {
+      method: "POST",
+      body: formData,
+    });
+
+    const result = await res.json();
+    console.log(result);
+
+    // Naviagate to style page with data file path.
+    navigate('/style', { state: result.filepath });
+  }
+
   return (
     <PageContainer hideBackButton>
       <Box as='main' role="main">
         <Heading size="4xl">Step 1: Data</Heading>
         <br />
-        <HStack>
-            <Text textStyle="lg">Select a data source to sonify, or </Text>
-            <Tooltip content='Coming soon!' openDelay={100}>
-              <Button cursor='disabled' colorPalette='teal'>Upload your own<Upload /></Button>
-            </Tooltip>
-            
+        <HStack flexWrap="nowrap">
+            <Text textStyle="lg" flexShrink={1}>Select a data source to sonify, or </Text>
+            <FileUpload.Root accept=".csv, .fits" w="auto" onFileAccept={({ files }) => handleFileAccept(files)}>
+              <FileUpload.HiddenInput />
+              <FileUpload.Trigger asChild>
+                <Button colorPalette='teal'>
+                  <Upload />Upload your own
+                </Button>
+              </FileUpload.Trigger>
+              <FileUpload.List />
+            </FileUpload.Root>
         </HStack>
         <br />
         <br />

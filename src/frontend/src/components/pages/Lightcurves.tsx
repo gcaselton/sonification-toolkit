@@ -228,7 +228,7 @@ export default function Lightcurves() {
     selectLightcurve(dataURI).then((filepath) => {
       if (filepath) {
         console.log("Lightcurve selected, filepath:", filepath);
-        // Navigate to the sound page with the filepath
+        // Navigate to the style page with the filepath
         navigate('/style', { state: filepath });
       }
     });
@@ -303,7 +303,11 @@ export default function Lightcurves() {
                     }}
                   />
                 </InputGroup>
-                <Button variant='outline' onClick={() => setShowFilters(!showFilters)}>
+                <Button
+                  variant='outline' 
+                  onClick={() => setShowFilters(!showFilters)}
+                  aria-label="Show filters"
+                  >
                     <LuSlidersHorizontal/>
                 </Button>
               </HStack>

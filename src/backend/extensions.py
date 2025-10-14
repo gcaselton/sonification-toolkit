@@ -12,11 +12,10 @@ from paths import *
 
 import lightkurve as lk
 import numpy as np
-import random
+import pandas as pd
+import random, os, yaml
 import matplotlib.pyplot as plt
 from pathlib import Path
-import os
-import yaml
 
 def read_YAML_file(filepath):
     
@@ -194,6 +193,12 @@ def light_curve_sources(data, style, length):
             lc = lc.remove_nans()
             x = lc.time.value
             y = lc.flux.value
+      elif isinstance(data, Path) and data.suffix == '.csv':
+            df = pd.read_csv("data.csv")
+
+            x = df.iloc[:, 0].to_list()  # first column
+            y = df.iloc[:, 1].to_list()  # second column
+
 
       x = ensure_array(x)
       y = ensure_array(y)
