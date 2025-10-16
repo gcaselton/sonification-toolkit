@@ -16,6 +16,10 @@ import pandas as pd
 import random, os, yaml
 import matplotlib.pyplot as plt
 from pathlib import Path
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 def read_YAML_file(filepath):
     
@@ -155,6 +159,8 @@ def univariate_sources(xy_data: tuple, params, chord_mode, data_mode):
       pass
 
 def scale_events(x, y, params, length):
+
+      logger.debug(params)
 
       user_settings = read_YAML_file(SETTINGS_FILE)
       resolution = user_settings['data_resolution']

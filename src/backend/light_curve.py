@@ -7,10 +7,12 @@ from paths import TMP_DIR, STYLE_FILES_DIR, SUGGESTED_DATA_DIR, SAMPLES_DIR, SET
 from strauss.sources import param_lim_dict
 from sounds import all_sounds, online_sounds, local_sounds, asset_cache, format_name
 from config import GITHUB_USER, GITHUB_REPO
-import logging, httpx, yaml, requests, os, base64, hashlib, uuid, aiofiles, zipfile, json
+import logging, httpx, yaml, requests, os, base64, hashlib, uuid, aiofiles, zipfile, json, gc
 
 import lightkurve as lk
 import numpy as np
+import matplotlib
+matplotlib.use("Agg")  # non-interactive backend, no Tkinter
 import matplotlib.pyplot as plt
 from io import BytesIO
 from astroquery.simbad import Simbad
@@ -231,10 +233,16 @@ async def plot_lightcurve(request: DownloadRequest):
 
     # send bytes to buffer
     buf = BytesIO()
-    plt.savefig(buf, format="png")
+    fig.savefig(buf, format="png", bbox_inches="tight")
     plt.close(fig)
     buf.seek(0)
     img_base64 = base64.b64encode(buf.read()).decode("utf-8")
+
+    # Clean up memory
+    buf.close()
+    lc = None
+    del fig, ax
+    gc.collect()
 
     return {'image': img_base64}
 
