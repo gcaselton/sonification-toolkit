@@ -52,7 +52,7 @@ import musical_scales
 # y /= y.max()*1.2
 # y += 0.15
 
-# s_type = 'light_curve'
+# s_type = 'light_curves'
 
 # data_path = Path('src', 'backend', 'tmp', '2070bf69d1291ba08e67a3191f511107.fits')
 # style_path = Path('src', 'backend','style_files', s_type, 'twinkle.yml')

@@ -2,7 +2,7 @@ import time
 from lightkurve import search_lightcurve
 from astroquery.mast import Observations
 from astroquery.simbad import Simbad
-from light_curve import search_lightcurves, get_identifiers
+from light_curves import search_lightcurves, get_identifiers
 
 kic = 'KIC 7548061'
 tic = 'TIC 28569279'

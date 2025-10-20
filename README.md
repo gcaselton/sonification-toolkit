@@ -18,7 +18,7 @@ The backend uses fastapi and the frontend uses React + Vite
 - backend/
   - api/
     - __init__.py
-    - light_curve.py
+    - light_curves.py
   main.py
 - frontend/
   - public

@@ -7,7 +7,7 @@ from musical_scales import scale as parse_scale
 from sounds import all_sounds
 
 defaults = {
-        'light_curve': {
+        'light_curves': {
             'name': 'Light Curve Default',
             'description': 'Default style for sonifying light curves. It combines the default STRAUSS synth sound with a cutoff filter, and chooses a random chord to play.',
             'sound': 'default_synth',

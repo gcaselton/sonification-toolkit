@@ -8,7 +8,7 @@ import { PlotDialog } from "../ui/PlotDialog";
 import { Tooltip } from "../ui/Tooltip";
 import ErrorMsg from "../ui/ErrorMsg";
 import { getImage } from "../../utils/assets";
-import { apiUrl as baseAPI } from "../../apiConfig";
+import { apiUrl } from "../../apiConfig";
 
 import {
   Box,
@@ -34,73 +34,29 @@ import {
   HStack
 } from "@chakra-ui/react";
 
-// API route
-const apiUrl = baseAPI + '/light-curves'
-
- export interface Lightcurve {
-  id: string;
-  mission: string;
-  exposure: number;
-  pipeline: string;
-  year: number;
-  period: string;
-  dataURI: string;
-}
-
 export interface Variant {
   name: string;
   description: string;
   filepath: string;
 }
 
-const LightcurvesContext = createContext({
-  lightcurves: [], fetchLightcurves: () => {}
-})
 
 function capitaliseWords(str: string) {
   return str.replace(/\b\w/g, char => char.toUpperCase());
 }
 
-export const plotLightcurve = async (filepath: string) => {
-
-  const url_plot = `${apiUrl}/plot-lightcurve`
-  const response = await fetch(url_plot, {
-    method: 'POST',
-    headers: {
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ 'data_uri': filepath })
-  });
-  const plotData = await response.json();
-  const image = plotData.image; 
-  
-  console.log("Data URI:", filepath);
-  console.log("Image:", image);
-  console.log("src:", "data:image/png;base64,"+ image);
-  return image;
-}
-
-
-
-export default function Lightcurves() {
+export default function Constellations() {
   const navigate = useNavigate();
-  const [selectedStar, setSelectedStar] = useState("");
-  const [lightcurves, setLightcurves] = useState([])
-  const [image, setImage] = useState("");
-  const [title, setTitle] = useState("");
+  
   const [open, setOpen] = useState(false);
   const [variants, setVariants] = useState<Variant[]>([]);
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false)
-  const [loadingPlot, setLoadingPlot] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
   const [loadingId, setLoadingId] = useState("fake ID")
   const [showFilters, setShowFilters] = useState(false);
-  const [tessChecked, setTessChecked] = useState(true);
-  const [keplerChecked, setKeplerChecked] = useState(true);
-  const [k2Checked, setK2Checked] = useState(true);
+
   
   useEffect(() => {
         fetch(`${apiUrl}/suggested-stars/`)

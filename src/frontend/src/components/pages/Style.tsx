@@ -5,7 +5,7 @@ import {BackButton} from "../ui/Buttons";
 import PageContainer from "../ui/PageContainer";
 import { ToggleTip, InfoTip } from "../ui/ToggleTip";
 import { Tooltip } from "../ui/Tooltip";
-import { apiUrl } from "../../apiConfig";
+import { apiUrl as baseAPI} from "../../apiConfig";
 
 import {
   Box,
@@ -27,9 +27,10 @@ import {
   Text  
 } from "@chakra-ui/react";
 
-
-
 export default function Style() {
+
+    const lightCurveAPI = baseAPI + "/light-curves"
+    const coreAPI = baseAPI + "/core"
 
     const navigate = useNavigate();
 
@@ -55,7 +56,7 @@ export default function Style() {
     const inputRef = useRef<HTMLInputElement | null>(null);
 
     useEffect(() => {
-        fetch(`${apiUrl}/styles/`)
+        fetch(`${coreAPI}/styles/light_curves`)
             .then((res) => res.json())
             .then((data) => {
                 data.push({'name': 'Custom'})
@@ -73,7 +74,7 @@ export default function Style() {
 
         const fetchSounds = async () => {
             try {
-                const response = await fetch(`${apiUrl}/sound_info/`)
+                const response = await fetch(`${coreAPI}/sound_info/`)
 
                 if (!response.ok) {
                     throw new Error('Failed to fetch sounds');
@@ -184,7 +185,7 @@ export default function Style() {
     
     const saveSoundSettings = async () => {
 
-        const save_sound_settings_url = `${apiUrl}/save-sound-settings/`;
+        const save_sound_settings_url = `${coreAPI}/save-sound-settings/`;
 
         const response = await fetch(save_sound_settings_url, {
             method: 'POST',
@@ -224,7 +225,7 @@ export default function Style() {
 
     const ensureSoundAvailable = async (soundName: string) => {
         // ensure the sound is available by downloading if necessary
-        await fetch(`${apiUrl}/ensure-sound-available/`, {
+        await fetch(`${coreAPI}/ensure-sound-available/`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ sound_name: soundName }),
@@ -239,7 +240,7 @@ export default function Style() {
             const filepath = await saveSoundSettings();
             console.log("Saved sound settings to:", filepath);
 
-            const preview_endpoint = `${apiUrl}/preview-style-settings/`;
+            const preview_endpoint = `${coreAPI}/preview-style-settings/light_curves`;
 
             const response = await fetch(preview_endpoint, {
                 method: 'POST',
@@ -252,7 +253,7 @@ export default function Style() {
             });
 
             const data = await response.json();
-            const audioUrl = `${apiUrl}/audio/${data.filename}`;
+            const audioUrl = `${coreAPI}/audio/${data.filename}`;
             const preview = new Audio(audioUrl);
             preview.play()
 
@@ -368,7 +369,7 @@ export default function Style() {
         formData.append("file", file);
 
         try {
-            const res = await fetch(`${apiUrl}/upload-yaml/`, {
+            const res = await fetch(`${coreAPI}/upload-yaml/`, {
                 method: "POST",
                 body: formData,
             });

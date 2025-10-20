@@ -132,7 +132,7 @@ def setup_strauss(data, style: BaseStyle, sonify_type, length):
             generator.modify_preset({'filter': 'on'})
 
       # Set up the data and Sources
-      if sonify_type == 'light_curve':
+      if sonify_type == 'light_curves':
             sources = light_curve_sources(data, style, length)
 
       # Handle chord or scale

@@ -6,7 +6,8 @@ for lib in ["uvicorn", "matplotlib", "httpcore", "asyncio", "httpx", "urllib3", 
 logging.getLogger("uvicorn.error")
 
 from fastapi import FastAPI
-from light_curve import router as light_curve_router
+from light_curves import router as light_curve_router
+from core import router as core_router
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse
@@ -67,6 +68,7 @@ app.add_middleware(
 
 # Import API endpoints
 app.include_router(light_curve_router)
+app.include_router(core_router)
 
 
 @app.get("/")
