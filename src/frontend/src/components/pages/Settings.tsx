@@ -2,7 +2,7 @@ import React, { useEffect, useState, ChangeEvent } from "react";
 import { useNavigate } from 'react-router-dom';
 import LoadingMessage from '../ui/LoadingMessage';
 import PageContainer from "../ui/PageContainer";
-import { apiUrl } from "../../apiConfig";
+import { apiUrl as baseAPI } from "../../apiConfig";
 
 import {
   Box,
@@ -16,6 +16,9 @@ import {
 } from "@chakra-ui/react";
 
 export default function Settings() {
+
+  const apiUrl = baseAPI + "/core"
+
   const navigate = useNavigate();
   const [dataResolution, setDataResolution] = useState<number>(10);
   const [loading, setLoading] = useState(true);

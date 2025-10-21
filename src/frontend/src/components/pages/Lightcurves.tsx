@@ -84,6 +84,9 @@ export const plotLightcurve = async (filepath: string) => {
 
 
 export default function Lightcurves() {
+
+  
+
   const navigate = useNavigate();
   const [selectedStar, setSelectedStar] = useState("");
   const [lightcurves, setLightcurves] = useState([])

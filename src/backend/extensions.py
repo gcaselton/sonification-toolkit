@@ -156,11 +156,10 @@ def setup_strauss(data, style: BaseStyle, sonify_type, length):
       return score, sources, generator
 
 def univariate_sources(xy_data: tuple, params, chord_mode, data_mode):
+      # NOTE to do: make this into a more generic function for univariate data.
       pass
 
 def scale_events(x, y, params, length):
-
-      logger.debug(params)
 
       user_settings = read_YAML_file(SETTINGS_FILE)
       resolution = user_settings['data_resolution']
@@ -183,7 +182,8 @@ def scale_events(x, y, params, length):
       
       sources = Events(data.keys())
       sources.fromdict(data)
-      sources.apply_mapping_functions(map_lims=m_lims, param_lims=p_lims)
+      sources.apply_mapping_functions(map_lims=m_lims, param_lims=p_lims) # Problem here: 'pitch cannot be evolved'
+      
 
       return sources
 
@@ -194,17 +194,17 @@ def light_curve_sources(data, style, length):
             x = data[0]
             y = data[1]
       elif isinstance(data, Path) and data.suffix == '.fits':
-
+           
             lc = lk.read(data)
             lc = lc.remove_nans()
             x = lc.time.value
             y = lc.flux.value
       elif isinstance(data, Path) and data.suffix == '.csv':
+
             df = pd.read_csv("data.csv")
 
             x = df.iloc[:, 0].to_list()  # first column
             y = df.iloc[:, 1].to_list()  # second column
-
 
       x = ensure_array(x)
       y = ensure_array(y)

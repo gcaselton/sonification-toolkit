@@ -18,7 +18,7 @@ from io import BytesIO
 from astroquery.simbad import Simbad
 
 
-router = APIRouter()
+router = APIRouter(prefix='/constellations')
 
 CATEGORY = 'constellations'
 
