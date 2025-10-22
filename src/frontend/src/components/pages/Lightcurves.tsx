@@ -436,7 +436,7 @@ export default function Lightcurves() {
             <br />
           </Box>
         )}
-        {lightcurves.length > 0 && (
+        {lightcurves.length > 0 && !loading && (
           <>
           <Heading>Search results for {searchTerm}:</Heading>
           <br />
