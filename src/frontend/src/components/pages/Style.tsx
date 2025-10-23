@@ -180,7 +180,8 @@ export default function Style() {
     const parameters = ["Filter Cutoff", "Pitch", "Volume", "Left/Right Pan"] as const;
 
     const location = useLocation();
-    const dataFilepath = location.state;
+    const dataFilepath = location.state.dataFilepath;
+    
     console.log("Filepath of Selected Lightcurve:", dataFilepath);
     
     const saveSoundSettings = async () => {
@@ -210,16 +211,16 @@ export default function Style() {
         return data.filepath;
     }
 
-    const handleClick  = async (variant: any) => {
-        if (variant.name === "Custom") {
+    const handleClick  = async (style: any) => {
+        if (style.name === "Custom") {
             console.log("Custom sound settings selected, opening dialog...");
             setOpen(true);
         } else {
-            console.log("Selected variant:", variant.name);
-            const filepath = variant.filepath;
-            console.log("Filepath of selected variant:", filepath);
-            // Navigate to the Sonify page with the selected variant
-            navigate('/sonify', { state: { filepath, dataFilepath } });
+            console.log("Selected style:", style.name);
+            const styleFilepath = style.filepath;
+            console.log("Filepath of selected style:", styleFilepath);
+            // Navigate to the Sonify page with the selected style
+            navigate('/sonify', { state: { dataFilepath, styleFilepath } });
         }
     }
 

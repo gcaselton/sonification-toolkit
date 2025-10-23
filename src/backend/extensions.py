@@ -193,18 +193,22 @@ def light_curve_sources(data, style, length):
 
             x = data[0]
             y = data[1]
-      elif isinstance(data, Path) and data.suffix == '.fits':
-           
-            lc = lk.read(data)
-            lc = lc.remove_nans()
-            x = lc.time.value
-            y = lc.flux.value
-      elif isinstance(data, Path) and data.suffix == '.csv':
+            
+      elif isinstance(data, Path):
+            if data.suffix == '.fits':
 
-            df = pd.read_csv("data.csv")
+                  lc = lk.read(data)
+                  lc = lc.remove_nans()
+                  x = lc.time.value
+                  y = lc.flux.value
 
-            x = df.iloc[:, 0].to_list()  # first column
-            y = df.iloc[:, 1].to_list()  # second column
+            elif data.suffix == '.csv':
+
+                  df = pd.read_csv("data.csv")
+
+                  x = df.iloc[:, 0].to_list()  # first column
+                  y = df.iloc[:, 1].to_list()  # second column
+
 
       x = ensure_array(x)
       y = ensure_array(y)

@@ -32,7 +32,7 @@ export default function Sonify() {
   const [audioSystem, setAudioSystem] = useState<string[]>(["mono"])
   const [audioFilepath, setAudioFilepath] = useState("");
   const location = useLocation();
-  const settingsFilepath = location.state.filepath;
+  const styleFilepath = location.state.styleFilepath;
   const dataFilepath = location.state.dataFilepath;
   const [soniReady, setSoniReady] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -74,7 +74,7 @@ export default function Sonify() {
   
     const data = {
       "data_filepath": dataFilepath,
-      "style_filepath": settingsFilepath,
+      "style_filepath": styleFilepath,
       "duration": length,
       "system": audioSystem[0]
     };

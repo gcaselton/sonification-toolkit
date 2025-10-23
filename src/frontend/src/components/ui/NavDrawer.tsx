@@ -68,7 +68,7 @@ export function NavDrawer() {
                     >
                       <HStack>
                         <item.icon size={18} />
-                        <Text>{item.label}</Text>
+                        <Text textStyle='md'>{item.label}</Text>
                       </HStack>
                     </Button>
                   </Link>

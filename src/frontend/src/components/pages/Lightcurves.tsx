@@ -92,7 +92,7 @@ export default function Lightcurves() {
   const [lightcurves, setLightcurves] = useState([])
   const [image, setImage] = useState("");
   const [title, setTitle] = useState("");
-  const [open, setOpen] = useState(false);
+  const [plotOpen, setPlotOpen] = useState(false);
   const [variants, setVariants] = useState<Variant[]>([]);
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [loading, setLoading] = useState(false);
@@ -231,11 +231,12 @@ export default function Lightcurves() {
     console.log("Sonify button clicked for star:", selectedStar);
     console.log("Data URI:", dataURI);
     // Call the select lightcurve function with the dataURI
-    selectLightcurve(dataURI).then((filepath) => {
-      if (filepath) {
-        console.log("Lightcurve selected, filepath:", filepath);
-        // Navigate to the style page with the filepath
-        navigate('/style', { state: filepath });
+    selectLightcurve(dataURI).then((dataFilepath) => {
+      if (dataFilepath) {
+        console.log("Lightcurve selected, filepath:", dataFilepath);
+        // Navigate to the style page with the filepath and star name
+        const dataName = searchTerm
+        navigate('/refine', { state: { dataFilepath, dataName } });
       }
     });
   };
@@ -257,7 +258,7 @@ export default function Lightcurves() {
     
     setTitle(`Light Curve Graph for ${plotTitle}`);
     setLoadingPlot(true);
-    setOpen(true);
+    setPlotOpen(true);
     
     try {
       setImage("");
@@ -275,10 +276,11 @@ export default function Lightcurves() {
     }
   };
 
-  const handleClickStar = (variant: any) => {
-    console.log("Star clicked:", variant.name);
-    const filepath = variant.filepath;
-    navigate('/style', { state: filepath });
+  const handleClickStar = (star: any) => {
+    console.log("Star clicked:", star.name);
+    const dataFilepath = star.filepath;
+    const dataName = star.name
+    navigate('/refine', { state: { dataFilepath, dataName }});
   };
 
   return (
@@ -360,8 +362,8 @@ export default function Lightcurves() {
         {loading && <LoadingMessage msg={`Searching the Universe for ${searchTerm}...`} icon='pulsar'/>}
         <br />
         <PlotDialog 
-                      open={open}
-                      setOpen={setOpen}
+                      open={plotOpen}
+                      setOpen={setPlotOpen}
                       title={title}
                       loadingPlot={loadingPlot}
                       image={image}
