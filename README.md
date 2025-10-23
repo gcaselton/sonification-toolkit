@@ -52,3 +52,7 @@ Run the React app
 `npm run dev`
 
 The frontend application should be running at http://localhost:5173/
+
+### Known Bugs 🐞
+
+The 'Flute Notes' style is currently not working and is being investigated.
