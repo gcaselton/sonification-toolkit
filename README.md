@@ -1,6 +1,6 @@
 # Data Sonification Toolkit
 
-An application to play sounds of astronomical objects using the Strauss package.
+An application to communicate astronomical data through sound and music. Powered by the STRAUSS python package!
 
 ## Pre-requisites
 
@@ -11,34 +11,17 @@ An application to play sounds of astronomical objects using the Strauss package.
 - FastAPI v0.0.7
 - Python v3.11.0
 
-## Application structure
-
-The backend uses fastapi and the frontend uses React + Vite
-
-- backend/
-  - api/
-    - __init__.py
-    - light_curves.py
-  main.py
-- frontend/
-  - public
-  - src/
-    - assets/
-    - components/
-    App.css
-    App.tsx
-    index.css
-    main.tsx
-    vite-env.d.ts
-    .gitignore
-
 ## Instructions to run the app
 
-Open a terminal from the location you cloned the repo
+Open a terminal from the location you cloned the repo.
 
-Install the required python packages
+Install the required python packages:
 
-`pip install -r requirements.txt`
+If you are running Windows, run
+`pip install -r requirements-windows.txt`
+
+If Mac or Linux, run
+`pip install -r requirements-unix.txt`
 
 ### Run fastapi
 
@@ -46,9 +29,9 @@ Go into the backend directory
 
 `cd .\src\backend\`
 
-Run fastapi
+Run fastAPI using uvicorn:
 
-`fastapi dev .\main.py`
+`uvicorn main:app --reload`
 
 The fastapi should be running at http://127.0.0.1:8000
 
@@ -69,3 +52,7 @@ Run the React app
 `npm run dev`
 
 The frontend application should be running at http://localhost:5173/
+
+### Known Bugs 🐞
+
+The 'Flute Notes' style is currently not working and is being investigated.
