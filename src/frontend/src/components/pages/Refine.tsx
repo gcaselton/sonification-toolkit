@@ -1,4 +1,4 @@
-import React, { useEffect, useState, createContext, ChangeEvent } from "react";
+import React, { useEffect, useState, createContext, ChangeEvent, lazy, Suspense } from "react";
 import { useNavigate, useLocation } from 'react-router-dom';
 import LoadingMessage from '../ui/LoadingMessage';
 import { LuX, LuChartSpline, LuAudioLines, LuSearch, LuSlidersHorizontal } from "react-icons/lu";
@@ -35,14 +35,17 @@ import {
 } from "@chakra-ui/react";
 
 
+
 export default function Refine() {
 
     const navigate = useNavigate();
     const location = useLocation();
     const dataName = location.state.dataName
     const dataFilepath = location.state.dataFilepath
+    const soniType = location.state.soniType
 
-    // To Do: Create RefineMenus.tsx which will return different options depending on sonification type.
+    // Dynamically import the menu component
+    const Menu = lazy(() => import(`../refine_menus/${soniType}.tsx`));
 
 
     return(
@@ -50,6 +53,9 @@ export default function Refine() {
             <Box position='relative' as='main' role='main'>
                 <Heading size="4xl">{dataName}</Heading>
                         <br />
+                <Suspense fallback={<p>Loading options...</p>}>
+                    <Menu dataFilepath={dataFilepath} />
+                </Suspense>
             </Box>
         </PageContainer>
     )

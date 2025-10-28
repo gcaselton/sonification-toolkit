@@ -37,6 +37,8 @@ import {
 // API route
 const apiUrl = baseAPI + '/light-curves'
 
+const soniType = 'light_curves'
+
  export interface Lightcurve {
   id: string;
   mission: string;
@@ -236,7 +238,7 @@ export default function Lightcurves() {
         console.log("Lightcurve selected, filepath:", dataFilepath);
         // Navigate to the style page with the filepath and star name
         const dataName = searchTerm
-        navigate('/refine', { state: { dataFilepath, dataName } });
+        navigate('/refine', { state: { dataFilepath, dataName, soniType } });
       }
     });
   };
@@ -280,7 +282,7 @@ export default function Lightcurves() {
     console.log("Star clicked:", star.name);
     const dataFilepath = star.filepath;
     const dataName = star.name
-    navigate('/refine', { state: { dataFilepath, dataName }});
+    navigate('/refine', { state: { dataFilepath, dataName, soniType }});
   };
 
   return (
