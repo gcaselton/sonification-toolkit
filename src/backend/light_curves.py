@@ -36,7 +36,8 @@ class StarQuery(BaseModel):
 class DownloadRequest(BaseModel):
     data_uri: str
 
-    
+class RangeRequest(BaseModel):
+    data_filepath: str
 
 
 class SonificationRequest(BaseModel):
@@ -44,6 +45,10 @@ class SonificationRequest(BaseModel):
     style_filepath: str
     duration: int
     system: str
+
+class PlotRequest(BaseModel):
+    data_filpath: str
+    new_range: list[int]
 
 
 
@@ -280,5 +285,16 @@ async def sonify_lightcurve(request: SonificationRequest):
     except Exception as e:
         raise HTTPException(status_code=404, detail=str(e))
 
+@router.post('/get-range/')
+async def get_range(request: RangeRequest):
 
+    lc = lk.read(request.data_filepath)
+    x = lc.time.value
+    range = [int(min(x)),int(max(x))]
 
+    return{'range': range}
+
+@router.post('/plot-trimmed/')
+async def plot_trimmed(request: PlotRequest):
+    #NOTE to do: make this create a new plot for trimmed data.
+    pass

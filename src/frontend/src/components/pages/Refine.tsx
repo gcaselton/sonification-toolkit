@@ -51,8 +51,11 @@ export default function Refine() {
     return(
         <PageContainer>
             <Box position='relative' as='main' role='main'>
-                <Heading size="4xl">{dataName}</Heading>
-                        <br />
+                <Heading size="4xl">Step 2: Refine</Heading>
+                <br />
+                <Text textStyle='lg'>Optionally, edit the {dataName} dataset.</Text>
+                <br />
+                <br />
                 <Suspense fallback={<p>Loading options...</p>}>
                     <Menu dataFilepath={dataFilepath} />
                 </Suspense>
