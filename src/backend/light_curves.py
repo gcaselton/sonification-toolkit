@@ -16,6 +16,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from io import BytesIO
 from astroquery.simbad import Simbad
+from scipy.ndimage import gaussian_filter1d
 
 
 router = APIRouter(prefix='/light-curves')
@@ -47,8 +48,13 @@ class SonificationRequest(BaseModel):
     system: str
 
 class PlotRequest(BaseModel):
-    data_filpath: str
+    data_filepath: str
     new_range: list[int]
+
+class RefinePreviewRequest(BaseModel):
+    data_filepath: str
+    new_range: list[int]
+    window_length: int
 
 
 
@@ -194,6 +200,13 @@ async def plot_lightcurve(request: DownloadRequest):
 
     lc = lk.read(filepath)
 
+    img_base64 = plot_and_format_lc(lc)
+
+    return {'image': img_base64}
+
+
+def plot_and_format_lc(lc: lk.LightCurve):
+
     # Plot and format
     fig, ax = plt.subplots()
     lc.plot(ax=ax, color="#008080", linewidth=1.2, alpha=0.9)
@@ -218,8 +231,7 @@ async def plot_lightcurve(request: DownloadRequest):
     del fig, ax
     gc.collect()
 
-    return {'image': img_base64}
-
+    return img_base64
 
 @router.post('/select-lightcurve/')
 async def select_lightcurve(request: DownloadRequest):
@@ -261,9 +273,6 @@ async def get_stars():
     return stars
 
 
-
-
-
 @router.post('/sonify-lightcurve/')
 async def sonify_lightcurve(request: SonificationRequest):
 
@@ -285,16 +294,46 @@ async def sonify_lightcurve(request: SonificationRequest):
     except Exception as e:
         raise HTTPException(status_code=404, detail=str(e))
 
-@router.post('/get-range/')
+@router.post('/get-range-data/')
 async def get_range(request: RangeRequest):
 
     lc = lk.read(request.data_filepath)
     x = lc.time.value
     range = [int(min(x)),int(max(x))]
 
-    return{'range': range}
+    return{'range': range,
+           'max_window': len(x)}
 
-@router.post('/plot-trimmed/')
+
 async def plot_trimmed(request: PlotRequest):
-    #NOTE to do: make this create a new plot for trimmed data.
-    pass
+
+    new_start, new_end = request.new_range
+    lc = lk.read(request.data_filepath)
+    lc = lc.truncate(new_start, new_end)
+
+    img_base64 = plot_and_format_lc(lc)
+
+    return{'image': img_base64}
+
+@router.post('/preview-refined/')
+async def preview_refined(request: RefinePreviewRequest):
+
+    # Truncate x-axis to new range
+    new_start, new_end = request.new_range
+    lc = lk.read(request.data_filepath)
+    lc = lc.truncate(new_start, new_end)
+
+    # Smooth with Savitsky-Golay filter
+    w_length = request.window_length
+    # NOTE To do: w_length needs to be odd
+    lc = lc.flatten(window_length=request.window_length)
+
+    # Plot, format, and convert image to Base64
+    img_base64 = plot_and_format_lc(lc)
+
+    return{'image': img_base64}
+
+
+    
+    
+
