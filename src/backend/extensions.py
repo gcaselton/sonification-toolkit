@@ -204,7 +204,10 @@ def light_curve_sources(data, style, length):
 
             elif data.suffix == '.csv':
 
-                  df = pd.read_csv("data.csv")
+                  df = pd.read_csv(data)
+
+                  # Remove rows with NaN values in either column
+                  df = df.dropna()
 
                   x = df.iloc[:, 0].to_list()  # first column
                   y = df.iloc[:, 1].to_list()  # second column

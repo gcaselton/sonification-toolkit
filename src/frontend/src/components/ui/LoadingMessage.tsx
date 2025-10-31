@@ -12,8 +12,7 @@ const LoadingMessage = ({ msg, icon = 'waveform' }: LoadingMessageProps) => (
   <Box
     textAlign="center" 
     mt={4} 
-    animation="fade-in" 
-    animationDuration="0.3s"
+    animation="fade-in 300ms ease-out"
     role="status"
     aria-live="polite"
     >

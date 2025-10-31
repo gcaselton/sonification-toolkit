@@ -10,10 +10,12 @@ from config import GITHUB_USER, GITHUB_REPO
 import logging, httpx, yaml, requests, os, base64, hashlib, uuid, aiofiles, zipfile, json, gc
 
 import lightkurve as lk
+from lightkurve import LightCurve
 import numpy as np
 import matplotlib
 matplotlib.use("Agg") 
 import matplotlib.pyplot as plt
+import pandas as pd
 from io import BytesIO
 from astroquery.simbad import Simbad
 from scipy.ndimage import gaussian_filter1d
@@ -51,10 +53,12 @@ class PlotRequest(BaseModel):
     data_filepath: str
     new_range: list[int]
 
-class RefinePreviewRequest(BaseModel):
+class RefineRequest(BaseModel):
     data_filepath: str
     new_range: list[int]
-    window_length: int
+    sigma: int
+
+
 
 
 
@@ -198,22 +202,43 @@ async def plot_lightcurve(request: DownloadRequest):
     else:
         filepath = request.data_uri
 
-    lc = lk.read(filepath)
-
-    img_base64 = plot_and_format_lc(lc)
+    img_base64 = plot_and_format_lc(filepath)
 
     return {'image': img_base64}
 
 
-def plot_and_format_lc(lc: lk.LightCurve):
+def plot_and_format_lc(filepath: str):
+
+    # Check file extension
+    if filepath.endswith('.csv'):
+     
+        df = pd.read_csv(filepath)
+        
+        # Get column names for labels
+        columns = df.columns.tolist()
+        time = df[columns[0]].values
+        flux = df[columns[1]].values
+        
+        # Use column names as labels (capitalize first letter)
+        x_label = columns[0].replace('_', ' ').title()
+        y_label = columns[1].replace('_', ' ').title()
+    elif filepath.endswith('.fits'):
+
+        # It's a FITS file
+        lc = lk.read(filepath)
+        time = lc.time.value
+        flux = lc.flux.value
+        
+        # Get labels from the LightCurve object
+        x_label = f'Time ({lc.time.format})' if hasattr(lc.time, 'format') else 'Time'
+        y_label = f'Flux ({lc.flux.unit})' if hasattr(lc.flux, 'unit') else 'Flux'
 
     # Plot and format
     fig, ax = plt.subplots()
-    lc.plot(ax=ax, color="#008080", linewidth=1.2, alpha=0.9)
-
-    legend = ax.get_legend()
-    if legend:
-        legend.remove()
+    ax.plot(time, flux, color="#008080", linewidth=1.2, alpha=0.9)
+    
+    ax.set_xlabel(x_label)
+    ax.set_ylabel(y_label)
 
     ax.spines['top'].set_visible(False)
     ax.spines['right'].set_visible(False)
@@ -227,8 +252,7 @@ def plot_and_format_lc(lc: lk.LightCurve):
 
     # Clean up memory
     buf.close()
-    lc = None
-    del fig, ax
+    del fig, ax, time, flux
     gc.collect()
 
     return img_base64
@@ -294,44 +318,69 @@ async def sonify_lightcurve(request: SonificationRequest):
     except Exception as e:
         raise HTTPException(status_code=404, detail=str(e))
 
-@router.post('/get-range-data/')
+@router.post('/get-range/')
 async def get_range(request: RangeRequest):
 
     lc = lk.read(request.data_filepath)
     x = lc.time.value
     range = [int(min(x)),int(max(x))]
 
-    return{'range': range,
-           'max_window': len(x)}
+    return{'range': range}
 
 
-async def plot_trimmed(request: PlotRequest):
+@router.post('/preview-refined/')
+async def preview_refined(request: RefineRequest):
 
-    new_start, new_end = request.new_range
-    lc = lk.read(request.data_filepath)
-    lc = lc.truncate(new_start, new_end)
-
-    img_base64 = plot_and_format_lc(lc)
+    lc_csv = await save_refined(request)
+       
+    # Plot, format, and convert image to Base64
+    img_base64 = plot_and_format_lc(lc_csv['data_filepath'])
 
     return{'image': img_base64}
 
-@router.post('/preview-refined/')
-async def preview_refined(request: RefinePreviewRequest):
+def refine_lightcurve(request: RefineRequest):
 
     # Truncate x-axis to new range
     new_start, new_end = request.new_range
     lc = lk.read(request.data_filepath)
     lc = lc.truncate(new_start, new_end)
 
-    # Smooth with Savitsky-Golay filter
-    w_length = request.window_length
-    # NOTE To do: w_length needs to be odd
-    lc = lc.flatten(window_length=request.window_length)
+    if request.sigma > 0:
 
-    # Plot, format, and convert image to Base64
-    img_base64 = plot_and_format_lc(lc)
+        # Smooth with Gaussian filter if sigma > 0
+        flux_unit = lc.flux.unit
+        smoothed_flux = gaussian_filter1d(lc.flux.value, request.sigma)
+        lc = lc.copy()
+        lc.flux = smoothed_flux * flux_unit
 
-    return{'image': img_base64}
+    return lc
+
+@router.post('/save-refined/')
+async def save_refined(request: RefineRequest):
+
+    lc = refine_lightcurve(request)
+
+    # Make a hash of the refined data (reproducible for identical refine parameters)
+    data = json.dumps(request.model_dump(), sort_keys=True)
+    hash = hashlib.md5(data.encode()).hexdigest()
+
+    filename = f'{hash}.csv'
+
+    filepath = os.path.join(TMP_DIR, filename)
+
+    if not os.path.exists(filepath):
+
+        df = pd.DataFrame({
+            'time': lc.time.value,
+            'flux': lc.flux.value
+        })
+        
+        # Save to CSV
+        df.to_csv(filepath, index=False)
+
+
+    return {'data_filepath': filepath}
+
 
 
     
