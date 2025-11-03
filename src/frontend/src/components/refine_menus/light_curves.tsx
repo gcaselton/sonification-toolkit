@@ -41,6 +41,8 @@ export default function LightCurves({ dataFilepath, onApply }: RefineMenuProps) 
   // controlled slider value
   const [cropValues, setCropValues] = useState<[number, number] | null>(null);
 
+  const [slidersLoading, setSlidersLoading] = useState(true)
+
   // sigma value for data smoothing
   const [sigma, setSigma] = useState(0)
 
@@ -66,27 +68,33 @@ export default function LightCurves({ dataFilepath, onApply }: RefineMenuProps) 
 
   // fetch cropRange
   useEffect(() => {
+    
     if (!dataFilepath) return;
 
     let mounted = true;
     async function fetchCropRange() {
+    
       const endpoint = `${lightCurveAPI}/get-range/`;
       try {
         const payload = { data_filepath: dataFilepath}
-        const result = await apiRequest(endpoint, payload, 'POST') // Send the request
+        const result = await apiRequest(endpoint, payload, 'POST')
 
-        // ensure range is a two-element numeric array
         if (mounted && Array.isArray(result.range) && result.range.length === 2) {
           const r: [number, number] = [Number(result.range[0]), Number(result.range[1])];
           setCropRange(r);
-          setCropValues(r); // set slider values
+          setCropValues(r);
+          setSlidersLoading(false)
         }
+
       } catch (error) {
         console.error("Error fetching x-axis range:", error);
+        setSlidersLoading(false);
       }
     }
     fetchCropRange();
-    return () => { mounted = false; };
+    return () => { 
+      mounted = false; 
+    };
   }, [dataFilepath]);
 
   // prepare marks when cropRange exists
@@ -135,13 +143,13 @@ export default function LightCurves({ dataFilepath, onApply }: RefineMenuProps) 
 
   }
 
-  const applyButtonText = cropValues && cropRange ?
+  const applyButtonOn = cropValues && cropRange ?
                             cropValues![0] == cropRange![0] &&
                             cropValues![1] == cropRange![1] &&
                             sigma == 0
-                            ? 'Skip'
-                            : 'Apply & Continue'
-                          : 'Skip'
+                            ? false
+                            : true
+                          : false
 
 
   return (
@@ -149,7 +157,7 @@ export default function LightCurves({ dataFilepath, onApply }: RefineMenuProps) 
       <Box width="50%">
         <VStack align='start' justify='center' gap='16' w='80%'>
         {/* render slider only when we have cropRange & cropValues */}
-        {cropRange && cropValues ? (
+        {!slidersLoading && cropRange && cropValues ? (
           <Slider.Root
             w="100%"
             minStepsBetweenThumbs={1}
@@ -157,6 +165,7 @@ export default function LightCurves({ dataFilepath, onApply }: RefineMenuProps) 
             min={cropRange[0]}
             max={cropRange[1]}
             value={cropValues}
+            animation="fade-in 300ms ease-out"
             onValueChange={(e) => setCropValues(e.value as [number, number])
             }
           >
@@ -176,15 +185,18 @@ export default function LightCurves({ dataFilepath, onApply }: RefineMenuProps) 
             </Slider.Control>
           </Slider.Root>
         ) : (
-          <Skeleton height='5em'/>
+          <Box width="100%">
+            <Skeleton height='4em'/>
+          </Box>
         )}
-        {window ? (
+        {!slidersLoading ? (
           <Slider.Root  
             w='100%'
             colorPalette='teal'
             min={0}
             max={10}
             value={[sigma]}
+            animation="fade-in 300ms ease-out"
             onValueChange={(e) => setSigma(e.value[0])}>
             <HStack>
               <Slider.Label textStyle='md'>Smoothing Factor</Slider.Label>
@@ -199,17 +211,23 @@ export default function LightCurves({ dataFilepath, onApply }: RefineMenuProps) 
             </Slider.Control>
           </Slider.Root>
         ) : (
-          <Skeleton height='5em'/>
+          <Box width="100%">
+            <Skeleton height='4em'/>
+          </Box>
         )}
-      
-      <HStack gap='5' justify="center" w="100%">
-        <Button w='40%' onClick={handleClickPreview} colorPalette="teal" variant="subtle">
+      {!slidersLoading ? (
+      <HStack gap='5' justify="center" w="100%" animation="fade-in 300ms ease-out">
+        <Button w='40%' onClick={handleClickPreview} colorPalette="teal" variant="surface">
           Preview changes
         </Button>
-        <Button w='40%' onClick={handleClickApply} colorPalette="teal" loading={applyLoading} loadingText="Saving...">
-          {applyButtonText}
+        <Button w='40%' onClick={handleClickApply} colorPalette="teal" loading={applyLoading} loadingText="Saving..." variant={applyButtonOn ? 'solid' : 'surface'}>
+          {applyButtonOn ? 'Apply & Continue' : 'Skip'}
         </Button>
-      </HStack>
+      </HStack>) : (
+      <Box width="100%">
+        <Skeleton height='4em'/>
+      </Box>
+      )}
       </VStack>
       </Box>
 

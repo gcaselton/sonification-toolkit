@@ -77,9 +77,6 @@ export const plotLightcurve = async (filepath: string) => {
   const plotData = await response.json();
   const image = plotData.image; 
   
-  console.log("Data URI:", filepath);
-  console.log("Image:", image);
-  console.log("src:", "data:image/png;base64,"+ image);
   return image;
 }
 

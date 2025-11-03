@@ -29,6 +29,7 @@ import {
   VStack,
   Table,
   Text,
+  Skeleton,
   IconButton,
   chakra,
   HStack
@@ -56,7 +57,7 @@ export default function Refine() {
                 <Text textStyle='lg'>Optionally, edit the {dataName} dataset.</Text>
                 <br />
                 <br />
-                <Suspense fallback={<p>Loading options...</p>}>
+                <Suspense>
                     <Menu 
                         dataFilepath={dataFilepath} 
                         onApply={(newFilepath: string) => {
