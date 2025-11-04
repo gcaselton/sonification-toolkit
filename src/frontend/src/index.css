@@ -69,3 +69,18 @@ button:focus-visible {
     background-color: #f9f9f9;
   } */
 }
+
+@keyframes twinkle {
+  0%, 100% {
+    filter: drop-shadow(0 0 2px #fff) drop-shadow(0 0 4px #0ff);
+    opacity: 0.85;
+    transform: scale(1);
+  }
+  50% {
+    filter: drop-shadow(0 0 6px #fff) drop-shadow(0 0 12px #0ff);
+    opacity: 1;
+    transform: scale(1.03); /* subtle pulse */
+  }
+}
+
+

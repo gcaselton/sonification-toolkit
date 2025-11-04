@@ -8,7 +8,7 @@ import { PlotDialog } from "../ui/PlotDialog";
 import { Tooltip } from "../ui/Tooltip";
 import ErrorMsg from "../ui/ErrorMsg";
 import { getImage } from "../../utils/assets";
-import { apiUrl as baseAPI} from "../../apiConfig";
+import { apiUrl} from "../../apiConfig";
 
 import {
   Box,

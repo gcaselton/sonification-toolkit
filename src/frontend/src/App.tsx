@@ -9,6 +9,7 @@ import Help from './components/pages/Help';
 import Home from './components/pages/Home';
 import Settings from './components/pages/Settings'
 import Refine from './components/pages/Refine';
+import Constellations from './components/pages/Constellations';
 
 function App() {
 
@@ -19,6 +20,7 @@ function App() {
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/light-curves" element={<Lightcurves />} />
+            <Route path="/constellations" element={<Constellations />} />
             <Route path="/refine" element={<Refine />} />
             <Route path="/style" element={<Style />} />
             <Route path="/sonify" element={<Sonify />} />

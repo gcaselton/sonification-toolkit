@@ -45,7 +45,7 @@ const astroTypes: AstroType[] = [
     {
         name: 'Constellations',
         description: 'Hear the brightest stars in the night sky appearing.',
-        page: '/'
+        page: '/constellations'
     },
     {
         name: 'Planets',

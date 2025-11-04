@@ -230,7 +230,7 @@ def plot_and_format_lc(filepath: str):
         flux = lc.flux.value
         
         # Get labels from the LightCurve object
-        x_label = f'Time ({lc.time.format})' if hasattr(lc.time, 'format') else 'Time'
+        x_label = f'Time ({lc.time.format})' if hasattr(lc.time, 'format') else 'Time (days)'
         y_label = f'Flux ({lc.flux.unit})' if hasattr(lc.flux, 'unit') else 'Flux'
 
     # Plot and format
@@ -269,32 +269,6 @@ async def select_lightcurve(request: DownloadRequest):
     filepath = download_lightcurve(request.data_uri)
     
     return {'filepath': filepath}
-
-@router.get('/suggested-stars/')
-async def get_stars():
-    print('Stars dir: ' + str(STARS_DIR))
-    if not STARS_DIR.exists():
-        raise HTTPException(status_code=404, detail='Suggested stars directory not found')
-    
-    stars = []
-
-    for file in STARS_DIR.glob('*.yml'):
-        try:
-            with open(file, 'r') as f:
-                data = yaml.safe_load(f)
-            star_name = data.get('name', str(file.stem))  # fallback to filename if 'name' missing
-            star_desc = data.get('description')
-        except Exception as e:
-            print(f'Failed to read or parse {file}: {e}')
-            continue
-
-        star = {'name': star_name,
-                'description': star_desc,
-                'filepath': os.path.join(str(STARS_DIR), str(file.stem) + '.fits')}
-
-        stars.append(star)
-        
-    return stars
 
 
 @router.post('/sonify-lightcurve/')

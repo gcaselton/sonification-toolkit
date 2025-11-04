@@ -1,7 +1,7 @@
 
 
-export const getImage = (imageName: string) => {
-  return new URL(`../assets/images/${imageName}.jpg`, import.meta.url).href;
+export const getImage = (imageName: string, extension: string = '.jpg') => {
+  return new URL(`../assets/images/${imageName}${extension}`, import.meta.url).href;
 };
 
 export const getAudio = (audioName: string) => {

@@ -4,7 +4,7 @@ import LoadingMessage from "../ui/LoadingMessage";
 import {BackButton} from "../ui/Buttons";
 import PageContainer from "../ui/PageContainer";
 import ErrorMsg from "../ui/ErrorMsg";
-import { apiUrl as baseAPI } from "../../apiConfig";
+import { apiUrl, lightCurvesAPI, coreAPI} from "../../apiConfig";
 import {
   Box,
   Button,
@@ -24,9 +24,6 @@ import {
 import { plotLightcurve } from "./Lightcurves";
 
 export default function Sonify() {
-
-  const lightCurveAPI = baseAPI + "/light-curves"
-  const coreAPI = baseAPI + "/core"
 
   const [length, setLength] = useState('15');
   const [audioSystem, setAudioSystem] = useState<string[]>(["mono"])
@@ -70,7 +67,7 @@ export default function Sonify() {
 
     setErrorMessage("")
     
-    const url_sonification = `${lightCurveAPI}/sonify-lightcurve`;
+    const url_sonification = `${lightCurvesAPI}/sonify-lightcurve`;
   
     const data = {
       "data_filepath": dataFilepath,

@@ -64,6 +64,36 @@ async def uploadData(file: UploadFile):
 
     return {'filepath': filepath}
 
+@router.get('/suggested-data/{category}/')
+async def get_suggested(category: str):
+
+    data_dir = SUGGESTED_DATA_DIR / category
+    
+    if not data_dir.exists():
+        raise HTTPException(status_code=404, detail=f'Suggested data directory for {category} not found')
+    
+    data_list = []
+
+    for file in data_dir.glob('*.yml'):
+        try:
+            with open(file, 'r') as f:
+                data = yaml.safe_load(f)
+            name = data.get('name', str(file.stem))  # fallback to filename if 'name' missing
+            desc = data.get('description')
+        except Exception as e:
+            print(f'Failed to read or parse {file}: {e}')
+            continue
+
+        ext = '.fits' if category == 'light_curves' else '.csv'
+
+        data = {'name': name,
+                'description': desc,
+                'filepath': os.path.join(str(data_dir), str(file.stem) + ext)}
+
+        data_list.append(data)
+        
+    return data_list
+
 @router.get('/styles/{category}')
 async def get_styles(category: str):
 

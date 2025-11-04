@@ -8,7 +8,7 @@ import { PlotDialog } from "../ui/PlotDialog";
 import { Tooltip } from "../ui/Tooltip";
 import ErrorMsg from "../ui/ErrorMsg";
 import { getImage } from "../../utils/assets";
-import { apiUrl as baseAPI } from "../../apiConfig";
+import { apiUrl, lightCurvesAPI, coreAPI} from "../../apiConfig";
 
 import {
   Box,
@@ -34,9 +34,6 @@ import {
   HStack
 } from "@chakra-ui/react";
 
-// API route
-const apiUrl = baseAPI + '/light-curves'
-
 const soniType = 'light_curves'
 
  export interface Lightcurve {
@@ -49,7 +46,7 @@ const soniType = 'light_curves'
   dataURI: string;
 }
 
-export interface Variant {
+export interface SuggestedData {
   name: string;
   description: string;
   filepath: string;
@@ -65,7 +62,7 @@ function capitaliseWords(str: string) {
 
 export const plotLightcurve = async (filepath: string) => {
 
-  const url_plot = `${apiUrl}/plot-lightcurve`
+  const url_plot = `${lightCurvesAPI}/plot-lightcurve`
   const response = await fetch(url_plot, {
     method: 'POST',
     headers: {
@@ -92,7 +89,7 @@ export default function Lightcurves() {
   const [image, setImage] = useState("");
   const [title, setTitle] = useState("");
   const [plotOpen, setPlotOpen] = useState(false);
-  const [variants, setVariants] = useState<Variant[]>([]);
+  const [variants, setVariants] = useState<SuggestedData[]>([]);
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false)
@@ -105,14 +102,14 @@ export default function Lightcurves() {
   const [k2Checked, setK2Checked] = useState(true);
   
   useEffect(() => {
-        fetch(`${apiUrl}/suggested-stars/`)
+        fetch(`${coreAPI}/suggested-data/${soniType}/`)
             .then((res) => res.json())
             .then((data) => {
                 setVariants(data);
                 console.log(variants)
             })
             .catch((err) => {
-                console.error("Failed to fetch presets:", err);
+                console.error("Failed to fetch suggested data:", err);
             });
     }, []);
 
@@ -135,7 +132,7 @@ export default function Lightcurves() {
       }
     }
 
-    const url_search = `${apiUrl}/search-lightcurves`
+    const url_search = `${lightCurvesAPI}/search-lightcurves`
     const data = {
       "star_name": selectedStar,
       "filters": filters
@@ -192,7 +189,7 @@ export default function Lightcurves() {
 
   const selectLightcurve = async (dataURI: string) => {
     // Call the API endpoint to select the lightcurve and get the filepath
-    const url_selectlightcurve = `${apiUrl}/select-lightcurve`;
+    const url_selectlightcurve = `${lightCurvesAPI}/select-lightcurve`;
     const data = {
       "data_uri": dataURI
     }
@@ -240,7 +237,7 @@ export default function Lightcurves() {
     });
   };
 
-  const handleClickPlot = async (item: Lightcurve | Variant) => {
+  const handleClickPlot = async (item: Lightcurve | SuggestedData) => {
 
     console.log("Plot button clicked for star:", selectedStar);
 

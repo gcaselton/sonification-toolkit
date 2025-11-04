@@ -2,7 +2,7 @@ import React, { useEffect, useState, ChangeEvent } from "react";
 import { useNavigate } from 'react-router-dom';
 import LoadingMessage from '../ui/LoadingMessage';
 import PageContainer from "../ui/PageContainer";
-import { apiUrl as baseAPI } from "../../apiConfig";
+import { apiUrl, coreAPI } from "../../apiConfig";
 
 import {
   Box,
@@ -16,8 +16,6 @@ import {
 } from "@chakra-ui/react";
 
 export default function Settings() {
-
-  const apiUrl = baseAPI + "/core"
 
   const navigate = useNavigate();
   const [dataResolution, setDataResolution] = useState<number>(10);
@@ -33,7 +31,7 @@ export default function Settings() {
 
   const loadSettings = async () => {
     try {
-      const response = await fetch(`${apiUrl}/load-settings`);
+      const response = await fetch(`${coreAPI}/load-settings`);
       if (!response.ok) {
         throw new Error('Failed to load settings');
       }
@@ -53,7 +51,7 @@ export default function Settings() {
     setSuccessMessage("");
     
     try {
-      const response = await fetch(`${apiUrl}/save-settings`, {
+      const response = await fetch(`${coreAPI}/save-settings`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

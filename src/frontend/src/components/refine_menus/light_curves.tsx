@@ -23,12 +23,9 @@ import { useLocation } from 'react-router-dom';
 import { plotLightcurve } from "../pages/Lightcurves";
 import LoadingMessage from "../ui/LoadingMessage";
 import ErrorMsg from "../ui/ErrorMsg";
-import { apiUrl as baseAPI } from "../../apiConfig";
+import { apiUrl, lightCurvesAPI, coreAPI } from "../../apiConfig";
 import { apiRequest } from "../../utils/requests";
 import { InfoTip } from "../ui/ToggleTip";
-
-
-const lightCurveAPI = baseAPI + '/light-curves'
 
 
 export default function LightCurves({ dataFilepath, onApply }: RefineMenuProps) {
@@ -74,7 +71,7 @@ export default function LightCurves({ dataFilepath, onApply }: RefineMenuProps) 
     let mounted = true;
     async function fetchCropRange() {
     
-      const endpoint = `${lightCurveAPI}/get-range/`;
+      const endpoint = `${lightCurvesAPI}/get-range/`;
       try {
         const payload = { data_filepath: dataFilepath}
         const result = await apiRequest(endpoint, payload, 'POST')
@@ -108,7 +105,7 @@ export default function LightCurves({ dataFilepath, onApply }: RefineMenuProps) 
 
     setImageLoading(true)
 
-    const endpoint = `${lightCurveAPI}/preview-refined/`
+    const endpoint = `${lightCurvesAPI}/preview-refined/`
     const payload = {
       data_filepath: dataFilepath,
       new_range: cropValues,
@@ -126,7 +123,7 @@ export default function LightCurves({ dataFilepath, onApply }: RefineMenuProps) 
 
     setApplyLoading(true)
 
-    const endpoint = `${lightCurveAPI}/save-refined/`
+    const endpoint = `${lightCurvesAPI}/save-refined/`
     const payload = {
       data_filepath: dataFilepath,
       new_range: cropValues,

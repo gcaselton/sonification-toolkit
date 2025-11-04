@@ -5,7 +5,7 @@ import {BackButton} from "../ui/Buttons";
 import PageContainer from "../ui/PageContainer";
 import { ToggleTip, InfoTip } from "../ui/ToggleTip";
 import { Tooltip } from "../ui/Tooltip";
-import { apiUrl as baseAPI} from "../../apiConfig";
+import { apiUrl, lightCurvesAPI, coreAPI} from "../../apiConfig";
 
 import {
   Box,
@@ -28,9 +28,6 @@ import {
 } from "@chakra-ui/react";
 
 export default function Style() {
-
-    const lightCurveAPI = baseAPI + "/light-curves"
-    const coreAPI = baseAPI + "/core"
 
     const navigate = useNavigate();
 
@@ -269,10 +266,10 @@ export default function Style() {
     try {
         ensureSoundAvailable(sound.name)
         // save sound settings
-        saveSoundSettings().then((filepath) => {
-            console.log("Saved sound settings to:", filepath);
+        saveSoundSettings().then((styleFilepath) => {
+            console.log("Saved sound settings to:", styleFilepath);
             // navigate
-            navigate('/sonify', { state: { filepath, dataFilepath } });
+            navigate('/sonify', { state: { dataFilepath, styleFilepath } });
         });
     } catch (err) {
         console.error("Error saving style settings:", err);
@@ -378,9 +375,9 @@ export default function Style() {
             const data = await res.json();
             //setFilepath(data.filepath); // Save the filepath returned by the server
             console.log("File uploaded successfully:", data.filepath);
-            const filepath = data.filepath;
+            const styleFilepath = data.filepath;
             // Navigate to the Sonify page with the uploaded file
-            navigate('/sonify', { state: { filepath, dataFilepath } });
+            navigate('/sonify', { state: { dataFilepath, styleFilepath } });
             //setResponse(data);
         } catch (err: any) {
             //setResponse({ error: err.message });
