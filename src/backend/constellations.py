@@ -23,7 +23,10 @@ router = APIRouter(prefix='/constellations')
 CATEGORY = 'constellations'
 
 STYLES_DIR = STYLE_FILES_DIR / CATEGORY
-STARS_DIR = SUGGESTED_DATA_DIR / CATEGORY
+SUGGESTED_DIR = SUGGESTED_DATA_DIR / CATEGORY
+HYG_DATA = SUGGESTED_DIR / 'hyg.csv'
 
 logging.basicConfig(level=logging.INFO)
 LOG = logging.getLogger(__name__)
+
+

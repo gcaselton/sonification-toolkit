@@ -1,7 +1,7 @@
 import React, { useEffect, useState, createContext, ChangeEvent } from "react";
 import { useNavigate } from 'react-router-dom';
 import LoadingMessage from '../ui/LoadingMessage';
-import { LuX, LuChartSpline, LuAudioLines, LuSearch, LuSlidersHorizontal } from "react-icons/lu";
+import { LuX, LuChartSpline, LuAudioLines, LuSearch, LuSlidersHorizontal, LuTelescope } from "react-icons/lu";
 import PageContainer from "../ui/PageContainer";
 import { SonifyButton, PlotButton} from "../ui/Buttons";
 import { PlotDialog } from "../ui/PlotDialog";
@@ -291,7 +291,7 @@ export default function Lightcurves() {
           <Box display="flex" justifyContent="center">
             <VStack gap={4} width="50%">
               <HStack width='100%'>
-                <InputGroup startElement={<LuSearch />} width='100%'>
+                <InputGroup startElement={<LuTelescope size="1.1rem"/>} width='100%'>
                   <Input
                     placeholder="Search for a star by name, KIC or EPIC identifier"
                     type="text"

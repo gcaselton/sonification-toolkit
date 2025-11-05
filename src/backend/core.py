@@ -16,6 +16,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from io import BytesIO
 from astroquery.simbad import Simbad
+from constellations import HYG_DATA
 
 
 router = APIRouter(prefix='/core')
@@ -84,11 +85,14 @@ async def get_suggested(category: str):
             print(f'Failed to read or parse {file}: {e}')
             continue
 
-        ext = '.fits' if category == 'light_curves' else '.csv'
+        filepaths = {
+            'light_curves': os.path.join(str(data_dir), str(file.stem) + '.fits'),
+            'constellations': HYG_DATA 
+        }
 
         data = {'name': name,
                 'description': desc,
-                'filepath': os.path.join(str(data_dir), str(file.stem) + ext)}
+                'filepath': filepaths[category]}
 
         data_list.append(data)
         
