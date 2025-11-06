@@ -28,106 +28,56 @@ import { apiRequest } from "../../utils/requests";
 import { InfoTip } from "../ui/ToggleTip";
 
 
-export default function Constellations({ dataFilepath, onApply }: RefineMenuProps) {
+export default function Constellations({ dataFilepath, dataName, onApply }: RefineMenuProps) {
+
   const [imageSrc, setImageSrc] = useState<string | null>(null);
   const [imageLoading, setImageLoading] = useState(true);
 
-  // fetched range from backend (x axis min/max)
-  const [cropRange, setCropRange] = useState<[number, number] | null>(null);
+  // number of stars
+  const [nStars, setNStars] = useState('10')
 
-  // controlled slider value
-  const [cropValues, setCropValues] = useState<[number, number] | null>(null);
-
-  const [slidersLoading, setSlidersLoading] = useState(true)
-
-  // sigma value for data smoothing
-  const [sigma, setSigma] = useState(0)
+  // magnitude state
+  const [magnitude, setMagnitude] = useState('6')
 
   const [applyLoading, setApplyLoading] = useState(false)
   
-  // fetch plot
+  // fetch plot on first load
   useEffect(() => {
-    let mounted = true;
-    async function fetchPlot() {
-      try {
-        const base64 = await plotLightcurve(dataFilepath);
-        if (!mounted) return;
-        setImageSrc(`data:image/png;base64,${base64}`);
-      } catch (err) {
-        console.error("Error generating plot:", err);
-      } finally {
-        if (mounted) setImageLoading(false);
-      }
-    }
-    fetchPlot();
-    return () => { mounted = false; };
-  }, [dataFilepath]);
-
-  // fetch cropRange
-  useEffect(() => {
-    
-    if (!dataFilepath) return;
-
-    let mounted = true;
-    async function fetchCropRange() {
-    
-      const endpoint = `${lightCurvesAPI}/get-range/`;
-      try {
-        const payload = { data_filepath: dataFilepath}
-        const result = await apiRequest(endpoint, payload, 'POST')
-
-        if (mounted && Array.isArray(result.range) && result.range.length === 2) {
-          const r: [number, number] = [Number(result.range[0]), Number(result.range[1])];
-          setCropRange(r);
-          setCropValues(r);
-          setSlidersLoading(false)
-        }
-
-      } catch (error) {
-        console.error("Error fetching x-axis range:", error);
-        setSlidersLoading(false);
-      }
-    }
-    fetchCropRange();
-    return () => { 
-      mounted = false; 
+    const fetchPlot = async () => {
+      await plotConstellation();
     };
-  }, [dataFilepath]);
 
-  // prepare marks when cropRange exists
-  const sliderMarks = cropRange ? [
-        { value: cropRange[0], label: String(cropRange[0]) },
-        { value: cropRange[1], label: String(cropRange[1]) },
-      ]
-  : [];
+    fetchPlot();
+  }, []);
 
-  const handleClickPreview = async () => {
-
+  // request plot from backend
+  const plotConstellation = async () => {
+    
     setImageLoading(true)
 
-    const endpoint = `${lightCurvesAPI}/preview-refined/`
+    const endpoint = `${constellationsAPI}/plot-constellation/`
     const payload = {
-      data_filepath: dataFilepath,
-      new_range: cropValues,
-      sigma: sigma
+      name: dataName,
+      n_stars: nStars,
     }
 
     const result = await apiRequest(endpoint, payload)
-  
+    
+    // update image state
     setImageSrc(`data:image/png;base64,${result.image}`);
-    setImageLoading(false)
 
+    setImageLoading(false)
   }
+
 
   const handleClickApply = async () => {
 
     setApplyLoading(true)
 
-    const endpoint = `${lightCurvesAPI}/save-refined/`
+    const endpoint = `${constellationsAPI}/save-refined/`
     const payload = {
-      data_filepath: dataFilepath,
-      new_range: cropValues,
-      sigma: sigma
+      name: dataName,
+      n_stars: nStars
     }
 
     const result = await apiRequest(endpoint, payload)
@@ -140,91 +90,67 @@ export default function Constellations({ dataFilepath, onApply }: RefineMenuProp
 
   }
 
-  const applyButtonOn = cropValues && cropRange ?
-                            cropValues![0] == cropRange![0] &&
-                            cropValues![1] == cropRange![1] &&
-                            sigma == 0
-                            ? false
-                            : true
-                          : false
+  // const invalidNStars = isNaN(Number(nStars)) || !Number.isInteger(Number(nStars)) || Number(nStars) <= 0 || Number(nStars) > 60;
+
+  // const applyButtonOn = cropValues && cropRange ?
+  //                           cropValues![0] == cropRange![0] &&
+  //                           cropValues![1] == cropRange![1] &&
+  //                           sigma == 0
+  //                           ? false
+  //                           : true
+  //                         : false
 
 
   return (
     <HStack gap="4" align="start" justify="center">
       <Box width="50%">
-        <VStack align='start' justify='center' gap='16' w='80%'>
-        {/* render slider only when we have cropRange & cropValues */}
-        {!slidersLoading && cropRange && cropValues ? (
-          <Slider.Root
-            w="100%"
-            minStepsBetweenThumbs={1}
-            colorPalette="teal"
-            min={cropRange[0]}
-            max={cropRange[1]}
-            value={cropValues}
-            animation="fade-in 300ms ease-out"
-            onValueChange={(e) => setCropValues(e.value as [number, number])
+      <VStack align='start' justify='center' gap='16' w='80%'>
+        <HStack>
+        <Field.Root>
+        <Field.Label>Number of Stars</Field.Label>
+        <NumberInput.Root
+          min={1}
+          max={1000} 
+          value={nStars} 
+          onValueChange={(e) => {
+            const intValue = Math.floor(Number(e.value));
+            if (!isNaN(intValue)) {
+              setNStars(intValue.toString());
             }
-          >
-            <Slider.Label textStyle='md'>
-              {'Trim start ('}
-              <Code textStyle='md'>{cropValues[0]}</Code>
-              {') and end ('}
-              <Code textStyle='md'>{cropValues[1]}</Code>
-              {') points'}
-            </Slider.Label>
-            <Slider.Control>
-              <Slider.Track>
-                <Slider.Range />
-              </Slider.Track>
-              <Slider.Thumbs />
-              <Slider.Marks marks={sliderMarks} />
-            </Slider.Control>
-          </Slider.Root>
-        ) : (
-          <Box width="100%">
-            <Skeleton height='4em'/>
-          </Box>
-        )}
-        {!slidersLoading ? (
-          <Slider.Root  
-            w='100%'
-            colorPalette='teal'
-            min={0}
-            max={10}
-            value={[sigma]}
-            animation="fade-in 300ms ease-out"
-            onValueChange={(e) => setSigma(e.value[0])}>
-            <HStack>
-              <Slider.Label textStyle='md'>Smoothing Factor</Slider.Label>
-              <InfoTip content='This is the standard deviation to give to a Gaussian filter, removing noise from the signal.' positioning={{placement: 'top'}}/>
-              <Code textStyle='md' ml='auto'>{sigma}</Code>
-            </HStack>
-            <Slider.Control>
-              <Slider.Track>
-                <Slider.Range />
-              </Slider.Track>
-              <Slider.Thumbs />
-            </Slider.Control>
-          </Slider.Root>
-        ) : (
-          <Box width="100%">
-            <Skeleton height='4em'/>
-          </Box>
-        )}
-      {!slidersLoading ? (
-      <HStack gap='5' justify="center" w="100%" animation="fade-in 300ms ease-out">
-        <Button w='40%' onClick={handleClickPreview} colorPalette="teal" variant="surface">
-          Preview changes
-        </Button>
-        <Button w='40%' onClick={handleClickApply} colorPalette="teal" loading={applyLoading} loadingText="Saving..." variant={applyButtonOn ? 'solid' : 'surface'}>
-          {applyButtonOn ? 'Apply & Continue' : 'Skip'}
-        </Button>
-      </HStack>) : (
-      <Box width="100%">
-        <Skeleton height='4em'/>
-      </Box>
-      )}
+          }}
+          inputMode="numeric"
+          width='40%'>
+          <NumberInput.Control />
+            <NumberInput.Input />
+        </NumberInput.Root>
+        </Field.Root>
+        <Field.Root>
+        <Field.Label>Magnitude less than</Field.Label>
+        <NumberInput.Root
+          min={-1.5}
+          max={21} 
+          value={magnitude} 
+          onValueChange={(e) => {
+            const intValue = Math.floor(Number(e.value));
+            if (!isNaN(intValue)) {
+              setMagnitude(intValue.toString());
+            }
+          }}
+          inputMode="numeric"
+          width='40%'>
+          <NumberInput.Control />
+            <NumberInput.Input />
+        </NumberInput.Root>
+        </Field.Root>
+        </HStack>
+        <HStack gap='5' justify="center" w="100%" animation="fade-in 300ms ease-out">
+          <Button w='40%' onClick={plotConstellation} colorPalette="teal" variant="surface">
+            Preview changes
+          </Button>
+          <Button w='40%' onClick={handleClickApply} colorPalette="teal" loading={applyLoading} loadingText="Saving...">
+            Apply & Continue
+          </Button>
+        </HStack>
       </VStack>
       </Box>
 
@@ -232,7 +158,7 @@ export default function Constellations({ dataFilepath, onApply }: RefineMenuProp
         {imageLoading ? (
           <LoadingMessage msg="" icon="pulsar" />
         ) : imageSrc ? (
-          <Image src={imageSrc} alt="Light curve plot" animation="fade-in 300ms ease-out"/>
+          <Image src={imageSrc} alt="Constellation plot" animation="fade-in 300ms ease-out"/>
         ) : (
           <ErrorMsg message="Unable to plot data." />
         )}
