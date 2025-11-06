@@ -71,7 +71,7 @@ export default function Constellations({ dataFilepath, onApply }: RefineMenuProp
     let mounted = true;
     async function fetchCropRange() {
     
-      const endpoint = `${lightCurvesAPI}/get-range/`;
+      const endpoint = `${apiUrl}/get-range/`;
       try {
         const payload = { data_filepath: dataFilepath}
         const result = await apiRequest(endpoint, payload, 'POST')
@@ -105,7 +105,7 @@ export default function Constellations({ dataFilepath, onApply }: RefineMenuProp
 
     setImageLoading(true)
 
-    const endpoint = `${lightCurvesAPI}/preview-refined/`
+    const endpoint = `${apiUrl}/preview-refined/`
     const payload = {
       data_filepath: dataFilepath,
       new_range: cropValues,
@@ -123,7 +123,7 @@ export default function Constellations({ dataFilepath, onApply }: RefineMenuProp
 
     setApplyLoading(true)
 
-    const endpoint = `${lightCurvesAPI}/save-refined/`
+    const endpoint = `${apiUrl}/save-refined/`
     const payload = {
       data_filepath: dataFilepath,
       new_range: cropValues,

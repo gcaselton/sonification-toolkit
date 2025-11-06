@@ -145,7 +145,7 @@ def setup_strauss(data, style: BaseStyle, sonify_type, length):
       elif style.chord_mode == 'off' and style.scale:
 
             root, quality = style.scale.split(' ', 1)
-            notes = parse_scale(root, quality, 3) # 3 octave range as default, could give users the option?
+            notes = parse_scale(starting_note = root, mode=quality, octaves=3) # 3 octave range as default, could give users the option?
             notes = [[str(note - 12) for note in notes]] # -12 so it starts on 2nd octave
             print(notes)
       else:
