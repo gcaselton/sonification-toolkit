@@ -7,6 +7,7 @@ logging.getLogger("uvicorn.error")
 
 from fastapi import FastAPI
 from light_curves import router as light_curve_router
+from constellations import router as constellations_router
 from core import router as core_router
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -68,6 +69,7 @@ app.add_middleware(
 
 # Import API endpoints
 app.include_router(light_curve_router)
+app.include_router(constellations_router)
 app.include_router(core_router)
 
 

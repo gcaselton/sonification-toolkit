@@ -368,7 +368,6 @@ export default function Lightcurves() {
           <Box animation="fade-in 300ms ease-out">
             <Heading size="2xl">Suggested</Heading>
             <br />
-            <br />
             <Stack gap="4" direction="row" wrap="wrap">
               {variants.map((variant) => (
                 <Card.Root

@@ -59,7 +59,8 @@ export default function Refine() {
                 <br />
                 <Suspense>
                     <Menu 
-                        dataFilepath={dataFilepath} 
+                        dataFilepath={dataFilepath}
+                        dataName={dataName} 
                         onApply={(newFilepath: string) => {
                             // Navigate with refined data
                             dataFilepath = newFilepath;
