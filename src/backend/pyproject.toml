@@ -1,0 +1,24 @@
+[project]
+name = "sonification-toolkit"
+version = "0.1.0"
+description = "Backend for the sonification toolkit"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "aiofiles>=25.1.0",
+    "astroquery==0.4.10",
+    "fastapi[standard]==0.115.12",
+    "httpx==0.28.1",
+    "ipython>=8.37.0",
+    "lightkurve==2.5.0",
+    "matplotlib==3.10.3",
+    "musical-scales>=2.0.0",
+    "numpy==2.2.5",
+    "pandas==2.2.3",
+    "pychord==1.2.2",
+    "pydantic==2.11.5",
+    "python-multipart>=0.0.20",
+    "scipy==1.15.3",
+    "strauss==1.0.1",
+    "uvicorn>=0.38.0",
+]

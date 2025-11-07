@@ -290,7 +290,7 @@ async def sonify_lightcurve(request: SonificationRequest):
 
         return {'filename': filename}
     except Exception as e:
-        raise HTTPException(status_code=404, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.post('/get-range/')
 async def get_range(request: RangeRequest):

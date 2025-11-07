@@ -1,6 +1,5 @@
 const viteEnv = import.meta.env.VITE_API_URL;
-const local = 'http://localhost:8000'
-const renderURL = 'https://sonification-toolkit.onrender.com'
+const local = import.meta.env.VITE_SONIFICATION_BACKEND_URL
 
 export const apiUrl = local
 export const coreAPI = `${apiUrl}/core`

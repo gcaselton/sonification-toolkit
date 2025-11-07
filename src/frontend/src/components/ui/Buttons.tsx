@@ -2,7 +2,7 @@ import { IconButton, Button } from "@chakra-ui/react";
 import { useNavigate } from "react-router-dom";
 import { LuArrowLeft, LuAudioLines, LuChartSpline } from "react-icons/lu";
 import { Home } from "lucide-react";
-import { Lightcurve, Variant } from "../pages/Lightcurves";
+import { Lightcurve } from "../pages/Lightcurves";
 
 interface BackButtonProps {
   fallbackPath?: string;
