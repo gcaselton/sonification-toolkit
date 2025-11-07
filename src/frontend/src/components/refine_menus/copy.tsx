@@ -33,15 +33,11 @@ export default function Constellations({ dataFilepath, dataName, onApply }: Refi
   const [imageSrc, setImageSrc] = useState<string | null>(null);
   const [imageLoading, setImageLoading] = useState(true);
 
-  // loading states for nStars and magnitude inputs
-  const [nStarsLoading, setNStarsLoading] = useState(false); 
-  const [magLoading, setMagLoading] = useState(true);
-
   // number of stars
   const [nStars, setNStars] = useState('10')
 
   // magnitude state
-  const [magnitude, setMagnitude] = useState('')
+  const [magnitude, setMagnitude] = useState('6')
 
   const [applyLoading, setApplyLoading] = useState(false)
   
@@ -52,15 +48,6 @@ export default function Constellations({ dataFilepath, dataName, onApply }: Refi
     };
 
     fetchPlot();
-  }, []);
-
-  // set initial magnitude based on nStars (10)
-  useEffect(() => {
-    const setMag = async () => {
-      await handleNStarsChange(nStars);
-    };
-
-    setMag();
   }, []);
 
   // request plot from backend
@@ -103,46 +90,6 @@ export default function Constellations({ dataFilepath, dataName, onApply }: Refi
 
   }
 
-  const handleNStarsChange = async (value: string) => {
-
-    setMagLoading(true);
-
-    const intValue = Math.floor(Number(value));
-
-    if (!isNaN(intValue)) {
-      setNStars(intValue.toString());
-    }
-
-    const endpoint = `${constellationsAPI}/get-max-magnitude/`
-    const payload = {
-      name: dataName,
-      n_stars: intValue
-    }
-
-    const result = await apiRequest(endpoint, payload)
-
-    setMagnitude(result.max_magnitude);
-    setMagLoading(false);
-  }
-
-  const handleMagnitudeChange = async (value: string) => {
-
-    setNStarsLoading(true);
-  
-    setMagnitude(value);
-
-    const endpoint = `${constellationsAPI}/get-n-stars/`
-    const payload = {
-      name: dataName,
-      max_magnitude: value
-    }
-
-    const result = await apiRequest(endpoint, payload)
-
-    setNStars(result.n_stars);
-    setNStarsLoading(false);
-  }
-
   // const invalidNStars = isNaN(Number(nStars)) || !Number.isInteger(Number(nStars)) || Number(nStars) <= 0 || Number(nStars) > 60;
 
   // const applyButtonOn = cropValues && cropRange ?
@@ -158,34 +105,39 @@ export default function Constellations({ dataFilepath, dataName, onApply }: Refi
     <HStack gap="4" align="start" justify="center">
       <Box width="50%">
       <VStack align='start' justify='center' gap='16' w='80%'>
-        <HStack gap={10}>
-        <Field.Root width='auto'>
+        <HStack>
+        <Field.Root>
         <Field.Label>Number of Stars</Field.Label>
         <NumberInput.Root
-          disabled={nStarsLoading}
           min={1}
           max={1000} 
           value={nStars} 
           onValueChange={(e) => {
-            handleNStarsChange(e.value);
+            const intValue = Math.floor(Number(e.value));
+            if (!isNaN(intValue)) {
+              setNStars(intValue.toString());
+            }
           }}
-          inputMode="numeric">
+          inputMode="numeric"
+          width='40%'>
           <NumberInput.Control />
             <NumberInput.Input />
         </NumberInput.Root>
         </Field.Root>
-        <Text textStyle='2xl' height='0.5'>=</Text>
-        <Field.Root width='auto'>
+        <Field.Root>
         <Field.Label>Magnitude less than</Field.Label>
         <NumberInput.Root
-          disabled={magLoading}
           min={-1.5}
           max={21} 
           value={magnitude} 
           onValueChange={(e) => {
-            handleMagnitudeChange(e.value);
+            const intValue = Math.floor(Number(e.value));
+            if (!isNaN(intValue)) {
+              setMagnitude(intValue.toString());
+            }
           }}
-          inputMode="decimal">
+          inputMode="numeric"
+          width='40%'>
           <NumberInput.Control />
             <NumberInput.Input />
         </NumberInput.Root>

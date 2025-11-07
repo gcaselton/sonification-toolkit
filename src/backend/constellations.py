@@ -34,6 +34,10 @@ class ConstellationRequest(BaseModel):
     name: str
     n_stars: int
 
+class NStarsRequest(BaseModel):
+    name: str
+    max_magnitude: float
+
 IAU_names = {
     "Pisces": "Psc",
     "Cetus": "Cet",
@@ -125,19 +129,24 @@ IAU_names = {
     "Lacerta": "Lac"
 }
 
-
-@router.post("/plot-constellation/")
-async def plot_constellation(constellation: ConstellationRequest):
+def get_constellation(constellation_name: str) -> pd.DataFrame:
 
     # load CSV
     df = pd.read_csv(HYG_DATA)
 
-    # select a constellation, e.g., Pegasus
-    constellation_name = IAU_names[constellation.name]
-    stars_in_constellation = df[df['con'] == constellation_name].copy()
+    # select a constellation
+    stars_in_constellation = df[df['con'] == IAU_names[constellation_name]].copy()
 
     # sort by brightness (smaller magnitude = brighter)
     stars_sorted = stars_in_constellation.sort_values('mag')
+
+    return stars_sorted
+
+@router.post("/plot-constellation/")
+async def plot_constellation(constellation: ConstellationRequest):
+
+    # select constellation
+    stars_sorted = get_constellation(constellation.name)
 
     # choose top N stars
     N = constellation.n_stars
@@ -155,14 +164,22 @@ async def plot_constellation(constellation: ConstellationRequest):
     x = ra
     y = top_stars['dec']
 
+    # Calculate ranges for proportional offsets
+    ra_range = x.max() - x.min()
+    dec_range = y.max() - y.min()
+    
+    # Use 3-5% of the range as offset (adjust percentage to taste)
+    offset_ra = ra_range * 0.04
+    offset_dec = dec_range * 0.04
+
     # smaller marker size inversely proportional to magnitude
-    sizes = np.sqrt(10 / top_stars['mag']) * 50
+    sizes = np.sqrt(10 / top_stars['mag']) * 20
 
     plt.scatter(x, y, s=sizes, c='white', alpha=1.0)
 
     # add padding around stars
-    padding_ra = (x.max() - x.min()) * 0.2
-    padding_dec = (y.max() - y.min()) * 0.2
+    padding_ra = ra_range * 0.2
+    padding_dec = dec_range * 0.2
     plt.xlim(x.min() - padding_ra, x.max() + padding_ra)
     plt.ylim(y.min() - padding_dec, y.max() + padding_dec)
 
@@ -171,8 +188,8 @@ async def plot_constellation(constellation: ConstellationRequest):
         this_ra = ra.loc[i]  # use the corrected RA value
         if pd.notna(row['proper']) and str(row['proper']).strip() != "":
             plt.text(
-                this_ra + 0.2,   # small offset so names don't overlap dots
-                row['dec'] + 0.2,
+                this_ra + offset_ra,
+                row['dec'] + offset_dec,
                 row['proper'],
                 color='white',
                 fontsize=8,
@@ -181,7 +198,6 @@ async def plot_constellation(constellation: ConstellationRequest):
             )
 
     plt.gca().set_facecolor('black')
-    # plt.title(f"{constellation.name} - Top {N} Brightest Stars")
     plt.xlabel("RA")
     plt.ylabel("Dec")
     plt.gca().invert_xaxis()
@@ -200,3 +216,44 @@ async def plot_constellation(constellation: ConstellationRequest):
     gc.collect()
 
     return {'image': img_base64}
+
+@router.post("/get-max-magnitude/")
+async def get_magnitude(request: ConstellationRequest):
+    
+    # get and sort constellation stars
+    stars_sorted = get_constellation(request.name)
+
+    # choose top N stars
+    N = request.n_stars
+    top_stars = stars_sorted.head(N).copy()
+
+    max_magnitude = max(top_stars['mag'].tolist())
+
+    return {'max_magnitude': max_magnitude}
+
+@router.post("/get-n-stars/")
+async def get_n_stars(request: NStarsRequest):
+
+    # sort by brightness (smaller magnitude = brighter)
+    stars_sorted = get_constellation(request.name)
+
+    # choose stars up to max magnitude
+    max_magnitude = request.max_magnitude
+    selected_stars = stars_sorted[stars_sorted['mag'] <= max_magnitude].copy()
+
+    n_stars = len(selected_stars)
+
+    return {'n_stars': n_stars}
+
+@router.post("/save-refined/")
+async def save_refined(request: ConstellationRequest):
+
+    # get and sort constellation stars
+    stars = get_constellation(request.name)
+    refined_stars = stars.head(request.n_stars).copy()
+
+    # save to tmp directory
+    filepath = TMP_DIR / f'refined_{request.name}_{uuid.uuid4().hex}.csv'
+    refined_stars.to_csv(filepath, index=False)
+
+    return {'data_filepath': filepath}
