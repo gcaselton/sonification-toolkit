@@ -32,7 +32,7 @@ def read_YAML_file(filepath):
     
     return YAML_dict
 
-def sonify(data, style_filepath, sonify_type, length=15, system='mono'):
+def sonify(data_filepath, style_filepath, sonify_type, length=15, system='mono'):
 
       # Load user and default styles
       user_style = read_YAML_file(style_filepath)
@@ -41,11 +41,11 @@ def sonify(data, style_filepath, sonify_type, length=15, system='mono'):
       # Merge the user and default styles, overwriting defaults with user's where present
       merged = {**default_style, **{k: v for k, v in user_style.items() if v is not None}}
 
-      # Validate the merged result NOTE problem is here
+      # Validate the merged result
       validated_style = BaseStyle.model_validate(merged)
         
       # Set up Sonification elements
-      score, sources, generator = setup_strauss(data, validated_style, sonify_type, length)
+      score, sources, generator = setup_strauss(data_filepath, validated_style, sonify_type, length)
 
       # Render sonification
       sonification = Sonification(score, sources, generator, system)

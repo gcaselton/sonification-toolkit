@@ -16,7 +16,7 @@ import matplotlib
 matplotlib.use("Agg") 
 import matplotlib.pyplot as plt
 from io import BytesIO
-from astroquery.simbad import Simbad
+from core import SonificationRequest
 
 
 router = APIRouter(prefix='/constellations')
@@ -168,12 +168,14 @@ async def plot_constellation(constellation: ConstellationRequest):
     ra_range = x.max() - x.min()
     dec_range = y.max() - y.min()
     
-    # Use 3-5% of the range as offset (adjust percentage to taste)
+    # Use 3-5% of the range as offset
     offset_ra = ra_range * 0.04
     offset_dec = dec_range * 0.04
 
     # smaller marker size inversely proportional to magnitude
     sizes = np.sqrt(10 / top_stars['mag']) * 20
+
+    # sizes = (10/top_stars['mag']) ** 2
 
     plt.scatter(x, y, s=sizes, c='white', alpha=1.0)
 
@@ -253,7 +255,7 @@ async def save_refined(request: ConstellationRequest):
     refined_stars = stars.head(request.n_stars).copy()
 
     # save to tmp directory
-    filepath = TMP_DIR / f'refined_{request.name}_{uuid.uuid4().hex}.csv'
+    filepath = TMP_DIR / f'{request.name}_{uuid.uuid4().hex}.csv'
     refined_stars.to_csv(filepath, index=False)
 
     return {'data_filepath': filepath}

@@ -178,6 +178,7 @@ export default function Style() {
 
     const location = useLocation();
     const dataFilepath = location.state.dataFilepath;
+    const soniType = location.state.soniType;
     
     console.log("Filepath of Selected Lightcurve:", dataFilepath);
     
@@ -217,7 +218,7 @@ export default function Style() {
             const styleFilepath = style.filepath;
             console.log("Filepath of selected style:", styleFilepath);
             // Navigate to the Sonify page with the selected style
-            navigate('/sonify', { state: { dataFilepath, styleFilepath } });
+            navigate('/sonify', { state: { dataFilepath, styleFilepath, soniType } });
         }
     }
 
@@ -269,7 +270,7 @@ export default function Style() {
         saveSoundSettings().then((styleFilepath) => {
             console.log("Saved sound settings to:", styleFilepath);
             // navigate
-            navigate('/sonify', { state: { dataFilepath, styleFilepath } });
+            navigate('/sonify', { state: { dataFilepath, styleFilepath, soniType } });
         });
     } catch (err) {
         console.error("Error saving style settings:", err);
@@ -377,7 +378,7 @@ export default function Style() {
             console.log("File uploaded successfully:", data.filepath);
             const styleFilepath = data.filepath;
             // Navigate to the Sonify page with the uploaded file
-            navigate('/sonify', { state: { dataFilepath, styleFilepath } });
+            navigate('/sonify', { state: { dataFilepath, styleFilepath, soniType } });
             //setResponse(data);
         } catch (err: any) {
             //setResponse({ error: err.message });

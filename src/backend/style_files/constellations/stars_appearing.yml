@@ -1,0 +1,24 @@
+name: 'Stars Appearing'
+
+description: 'Brightest stars appear first, with colour mapped to pitch. Mallets base sound.'
+
+sound: 'Mallets'
+
+parameters:
+  magnitude:
+    map_to: 'time'
+  colour:
+    map_to: 'pitch'
+  ra:
+    map_to: 'azimuth'
+  dec:
+    map_to: 'altitude'
+
+music: 'Cmaj7'
+  
+
+
+  
+  
+  
+

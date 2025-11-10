@@ -29,6 +29,7 @@ export default function Sonify() {
   const [audioSystem, setAudioSystem] = useState<string[]>(["mono"])
   const [audioFilepath, setAudioFilepath] = useState("");
   const location = useLocation();
+  const soniType = location.state.soniType;
   const styleFilepath = location.state.styleFilepath;
   const dataFilepath = location.state.dataFilepath;
   const [soniReady, setSoniReady] = useState(false)
@@ -67,9 +68,10 @@ export default function Sonify() {
 
     setErrorMessage("")
     
-    const url_sonification = `${lightCurvesAPI}/sonify-lightcurve`;
+    const url_sonification = `${coreAPI}/generate-sonification/`;
   
     const data = {
+      "category": soniType,
       "data_filepath": dataFilepath,
       "style_filepath": styleFilepath,
       "duration": length,

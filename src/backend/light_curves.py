@@ -19,6 +19,7 @@ import pandas as pd
 from io import BytesIO
 from astroquery.simbad import Simbad
 from scipy.ndimage import gaussian_filter1d
+from core import SonificationRequest
 
 
 router = APIRouter(prefix='/light-curves')
@@ -43,12 +44,6 @@ class RangeRequest(BaseModel):
     data_filepath: str
 
 
-class SonificationRequest(BaseModel):
-    data_filepath: str
-    style_filepath: str
-    duration: int
-    system: str
-
 class PlotRequest(BaseModel):
     data_filepath: str
     new_range: list[int]
@@ -57,8 +52,6 @@ class RefineRequest(BaseModel):
     data_filepath: str
     new_range: list[int]
     sigma: int
-
-
 
 
 
@@ -271,26 +264,7 @@ async def select_lightcurve(request: DownloadRequest):
     return {'filepath': filepath}
 
 
-@router.post('/sonify-lightcurve/')
-async def sonify_lightcurve(request: SonificationRequest):
 
-    data = Path(request.data_filepath)
-    style = Path(request.style_filepath)
-    length = request.duration
-    system = request.system
-
-    try:
-        soni = sonify(data, style, CATEGORY, length, system)
-
-        id = str(uuid.uuid4().hex)
-        ext = '.wav'
-        filename = f'{CATEGORY}_{id}{ext}'
-        filepath = os.path.join(TMP_DIR, filename)
-        soni.save(filepath)
-
-        return {'filename': filename}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
 
 @router.post('/get-range/')
 async def get_range(request: RangeRequest):

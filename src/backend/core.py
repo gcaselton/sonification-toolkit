@@ -44,6 +44,35 @@ class SoundRequest(BaseModel):
 class UserSettings(BaseModel):
     data_resolution: int
 
+class SonificationRequest(BaseModel):
+    category: str
+    data_filepath: str
+    style_filepath: str
+    duration: int
+    system: str
+
+
+@router.post('/generate-sonification/')
+async def generate_sonification(request: SonificationRequest):
+
+    category = request.category
+    data = Path(request.data_filepath)
+    style = Path(request.style_filepath)
+    length = request.duration
+    system = request.system
+
+    try:
+        soni = sonify(data, style, category, length, system)
+
+        id = str(uuid.uuid4().hex)
+        ext = '.wav'
+        filename = f'{category}_{id}{ext}'
+        filepath = os.path.join(TMP_DIR, filename)
+        soni.save(filepath)
+
+        return {'filename': filename}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.post('/upload-data/')
 async def uploadData(file: UploadFile):

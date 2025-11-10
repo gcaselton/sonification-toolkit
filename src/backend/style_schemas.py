@@ -11,10 +11,16 @@ defaults = {
             'name': 'Light Curve Default',
             'description': 'Default style for sonifying light curves. It combines the default STRAUSS synth sound with a cutoff filter, and chooses a random chord to play.',
             'sound': 'default_synth',
-            'data_mode': 'continuous',
             'parameters': {'cutoff': [0,1]},
             'chord_mode': 'on',
             'chord': 'random'
+        },
+        'constellation': {
+            'name': 'Constellation Default',
+            'description': 'Default style for sonifying constellations. It uses the mallets sound and maps star colour to pitch.',
+            'sound': 'Mallets',
+            'parameters': {'magnitude': {'map_to': 'time'}, 'colour': {'map_to': 'pitch'}, 'ra': {'map_to': 'azimuth'}, 'dec': {'map_to': 'altitude'}},
+            'music': 'Cmaj7'
         },
         'orbit': {
             'name': 'Orbit Default',
@@ -25,8 +31,7 @@ defaults = {
 class BaseStyle(BaseModel):
     name: Optional[str] = None
     description: Optional[str] = None
-    sound: Optional[str] = None
-    data_mode: Literal['discrete', 'continuous'] = 'continuous'
+    sound: Optional[str] = None 
     parameters: Optional[Dict[str, Optional[List[float]]]] = None
     chord_mode: Literal['on', 'off'] = 'on'
     chord: Optional[str] = None
