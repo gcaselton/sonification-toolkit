@@ -5,19 +5,32 @@ description: 'Brightest stars appear first, with colour mapped to pitch and the 
 sound: 'Mallets'
 
 parameters:
-  magnitude:
-    input_range: [-1.5, 6]
-    map_to: 'time'
-    output_range: [1, 0]
+  - input: 'magnitude'
+    input_range: ['0%', '104%']
+    output: 'time'
+    output_range: ['0%', '100%']
 
-  colour:
-    map_to: 'pitch'
-  ra:
-    map_to: 'azimuth'
-  dec:
-    map_to: 'altitude'
+  - input: 'magnitude'
+    input_range: ['0%', '100%']
+    output: 'volume'
+    output_range: ['0%', '100%']
+    
+  - input: 'colour'
+    input_range: ['0%', '100%']
+    output: 'pitch'
+    output_range: ['0%', '100%']
 
-music: 'Cmaj7'
+  - input: 'ra'
+    input_range: ['0%', '100%']
+    output: 'azimuth'
+    output_range: ['0%', '100%']
+
+  - input: 'dec'
+    input_range: ['0%', '100%']
+    output: 'altitude'
+    output_range: ['0%', '100%']
+
+harmony: 'Cmaj7'
   
 
 
