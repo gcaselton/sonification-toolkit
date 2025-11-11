@@ -1,12 +1,15 @@
 name: 'Stars Appearing'
 
-description: 'Brightest stars appear first, with colour mapped to pitch. Mallets base sound.'
+description: 'Brightest stars appear first, with colour mapped to pitch and the stars spaced in stereo. Mallets base sound.'
 
 sound: 'Mallets'
 
 parameters:
   magnitude:
+    input_range: [-1.5, 6]
     map_to: 'time'
+    output_range: [1, 0]
+
   colour:
     map_to: 'pitch'
   ra:

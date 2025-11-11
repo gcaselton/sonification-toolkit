@@ -88,6 +88,7 @@ BACKEND_DIR, SRC_DIR = get_base_paths()
 # Define all paths
 STYLE_FILES_DIR = BACKEND_DIR / "style_files"
 SUGGESTED_DATA_DIR = BACKEND_DIR / "suggested_data"
+HYG_DATA = SUGGESTED_DATA_DIR / "constellations" / "hyg.csv"
 USER_DATA_DIR = get_user_data_dir()
 TMP_DIR = get_tmp_dir()
 SETTINGS_DIR = get_settings_dir()
