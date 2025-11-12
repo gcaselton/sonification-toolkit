@@ -1,41 +1,45 @@
 from pydantic import BaseModel, Field, field_validator, model_validator
-from typing import Literal, Optional, Dict, List
+from typing import Optional, Dict, List, Union, Tuple
 from paths import *
 from strauss.sources import param_lim_dict
 from pychord import Chord
 from musical_scales import scale as parse_scale
 from sounds import all_sounds
 
-defaults = {
-        'light_curves': {
-            'name': 'Light Curve Default',
-            'description': 'Default style for sonifying light curves. It combines the default STRAUSS synth sound with a cutoff filter, and chooses a random chord to play.',
-            'sound': 'default_synth',
-            'parameters': {'cutoff': [0,1]},
-            'chord_mode': 'on',
-            'chord': 'random'
-        },
-        'constellation': {
-            'name': 'Constellation Default',
-            'description': 'Default style for sonifying constellations. It uses the mallets sound and maps star colour to pitch.',
-            'sound': 'Mallets',
-            'parameters': {'magnitude': {'map_to': 'time'}, 'colour': {'map_to': 'pitch'}, 'ra': {'map_to': 'azimuth'}, 'dec': {'map_to': 'altitude'}},
-            'music': 'Cmaj7'
-        },
-        'orbit': {
-            'name': 'Orbit Default',
-            'description': 'Style for orbit sonification etc',
-        }
-    }
+# defaults = {
+#         'light_curves': {
+#             'name': 'Light Curve Default',
+#             'description': 'Default style for sonifying light curves. It combines the default STRAUSS synth sound with a cutoff filter, and chooses a random chord to play.',
+#             'sound': 'default_synth',
+#             'parameters': {'cutoff': [0,1]},
+#             'chord_mode': 'on',
+#             'chord': 'random'
+#         },
+#         'constellation': {
+#             'name': 'Constellation Default',
+#             'description': 'Default style for sonifying constellations. It uses the mallets sound and maps star colour to pitch.',
+#             'sound': 'Mallets',
+#             'parameters': {'magnitude': {'map_to': 'time'}, 'colour': {'map_to': 'pitch'}, 'ra': {'map_to': 'azimuth'}, 'dec': {'map_to': 'altitude'}},
+#             'music': 'Cmaj7'
+#         },
+#         'orbit': {
+#             'name': 'Orbit Default',
+#             'description': 'Style for orbit sonification etc',
+#         }
+#     }
+
+class ParameterMapping(BaseModel):
+    input: str = Field(..., title="Input Parameter Name", description="This is the name of the data variable to map from, e.g. magnitude.")
+    input_range: Tuple[Union[str, float, int], Union[str, float, int]] = Field(default=('0%','100%'), title="Input Parameter Range", description="The range of the input data to use. Can be specified as percentiles (e.g. '5%','95%') or absolute values (e.g. 0,100). All values outside this range will be clipped to this range.")
+    output: str = Field(..., title="Output Parameter Name", description="This is the name of the sound parameter to map to, e.g. pitch.")
+    output_range: Tuple[Union[str, float, int], Union[str, float, int]] = Field(..., description="Range of output values")
 
 class BaseStyle(BaseModel):
     name: Optional[str] = None
     description: Optional[str] = None
     sound: Optional[str] = None 
-    parameters: Optional[Dict[str, Optional[List[float]]]] = None
-    chord_mode: Literal['on', 'off'] = 'on'
-    chord: Optional[str] = None
-    scale: Optional[str] = None
+    parameters: List[ParameterMapping] = Field(default_factory=list)
+    harmony: Optional[str] = None
 
     @field_validator('sound')
     @classmethod
@@ -122,5 +126,4 @@ class BaseStyle(BaseModel):
         return self
 
 
-# create child classes for different style/sonification types?
 
