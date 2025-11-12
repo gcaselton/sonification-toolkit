@@ -17,11 +17,7 @@ Open a terminal from the location you cloned the repo.
 
 Install the required python packages:
 
-If you are running Windows, run
-`pip install -r requirements-windows.txt`
-
-If Mac or Linux, run
-`pip install -r requirements-unix.txt`
+`pip install .`
 
 ### Run fastapi
 
@@ -35,7 +31,7 @@ Run fastAPI using uvicorn:
 
 The fastapi should be running at http://127.0.0.1:8000
 
-You can find the documentation of the APIs available at http://127.0.0.1:8000/docs
+You can find the documentation of the API available at http://127.0.0.1:8000/docs
 
 ### Run the React app
 
@@ -51,8 +47,5 @@ Run the React app
 
 `npm run dev`
 
-The frontend application should be running at http://localhost:5173/
+Open a web browser window and navigate to http://localhost:5173/
 
-### Known Bugs 🐞
-
-The 'Flute Notes' style is currently not working and is being investigated.
