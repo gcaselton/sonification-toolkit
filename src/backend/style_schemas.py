@@ -28,18 +28,37 @@ from sounds import all_sounds
 #         }
 #     }
 
+metadata = {
+    'input': {
+        'title': 'Input Parameter Name',
+        'description': 'This is the name of the data variable to map from, e.g. magnitude.'
+    },
+    'input_range': {
+        'title': 'Input Parameter Range',
+        'description': "The range of the input data to use. Can be specified as percentiles (e.g. '5%','95%') or absolute values (e.g. 0,100). All values outside this range will be clipped to this range."
+    },
+    'output': {
+        'title': 'Output Parameter Name',
+        'description': 'This is the name of the sound parameter to map to, e.g. pitch.'
+    },
+    'output_range': {
+        'title': 'Output Parameter Range',
+        'description': 'The range of the output sound parameter values. E.g. for pitch, this could be between 0-24 semitones. Can also be specified as percentiles (e.g. "5%","95%") or absolute values (e.g. 0,100).'
+    }
+}
+
 class ParameterMapping(BaseModel):
-    input: str = Field(..., title="Input Parameter Name", description="This is the name of the data variable to map from, e.g. magnitude.")
-    input_range: Tuple[Union[str, float, int], Union[str, float, int]] = Field(default=('0%','100%'), title="Input Parameter Range", description="The range of the input data to use. Can be specified as percentiles (e.g. '5%','95%') or absolute values (e.g. 0,100). All values outside this range will be clipped to this range.")
-    output: str = Field(..., title="Output Parameter Name", description="This is the name of the sound parameter to map to, e.g. pitch.")
-    output_range: Tuple[Union[str, float, int], Union[str, float, int]] = Field(..., description="Range of output values")
+    input: str = Field(..., title=metadata['input']['title'], description=metadata['input']['description'])
+    input_range: Tuple[Union[str, float, int], Union[str, float, int]] = Field(default=('0%','100%'), title=metadata['input_range']['title'], description=metadata['input_range']['description'])
+    output: str = Field(..., title=metadata['output']['title'], description=metadata['output']['description'])
+    output_range: Tuple[Union[str, float, int], Union[str, float, int]] = Field(..., title=metadata['output_range']['title'], description=metadata['output_range']['description'])
 
 class BaseStyle(BaseModel):
-    name: Optional[str] = None
-    description: Optional[str] = None
-    sound: Optional[str] = None 
-    parameters: List[ParameterMapping] = Field(default_factory=list)
-    harmony: Optional[str] = None
+    name: Optional[str] = Field(None)
+    description: Optional[str] = Field(None)
+    sound: Optional[str] = Field(...)
+    parameters: List[ParameterMapping] = Field(..., default_factory=list)
+    harmony: Optional[str] = Field(None)
 
     @field_validator('sound')
     @classmethod
