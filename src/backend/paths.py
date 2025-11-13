@@ -99,11 +99,4 @@ SAMPLES_DIR = SOUND_ASSETS_DIR / "samples"
 SAMPLES_DIR.mkdir(exist_ok=True)
 
 
-def clear_tmp_dir():
-    """Clear temporary directory"""
-    try:
-        for file_path in TMP_DIR.glob('*'):
-            if file_path.is_file():
-                file_path.unlink()
-    except PermissionError as e:
-        print(f"Warning: Could not clear tmp directory: {e}")
+
