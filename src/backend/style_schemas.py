@@ -51,13 +51,46 @@ class ParameterMapping(BaseModel):
     input: str = Field(..., title=metadata['input']['title'], description=metadata['input']['description'])
     input_range: Tuple[Union[str, float, int], Union[str, float, int]] = Field(default=('0%','100%'), title=metadata['input_range']['title'], description=metadata['input_range']['description'])
     output: str = Field(..., title=metadata['output']['title'], description=metadata['output']['description'])
-    output_range: Tuple[Union[str, float, int], Union[str, float, int]] = Field(..., title=metadata['output_range']['title'], description=metadata['output_range']['description'])
+    output_range: Tuple[Union[str, float, int], Union[str, float, int]] = Field(default=('0%','100%'), title=metadata['output_range']['title'], description=metadata['output_range']['description'])
+
+    @field_validator('output')
+    @classmethod
+    def validate_output(cls, value: str):
+
+        if value not in param_lim_dict.keys():
+            raise ValueError(f'Parameter "{value}" is not a valid parameter.')
+        
+        return value
+    
+    @model_validator(mode="after")
+    def validate_output_range(self):
+
+        valid_min, valid_max = param_lim_dict[self.output]
+
+        for val in self.output_range:
+            if isinstance(val, (int, float)):
+                if val < valid_min or val > valid_max:
+                    if self.output == 'pitch':
+                        continue
+                    raise ValueError(f'Parameter limits for "{self.output}" must be between those stated in the schema.')
+            elif isinstance(val, str) and val.endswith('%'):
+                try:
+                    perc = float(val[:-1])
+                    if perc < 0 or perc > 150: # Allow beyond 100% to enable time delay at end of sonifications 
+                        raise ValueError()
+                except:
+                    raise ValueError(f'Invalid percentile value "{val}" in output_range for parameter "{self.output}". Must be between "0%" and "150%".')
+            else:
+                raise ValueError(f'Invalid value "{val}" in output_range for parameter "{self.output}". Must be a number or a percentile string like "5%".')
+            
+        return self
+
 
 class BaseStyle(BaseModel):
     name: Optional[str] = Field(None)
     description: Optional[str] = Field(None)
-    sound: Optional[str] = Field(...)
-    parameters: List[ParameterMapping] = Field(..., default_factory=list)
+    sound: str = Field(...)
+    parameters: List[ParameterMapping] = Field(...)
     harmony: Optional[str] = Field(None)
 
     @field_validator('sound')
@@ -71,76 +104,63 @@ class BaseStyle(BaseModel):
              
         if value not in valid_sounds:
             raise ValueError(f"'{value}' is not a valid sound name.")
+        
         return value
     
     @field_validator('parameters')
     @classmethod
-    def validate_parameters(cls, value: Optional[Dict[str, Optional[List[float]]]]):
+    def validate_parameters(cls, value: List[ParameterMapping]):
 
-        if value is None:
-            return value
+        if not value:
+            raise ValueError("At least one parameter mapping is required.")
+        
+        # check for duplicate output parameters (e.g. two mappings to 'pitch')
+        read_outputs = set()
+        for param in value:
+            if param.output in read_outputs:
+                raise ValueError(f"Duplicate output parameter: '{param.output}'. Each output parameter can only be mapped once.")
+            read_outputs.add(param.output)
 
-        for key, limits in value.items():
-            if key not in param_lim_dict.keys():
-                raise ValueError(f'Parameter "{key}" is not a valid parameter.')
-            if limits is None:
-                continue  # (Uses default)
-            if not isinstance(limits, list) or len(limits) != 2:
-                raise ValueError(f'Parameter "{key}" must have a list of two numbers [min, max].')
-            
-            min, max = limits
-            valid_min, valid_max = param_lim_dict[key]
-
-            if min > max:
-                raise ValueError(f'Parameter "{key}" has min limit greater than max limit: {limits}')
-            if min < valid_min or max > valid_max:
-                if key == 'pitch':
-                    continue
-                raise ValueError(f'Parameter limits for "{key}" must be between those stated in the schema.')
-            
         return value
     
-    @field_validator('chord')
+    @field_validator('harmony')
     @classmethod
     def validate_chord(cls, value: Optional[str]):
 
-        if value is None or value.lower() == 'random':
-            return value
-        
-        try:
-            chord = Chord(value)
-        except Exception as e:
-            raise ValueError(f'Invalid chord "{value}": {e}')
-        
-        return value
-    
-    @field_validator('scale')
-    @classmethod
-    def validate_scale(cls, value: Optional[str]):
         if value is None:
             return value
         
-        try:
-            root, quality = value.split(' ', 1)
-            scale  = parse_scale(root, quality)
-        except Exception as e:
-            raise ValueError(f'Invalid scale "{value}": {e}')
+        if ' ' in value: # likely a scale e.g. "C major"
+            try:
+                root, quality = value.split(' ', 1)
+                scale  = parse_scale(root, quality)
+            except Exception as e:
+                raise ValueError(f'Invalid scale "{value}": {e}')
+        else: # likely a chord e.g. "Cmaj7"
+            try:
+                chord = Chord(value)
+            except Exception as e:
+                raise ValueError(f'Invalid chord "{value}": {e}')
         
         return value
+
     
     @model_validator(mode="after")
-    def check_scale_conflicts(self):
+    def check_for_conflicts(self):
 
-        if self.scale and 'pitch' not in self.parameters:
+        # need to check that the chosen sound is composable if harmony is set
+        if self.harmony:
+            valid_sounds = [s.name for s in all_sounds() if s.composable]
+            if self.sound not in valid_sounds:
+                raise ValueError(f'Sound "{self.sound}" is not composable, so harmony cannot be applied.')
+
+        # need to check that pitch is mapped if using a scale
+        is_scale = ' ' in self.harmony if self.harmony else False
+
+        mapped_outputs = {param.output for param in self.parameters}
+
+        if is_scale and 'pitch' not in mapped_outputs:
             raise ValueError('"pitch" must be a parameter to use a musical scale.')
-
-        if 'pitch' in self.parameters:
-
-            min, max = self.parameters['pitch']
-            key = 'pitch' if self.scale else 'pitch_shift'
-            valid_min, valid_max = param_lim_dict[key]
-            if min < valid_min or max > valid_max:
-                raise ValueError(f'Parameter limits for "{key}" must be between those stated in the schema.')
 
         return self
 

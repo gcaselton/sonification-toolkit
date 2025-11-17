@@ -27,10 +27,10 @@ parameters:
 
   - input: 'dec'
     input_range: ['0%', '100%']
-    output: 'altitude'
+    output: 'polar'
     output_range: ['0%', '100%']
 
-harmony: 'Cmaj7'
+harmony: 'C pentatonic major'
   
 
 

@@ -1,4 +1,4 @@
-from extensions import sonify
+from extensions import sonify, read_YAML_file
 from paths import STYLE_FILES_DIR
 
 from strauss.sonification import Sonification
@@ -8,6 +8,7 @@ from strauss.score import Score
 from strauss.generator import Synthesizer
 
 from scipy.interpolate import interp1d
+from style_schemas import BaseStyle
 import lightkurve as lk
 from lightkurve import LightCurveFile
 import numpy as np
@@ -18,6 +19,11 @@ import asyncio
 from pathlib import Path
 from sounds import asset_cache
 import musical_scales
+
+
+yaml_dict = read_YAML_file(STYLE_FILES_DIR / 'constellations' / 'stars_appearing.yml')
+
+style = BaseStyle.model_validate(yaml_dict)
 
 # x_axis = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
 # y_axis = [2, 4, 19, 1, 11, 21, 15, 4, 6, 22, 20, 18]

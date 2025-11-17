@@ -4,7 +4,7 @@ from strauss.score import Score
 from strauss.generator import Synthesizer, Sampler
 from strauss.notes import notesharps
 from musical_scales import scale as parse_scale
-from style_schemas import BaseStyle, defaults
+from style_schemas import BaseStyle
 
 from pychord import Chord
 from pychord.utils import transpose_note

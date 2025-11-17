@@ -5,8 +5,15 @@ description: "Flute + Pitch + Chromatic Scale."
 sound: "Flute"
 
 parameters:
-  pitch: [0, 1]
+  - input: "time"
+    input_range: [0, 1] 
+    output: "time"
+    output_range: [0, 1]
 
-chord_mode: "off"
+  - input: "flux"
+    input_range: [0, 1]
+    output: "pitch"
+    output_range: [0, 1]
 
-scale: "C chromatic"
+
+harmony: "C chromatic"
