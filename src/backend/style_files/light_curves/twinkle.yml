@@ -5,6 +5,8 @@ description: 'Bright Mallets + Filter Cutoff.'
 sound: 'Bright Mallets'
 
 parameters:
-  cutoff: [0.3, 1]
+  - input: 'flux'
+    output: 'cutoff'
+    output_range: [0.3, 1]
 
-chord_mode: 'off'
+

@@ -5,6 +5,7 @@ description: "White Noise + Filter Cutoff."
 sound: "White Noise"
 
 parameters:
-  cutoff: [0.3, 0.7]
+  - input: "flux"
+    output: "cutoff"
+    output_range: [0.3, 0.7]
 
-chord_mode: "off"

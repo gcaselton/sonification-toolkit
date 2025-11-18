@@ -9,6 +9,7 @@ from style_schemas import BaseStyle
 from pychord import Chord
 from pychord.utils import transpose_note
 from paths import *
+from pydantic import ValidationError
 
 import lightkurve as lk
 import numpy as np
@@ -32,20 +33,19 @@ def read_YAML_file(filepath):
     
     return YAML_dict
 
-def sonify(data_filepath, style_filepath, sonify_type, length=15, system='mono'):
+def sonify(data: Path | str | tuple, style_file: Path | str | dict, sonify_type: str, length=15, system='mono'):
 
-      # Load user and default styles
-      user_style = read_YAML_file(style_filepath)
-      default_style = defaults[sonify_type]
+      # Load and validate user style
+      style_dict = read_YAML_file(style_file) if isinstance(style_file, (Path, str)) else style_file
 
-      # Merge the user and default styles, overwriting defaults with user's where present
-      merged = {**default_style, **{k: v for k, v in user_style.items() if v is not None}}
+      # validate input parameters against data headers
+      validate_input_params(style_dict, data)
 
-      # Validate the merged result
-      validated_style = BaseStyle.model_validate(merged)
+      # Validate entire style file
+      validated_style = BaseStyle.model_validate(style_dict)
         
       # Set up Sonification elements
-      score, sources, generator = setup_strauss(data_filepath, validated_style, sonify_type, length)
+      score, sources, generator = setup_strauss(data, validated_style, sonify_type, length)
 
       # Render sonification
       sonification = Sonification(score, sources, generator, system)
@@ -54,7 +54,51 @@ def sonify(data_filepath, style_filepath, sonify_type, length=15, system='mono')
 
       return sonification
 
+def validate_input_params(style: dict, data: Path | str | tuple):
 
+      if isinstance(data, tuple):
+            pass
+      else:
+            data_filepath = str(data)
+
+            if data_filepath.endswith('.csv'):
+
+                  df = pd.read_csv(data_filepath)
+                  
+            elif data_filepath.endswith('.fits'):
+
+                  lc = lk.read(data_filepath)
+                  df = lc.to_pandas()
+            else:
+                  raise ValueError('Data file must be a .csv or .fits file.')
+            
+            col_headers = df.columns.tolist()
+            col_headers_lower = [col.lower() for col in col_headers]
+
+            mappings = style['parameters']
+
+            for mapping in mappings:
+                  input_param = mapping['input'].lower()
+                  in_min, in_max = mapping['input_range']
+
+                  if input_param not in col_headers_lower:
+                        raise ValidationError(f'Input parameter "{input_param}" not found in data columns: {col_headers}')
+                  
+                  if in_min.endswith('%') or in_max.endswith('%'):
+                        # might need to catch if one is % and the other isn't
+                        continue
+                  
+                  col_index = col_headers_lower.index(input_param)
+                  col_data = df.iloc[:, col_index]
+
+                  mapping['input'] = col_headers[col_index]  # Update style with original case-sensitive name from data
+
+                  # How do we check range for absolute values? I.E 20 to 5000 instead of 0 to 1
+
+                  # if col_data.min() < in_min or col_data.max() > in_max:
+                  #       raise ValidationError(f'Input parameter "{input_param}" has data outside specified input_range [{in_min}, {in_max}]. Actual data range: [{col_data.min()}, {col_data.max()}]')
+            
+      
 
 def quick_sonify(x_data, y_data, sound='default', y_params=['cutoff'], chordal=True, length=15, system='mono'):
 
@@ -126,6 +170,11 @@ def setup_strauss(data, style: BaseStyle, sonify_type, length):
       # generator = Synthesizer() if folder == 'synths' else Sampler()
       # path_stem = str(path.with_suffix(""))
       # generator.load_preset(path_stem)
+
+      mappings = style.parameters
+
+      for mapping in mappings:
+            # check if filter needs switching on
 
       # Check if filter needs switching on
       if 'cutoff' in style.parameters:

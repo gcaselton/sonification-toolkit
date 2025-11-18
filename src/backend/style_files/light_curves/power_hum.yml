@@ -5,6 +5,6 @@ description: "Dark Drone + Pitch."
 sound: "Dark Drone"
 
 parameters:
-  pitch: [3, 15]
-
-chord_mode: "off"
+  - input: "flux"
+    output: "pitch"
+    output_range: [3, 15]

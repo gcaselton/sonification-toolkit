@@ -2,16 +2,12 @@ name: 'Test'
 
 description: 'This style file is meant to test the robustness of the style-reading code.'
 
-sound: 'default_synth'
-
-# data_mode: 'continuous'
+sound: 'Default Synth'
 
 parameters:
-  cutoff: [0,1]
+  - input: 'flux'
+    output: 'cutoff'
+    output_range: [0, 1]
 
-chord_mode: 'on'
-
-chord: 'random'
-
-# scale: 'C major'
+harmony: 'Cmaj7'
 

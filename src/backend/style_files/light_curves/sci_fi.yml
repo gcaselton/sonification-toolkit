@@ -5,9 +5,9 @@ description: "Space Strings + Filter Cutoff."
 sound: "Space Strings"
 
 parameters:
-  cutoff: [0.3, 1]
-
-chord_mode: "off"
+  - input: "flux"
+    output: "cutoff"
+    output_range: [0.3, 1]  
 
 
 
