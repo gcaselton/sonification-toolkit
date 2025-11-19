@@ -143,7 +143,7 @@ def get_filepath(directory):
       return os.path.join(directory, name)
 
 
-def setup_strauss(data, style: BaseStyle, sonify_type, length):
+def setup_strauss(data: Path | str | tuple, style: BaseStyle, sonify_type, length):
 
       # Read and find sound to create Generator
       folder, path = find_sound(style.sound)
@@ -159,7 +159,7 @@ def setup_strauss(data, style: BaseStyle, sonify_type, length):
             inner_file = get_filepath(path)
             generator = Sampler(inner_file, sf_preset=1) if inner_file.endswith('.sf2') else Sampler(path)
             
-            if style.scale:
+            if ' ' in style.harmony:
                   generator.load_preset('staccato')
                   generator.modify_preset({'volume_envelope': {'use':'on', 'R':0.2}})
             else:
@@ -173,40 +173,97 @@ def setup_strauss(data, style: BaseStyle, sonify_type, length):
 
       mappings = style.parameters
 
-      for mapping in mappings:
-            # check if filter needs switching on
+      outputs = [mapping.output for mapping in mappings]
 
       # Check if filter needs switching on
-      if 'cutoff' in style.parameters:
+      if 'cutoff' in outputs:
             generator.modify_preset({'filter': 'on'})
 
       # Set up the data and Sources
       if sonify_type == 'light_curves':
             sources = light_curve_sources(data, style, length)
+      elif sonify_type == 'constellations':
+            sources = constellation_sources(data, style, length)
+      else:
+            raise ValueError(f'Sonification type "{sonify_type}" not recognised.')
 
       # Handle chord or scale
-      if style.chord_mode == 'on':
-
-            if style.chord.lower() == 'random' or not style.chord:
-                  notes = random_chord()
-            else:
-                  notes = voice_chord(style.chord)
-      elif style.chord_mode == 'off' and style.scale:
-
-            root, quality = style.scale.split(' ', 1)
-            notes = parse_scale(starting_note = root, mode=quality, octaves=3) # 3 octave range as default, could give users the option?
-            notes = [[str(note - 12) for note in notes]] # -12 so it starts on 2nd octave
-            print(notes)
+      if style.harmony:
+            notes = parse_harmony(style.harmony)
       else:
-            notes = [['A3']]
+            notes = [['C3']]
       
       score = Score(notes,length)
 
       return score, sources, generator
 
+def parse_harmony(harmony: str):
+
+      if ' ' in harmony: 
+            
+            # Likely a scale e.g 'C major'
+            root, quality = harmony.split(' ', 1)
+            notes = parse_scale(starting_note=root, mode=quality, octaves=3) # 3 octave range as default, could give users the option?
+            notes = [[str(note - 12) for note in notes]] # -12 so it starts on 2nd octave
+      else:
+            # Likely a chord e.g. 'Cmaj7'
+            notes = voice_chord(harmony)
+
+      return notes
+
 def univariate_sources(xy_data: tuple, params, chord_mode, data_mode):
-      # NOTE to do: make this into a more generic function for univariate data.
+      # NOTE to do: make this into a more generic function for univariate data?
       pass
+
+def constellation_sources(data: Path | str , style: BaseStyle, length):
+
+      data_filepath = str(data)
+
+      if data_filepath.endswith('.csv'):
+
+            df = pd.read_csv(data_filepath)
+      else:
+            raise ValueError('Data file must be a .csv file.')
+      
+      # Remove rows with NaN values in any of the columns used
+      input_params = [mapping.input for mapping in style.parameters]
+      df = df.dropna(subset=input_params)
+
+      data_dict = {}
+      m_lims = {}
+      p_lims = {}
+      my_funcs = {}
+
+      special_funcs = {'polar': lambda x : 90.0 - np.asarray(x, dtype=float),
+               'pitch' : lambda x: -np.array(x),
+               'volume' : lambda x : (1+np.argsort(x).astype(float))**-0.2}
+      
+      for mapping in style.parameters:
+
+            input = mapping.input
+            output = mapping.output
+
+            # Apply special mapping functions if needed
+            my_funcs[output] = special_funcs.get(output, lambda x : x)
+
+            # Map data
+            data_dict[output] = df[input].to_list()
+
+            # Set mapping and parameter limits
+            m_lims[output] = convert_percent_to_values(mapping.input_range)
+            p_lims[output] = convert_percent_to_values(mapping.output_range)
+      
+      sources = Events(data_dict.keys())
+      sources.fromdict(data_dict)
+      sources.apply_mapping_functions(map_funcs=my_funcs, map_lims=m_lims, param_lims=p_lims)
+
+      return sources
+
+def convert_percent_to_values(param_lims: tuple):
+      if isinstance(param_lims[0], str) and param_lims[0].endswith('%'):
+            low_percent = float(param_lims[0].rstrip('%')) / 100.0
+            high_percent = float(param_lims[1].rstrip('%')) / 100.0
+            return (low_percent, high_percent)
 
 def scale_events(x, y, params, length):
 

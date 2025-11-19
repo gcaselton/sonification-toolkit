@@ -138,7 +138,7 @@ def get_constellation(constellation_name: str) -> pd.DataFrame:
     stars_in_constellation = df[df['con'] == IAU_names[constellation_name]].copy()
 
     # sort by brightness (smaller magnitude = brighter)
-    stars_sorted = stars_in_constellation.sort_values('mag')
+    stars_sorted = stars_in_constellation.sort_values('magnitude')
 
     return stars_sorted
 
@@ -173,7 +173,7 @@ async def plot_constellation(constellation: ConstellationRequest):
     offset_dec = dec_range * 0.04
 
     # smaller marker size inversely proportional to magnitude
-    sizes = np.sqrt(10 / top_stars['mag']) * 20
+    sizes = np.sqrt(10 / top_stars['magnitude']) * 20
 
     # sizes = (10/top_stars['mag']) ** 2
 
@@ -229,7 +229,7 @@ async def get_magnitude(request: ConstellationRequest):
     N = request.n_stars
     top_stars = stars_sorted.head(N).copy()
 
-    max_magnitude = max(top_stars['mag'].tolist())
+    max_magnitude = max(top_stars['magnitude'].tolist())
 
     return {'max_magnitude': max_magnitude}
 
@@ -241,7 +241,7 @@ async def get_n_stars(request: NStarsRequest):
 
     # choose stars up to max magnitude
     max_magnitude = request.max_magnitude
-    selected_stars = stars_sorted[stars_sorted['mag'] <= max_magnitude].copy()
+    selected_stars = stars_sorted[stars_sorted['magnitude'] <= max_magnitude].copy()
 
     n_stars = len(selected_stars)
 

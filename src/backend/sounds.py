@@ -74,7 +74,16 @@ def local_sounds():
     for f in SAMPLES_DIR.iterdir():
         if f.is_dir():
             name = f.stem
-            composable = any(file.suffix == ".sf2" for file in f.iterdir())
+    
+            files = [file for file in f.iterdir() if file.is_file()]
+
+            # Composable if:
+            # 1) The directory contains a .sf2 file
+            # 2) OR the directory contains multiple files
+            composable = (
+                any(file.suffix == ".sf2" for file in files)
+                or len(files) > 1
+            )
 
             sound = SoundInfo(name=name, composable=composable, downloaded=True)
             local_sounds.append(sound)
