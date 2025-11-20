@@ -78,13 +78,14 @@ def validate_input_params(style: dict, data: Path | str | tuple):
             mappings = style['parameters']
 
             for mapping in mappings:
+                
                   input_param = mapping['input'].lower()
-                  in_min, in_max = mapping['input_range']
+                  in_min, in_max = mapping.get('input_range', ('0%','100%'))
 
                   if input_param not in col_headers_lower:
                         raise ValidationError(f'Input parameter "{input_param}" not found in data columns: {col_headers}')
                   
-                  if in_min.endswith('%') or in_max.endswith('%'):
+                  if isinstance(in_min, str) and in_min.endswith('%'):
                         # might need to catch if one is % and the other isn't
                         continue
                   
@@ -234,24 +235,30 @@ def constellation_sources(data: Path | str , style: BaseStyle, length):
       p_lims = {}
       my_funcs = {}
 
-      special_funcs = {'polar': lambda x : 90.0 - np.asarray(x, dtype=float),
-               'pitch' : lambda x: -np.array(x),
-               'volume' : lambda x : (1+np.argsort(x).astype(float))**-0.2}
+      special_funcs = {
+      'polar':  lambda x: 90.-x,
+      'pitch':  lambda x: -x,
+      'volume': lambda x: (1 + np.argsort(x).astype(float))**-0.2}
       
       for mapping in style.parameters:
 
             input = mapping.input
             output = mapping.output
 
-            # Apply special mapping functions if needed
-            my_funcs[output] = special_funcs.get(output, lambda x : x)
+            # Apply special mapping functions, default to ndarray conversion
+            my_funcs[output] = special_funcs.get(
+            output,
+            lambda x : x
+            )
 
             # Map data
-            data_dict[output] = df[input].to_list()
+            data_dict[output] = df[input].to_numpy(dtype=float)
 
             # Set mapping and parameter limits
             m_lims[output] = convert_percent_to_values(mapping.input_range)
             p_lims[output] = convert_percent_to_values(mapping.output_range)
+
+      print(data_dict)
       
       sources = Events(data_dict.keys())
       sources.fromdict(data_dict)
@@ -260,10 +267,25 @@ def constellation_sources(data: Path | str , style: BaseStyle, length):
       return sources
 
 def convert_percent_to_values(param_lims: tuple):
-      if isinstance(param_lims[0], str) and param_lims[0].endswith('%'):
-            low_percent = float(param_lims[0].rstrip('%')) / 100.0
-            high_percent = float(param_lims[1].rstrip('%')) / 100.0
-            return (low_percent, high_percent)
+    """
+    Convert mapping limits to fractions for STRAUSS.
+    Supports:
+        - strings like '0%', '104%'
+        - numeric values (0, 104)
+    Returns:
+        tuple of floats (low, high)
+    """
+    low, high = param_lims
+
+    if isinstance(low, str) and low.endswith('%'):
+        low_val = float(low.rstrip('%')) / 100.0
+        high_val = float(high.rstrip('%')) / 100.0
+    else:
+        low_val = float(low)
+        high_val = float(high)
+
+    return (low_val, high_val)
+
 
 def scale_events(x, y, params, length):
 

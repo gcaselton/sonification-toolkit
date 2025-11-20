@@ -16,17 +16,15 @@ parameters:
     output_range: ['0%', '100%']
     
   - input: 'colour'
-    input_range: ['0%', '100%']
     output: 'pitch'
-    output_range: ['0%', '100%']
 
   - input: 'ra'
-    input_range: ['0%', '100%']
+    input_range: [0,360]
     output: 'azimuth'
     output_range: ['0%', '100%']
 
   - input: 'dec'
-    input_range: ['0%', '100%']
+    input_range: [0,180]
     output: 'polar'
     output_range: ['0%', '100%']
 
