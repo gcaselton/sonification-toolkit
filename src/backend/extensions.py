@@ -4,7 +4,7 @@ from strauss.score import Score
 from strauss.generator import Synthesizer, Sampler
 from strauss.notes import notesharps
 from musical_scales import scale as parse_scale
-from style_schemas import BaseStyle
+from style_schemas import BaseStyle, ParameterMapping
 
 from pychord import Chord
 from pychord.utils import transpose_note
@@ -160,7 +160,7 @@ def setup_strauss(data: Path | str | tuple, style: BaseStyle, sonify_type, lengt
             inner_file = get_filepath(path)
             generator = Sampler(inner_file, sf_preset=1) if inner_file.endswith('.sf2') else Sampler(path)
             
-            if ' ' in style.harmony:
+            if style.harmony and ' ' in style.harmony:
                   generator.load_preset('staccato')
                   generator.modify_preset({'volume_envelope': {'use':'on', 'R':0.2}})
             else:
@@ -180,6 +180,8 @@ def setup_strauss(data: Path | str | tuple, style: BaseStyle, sonify_type, lengt
       if 'cutoff' in outputs:
             generator.modify_preset({'filter': 'on'})
 
+      
+
       # Set up the data and Sources
       if sonify_type == 'light_curves':
             sources = light_curve_sources(data, style, length)
@@ -187,12 +189,12 @@ def setup_strauss(data: Path | str | tuple, style: BaseStyle, sonify_type, lengt
             sources = constellation_sources(data, style, length)
       else:
             raise ValueError(f'Sonification type "{sonify_type}" not recognised.')
-
+      
       # Handle chord or scale
       if style.harmony:
             notes = parse_harmony(style.harmony)
       else:
-            notes = [['C3']]
+            notes = [['A3']]
       
       score = Score(notes,length)
 
@@ -204,7 +206,7 @@ def parse_harmony(harmony: str):
             
             # Likely a scale e.g 'C major'
             root, quality = harmony.split(' ', 1)
-            notes = parse_scale(starting_note=root, mode=quality, octaves=3) # 3 octave range as default, could give users the option?
+            notes = parse_scale(starting_note=root, mode=quality, octaves=2) # 3 octave range as default, could give users the option?
             notes = [[str(note - 12) for note in notes]] # -12 so it starts on 2nd octave
       else:
             # Likely a chord e.g. 'Cmaj7'
@@ -255,8 +257,10 @@ def constellation_sources(data: Path | str , style: BaseStyle, length):
             data_dict[output] = df[input].to_numpy(dtype=float)
 
             # Set mapping and parameter limits
-            m_lims[output] = convert_percent_to_values(mapping.input_range)
-            p_lims[output] = convert_percent_to_values(mapping.output_range)
+            m_lims[output] = mapping.input_range
+
+            if mapping.output_range:
+                  p_lims[output] = mapping.output_range
 
       print(data_dict)
       
@@ -287,7 +291,7 @@ def convert_percent_to_values(param_lims: tuple):
     return (low_val, high_val)
 
 
-def scale_events(x, y, params, length):
+def scale_events(x, y, params: list[ParameterMapping], length):
 
       user_settings = read_YAML_file(SETTINGS_FILE)
       resolution = user_settings['data_resolution']
@@ -302,11 +306,13 @@ def scale_events(x, y, params, length):
       
       p_lims = {}
 
-      for p in params:
-            if p not in data:
-                  data[p] = new_y
-                  m_lims[p] = ('0%', '100%')
-                  p_lims[p] = tuple(params[p])
+      for mapping in params:
+            if mapping.output not in data.keys():
+                  data[mapping.output] = new_y
+                  m_lims[mapping.output] = mapping.input_range
+
+                  if mapping.output_range:
+                        p_lims[mapping.output] = mapping.output_range
       
       sources = Events(data.keys())
       sources.fromdict(data)
@@ -315,7 +321,7 @@ def scale_events(x, y, params, length):
 
       return sources
 
-def light_curve_sources(data, style, length):
+def light_curve_sources(data, style: BaseStyle, length):
 
       if isinstance(data, tuple):
 
@@ -344,26 +350,35 @@ def light_curve_sources(data, style, length):
       x = ensure_array(x)
       y = ensure_array(y)
 
-      pitches = [0,1,2,3] if style.chord_mode == 'on' else [0]
+      is_scale = style.harmony and ' ' in style.harmony
 
-      if 'pitch' in style.parameters:
+      pitches = [0] if is_scale else [0,1,2,3]
 
-            if style.scale:
-                  return scale_events(x, y, style.parameters, length)
-            else:
-                  # Change pitch for pitch_shift if we want Objects type
-                  lims = style.parameters.pop('pitch')
-                  style.parameters['pitch_shift'] = lims
-     
+      for mapping in style.parameters:
+            if mapping.output == 'pitch':
+                  if is_scale:
+                        # Return Events type for scale mapping
+                        return scale_events(x, y, style.parameters, length)
+                  else:
+                        # Change pitch for pitch_shift if we want Objects type
+                        mapping.output = 'pitch_shift'
+                        
+
       data_dict = {'pitch': pitches, 
               'time_evo': [x]*len(pitches)}
       m_lims = {'time_evo': ('0%', '100%')}
       p_lims = {}
+      
 
-      for p in style.parameters:
-            data_dict[p] = [y]*len(pitches)
-            m_lims[p] = ('0%', '100%')
-            p_lims[p] = tuple(style.parameters[p])
+      for mapping in style.parameters:
+            data_dict[mapping.output] = [y]*len(pitches)
+            m_lims[mapping.output] = mapping.input_range
+            if mapping.output_range:
+                  p_lims[mapping.output] = mapping.output_range
+
+      logger.info('m_lims: ' + str(m_lims))
+      logger.info('p_lims: ' + str(p_lims))
+      logger.info('data_dict: ' + str(data_dict))
 
       sources = Objects(data_dict.keys())
       sources.fromdict(data_dict)

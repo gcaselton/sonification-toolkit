@@ -51,7 +51,7 @@ class ParameterMapping(BaseModel):
     input: str = Field(..., title=metadata['input']['title'], description=metadata['input']['description'])
     input_range: Tuple[Union[str, float, int], Union[str, float, int]] = Field(default=('0%','100%'), title=metadata['input_range']['title'], description=metadata['input_range']['description'])
     output: str = Field(..., title=metadata['output']['title'], description=metadata['output']['description'])
-    output_range: Tuple[Union[str, float, int], Union[str, float, int]] = Field(default=('0%','100%'), title=metadata['output_range']['title'], description=metadata['output_range']['description'])
+    output_range: Optional[Tuple[Union[float, int], Union[float, int]]] = Field(default=None, title=metadata['output_range']['title'], description=metadata['output_range']['description'])
 
     @field_validator('output')
     @classmethod
@@ -65,23 +65,17 @@ class ParameterMapping(BaseModel):
     @model_validator(mode="after")
     def validate_output_range(self):
 
+        if self.output_range is None:
+            return self
+
         valid_min, valid_max = param_lim_dict[self.output]
 
         for val in self.output_range:
-            if isinstance(val, (int, float)):
-                if val < valid_min or val > valid_max:
-                    if self.output == 'pitch':
-                        continue
-                    raise ValueError(f'Parameter limits for "{self.output}" must be between those stated in the schema.')
-            elif isinstance(val, str) and val.endswith('%'):
-                try:
-                    perc = float(val[:-1])
-                    if perc < 0 or perc > 150: # Allow beyond 100% to enable time delay at end of sonifications 
-                        raise ValueError()
-                except:
-                    raise ValueError(f'Invalid percentile value "{val}" in output_range for parameter "{self.output}". Must be between "0%" and "150%".')
-            else:
-                raise ValueError(f'Invalid value "{val}" in output_range for parameter "{self.output}". Must be a number or a percentile string like "5%".')
+
+            if val < valid_min or val > valid_max:
+                if self.output == 'pitch':
+                    continue
+                raise ValueError(f'Parameter limits for "{self.output}" must be between those stated in the schema.')
             
         return self
 

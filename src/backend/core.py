@@ -159,13 +159,17 @@ async def preview_style_settings(request: StylePreviewRequest, category: str):
     style = Path(request.style_filepath)
 
     # Generate simple ramp to sonify
-    x = np.arange(0, 100)
+    x = np.arange(0, 100) 
     y = x.copy()
 
     data = (x, y)
 
+    print('hello')
+
     try:
         soni = sonify(data, style, category, length=5,  system='mono')
+
+        print('soni generated')
 
         id = str(uuid.uuid4().hex)
         ext = '.wav'
@@ -208,39 +212,28 @@ default_lims = {
 
 def format_settings(settings: SoundSettings):
 
-    parameters = {
-        "cutoff": default_lims['cutoff'] if settings.filterCutOff else None,
-        "volume": default_lims['volume'] if settings.volume else None,
-        "azimuth": default_lims['azimuth'] if settings.leftRightPan else None
+    param_choices = {
+        'cutoff': settings.filterCutOff,
+        'pitch': settings.pitch,
+        'volume': settings.volume,
+        'azimuth': settings.leftRightPan
     }
 
-    # Check which type of pitch lims are needed
-    if settings.pitch:
-        if settings.scale == 'None':
-            parameters['pitch'] = default_lims['pitch_shift']
-        else:
-            parameters['pitch'] = default_lims['pitch']
-    else:
-        parameters['pitch'] = None
-        
-
-    # Remove any None entries in parameters
-    parameters = {k: v for k, v in parameters.items() if v is not None}
-
-    if settings.chordMode:
-        music = 'chord'
-        value = f"{settings.rootNote}{settings.quality}"
-    else:
-        music = 'scale'
-        value = f"{settings.rootNote} {settings.scale}" if settings.scale != 'None' else None
+    # Populate the list of parameters based on user selections
+    parameters = [{'input': 'flux', 'output': k} for k, v in param_choices.items() if v]
 
     style = {
         "sound": settings.sound,
-        "parameters": parameters if parameters else None,
-        "chord_mode": "on" if settings.chordMode else "off",
-        "chord": f"{settings.rootNote}{settings.quality}" if settings.chordMode else None,
-        music: value
+        "parameters": parameters
     }
+
+    if settings.chordMode:
+        style['harmony'] = f"{settings.rootNote}{settings.quality}"
+    else:
+        if settings.scale != 'None':
+            style['harmony'] = f"{settings.rootNote} {settings.scale}"
+
+    
     
     return style
 
