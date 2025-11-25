@@ -194,7 +194,7 @@ def setup_strauss(data: Path | str | tuple, style: BaseStyle, sonify_type, lengt
       if style.harmony:
             notes = parse_harmony(style.harmony)
       else:
-            notes = [['A3']]
+            notes = [['A3']] # Change this?
       
       score = Score(notes,length)
 

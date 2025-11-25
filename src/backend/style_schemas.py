@@ -119,7 +119,7 @@ class BaseStyle(BaseModel):
     
     @field_validator('harmony')
     @classmethod
-    def validate_chord(cls, value: Optional[str]):
+    def validate_harmony(cls, value: Optional[str]):
 
         if value is None:
             return value
