@@ -5,6 +5,7 @@ import {BackButton} from "../ui/Buttons";
 import PageContainer from "../ui/PageContainer";
 import ErrorMsg from "../ui/ErrorMsg";
 import { apiUrl, lightCurvesAPI, coreAPI} from "../../apiConfig";
+import { apiRequest } from "../../utils/requests";
 import {
   Box,
   Button,
@@ -37,6 +38,9 @@ export default function Sonify() {
   const [showPlot, setShowPlot] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string>("");
 
+  const [daysPerSec, setDaysPerSec] = useState('');
+  const [totalDays, setTotalDays] = useState<number>(0);
+
   const [imageSrc, setImageSrc] = useState<string | null>(null);
   const [imageLoading, setImageLoading] = useState(true);
 
@@ -54,6 +58,27 @@ export default function Sonify() {
     }
     fetchPlot();
   }, [dataFilepath]);
+
+  // Fetch data range once on load
+  useEffect(() => {
+    const fetchDataRange = async () => {
+      const url_range = `${lightCurvesAPI}/get-range/`;
+      const data = {
+        "data_filepath": dataFilepath
+      };
+      try {
+        const response = await apiRequest(url_range, data, 'POST');
+        const dataRange = response.range;
+        const days = dataRange[1] - dataRange[0];
+        setTotalDays(days);
+        const rounded = Number((days / Number(length))).toFixed(1);
+        setDaysPerSec(rounded);
+      } catch (error) {
+        console.error("Error fetching data range:", error);
+      }
+    };
+    fetchDataRange();
+  }, []);
 
   const audioSystemOptions = createListCollection({
     items: [
@@ -119,6 +144,25 @@ export default function Sonify() {
     });
   };
 
+  const handleLengthChange = (value: string) => {
+    setLength(value);
+    if (totalDays > 0 && value) {
+      const rounded = Number(totalDays / Number(value)).toFixed(1);
+      setDaysPerSec(rounded);
+    }
+  }
+
+  const handleDaysPerSecChange = (value: string) => {
+
+    setDaysPerSec(value);
+    const floatValue = parseFloat(value);
+  
+    if (totalDays > 0 && floatValue > 0) {
+      const rounded = Number(totalDays / floatValue).toFixed(0);
+      setLength(rounded);
+    }
+  }
+
   const invalidLength = (
     Number(length) > 60 ||
     length === '0' || 
@@ -137,16 +181,39 @@ export default function Sonify() {
         <HStack gap='4' align='start' justify='center'>
         <Box width='50%'>
           <form onSubmit={handleSubmit}>
-              <VStack gap="5">
-                <Field.Root invalid={invalidLength}>
+              <VStack align='start' justify='center' w='80%' gap={8}>
+                <HStack gap={10}>
+                <Field.Root invalid={invalidLength} width='auto'>
                   <Field.Label>Duration (seconds)</Field.Label>
-                  <NumberInput.Root value={length} onValueChange={(e) => setLength(e.value)} inputMode="numeric">
+                  <NumberInput.Root 
+                  value={length} 
+                  onValueChange={(e) => 
+                    handleLengthChange(e.value)
+                  }
+                  inputMode="numeric"
+                  min={1}
+                  max={60}>
                     <NumberInput.Control />
                     <NumberInput.Input />
                   </NumberInput.Root>
-                  {!invalidLength && <Field.HelperText>The sonification will compress or stretch to fit this length.</Field.HelperText>}
                   <Field.ErrorText>Please enter a whole number up to 60 seconds.</Field.ErrorText>
                 </Field.Root>
+                <Text textStyle='2xl' height='0.5'>=</Text>
+                <Field.Root width='auto'>
+                <Field.Label>Days per Second</Field.Label>
+                <NumberInput.Root
+                  value={String(daysPerSec)} 
+                  onValueChange={(e) => {
+                    handleDaysPerSecChange(e.value)
+                  }}
+                  inputMode="decimal"
+                  min={0}
+                  max={totalDays}>
+                  <NumberInput.Control />
+                    <NumberInput.Input />
+                </NumberInput.Root>
+                </Field.Root>
+                </HStack>
                 <Select.Root collection={audioSystemOptions} value={audioSystem} onValueChange={(e) => setAudioSystem(e.value)} variant='outline'>
                     <Select.HiddenSelect />
                     <Select.Label>Audio System</Select.Label>

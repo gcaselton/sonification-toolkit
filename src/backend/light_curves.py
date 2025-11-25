@@ -40,7 +40,7 @@ class StarQuery(BaseModel):
 class DownloadRequest(BaseModel):
     data_uri: str
 
-class RangeRequest(BaseModel):
+class DataRequest(BaseModel):
     data_filepath: str
 
 
@@ -212,26 +212,19 @@ def plot_and_format_lc(filepath: str):
         time = df[columns[0]].values
         flux = df[columns[1]].values
         
-        # Use column names as labels (capitalize first letter)
-        x_label = columns[0].replace('_', ' ').title()
-        y_label = columns[1].replace('_', ' ').title()
     elif filepath.endswith('.fits'):
 
         # It's a FITS file
         lc = lk.read(filepath)
         time = lc.time.value
         flux = lc.flux.value
-        
-        # Get labels from the LightCurve object
-        x_label = f'Time ({lc.time.format})' if hasattr(lc.time, 'format') else 'Time (days)'
-        y_label = f'Flux ({lc.flux.unit})' if hasattr(lc.flux, 'unit') else 'Flux'
 
     # Plot and format
     fig, ax = plt.subplots()
     ax.plot(time, flux, color="#008080", linewidth=1.2, alpha=0.9)
     
-    ax.set_xlabel(x_label)
-    ax.set_ylabel(y_label)
+    ax.set_xlabel('Time (days)')
+    ax.set_ylabel('Flux (electrons per second)')
 
     ax.spines['top'].set_visible(False)
     ax.spines['right'].set_visible(False)
@@ -264,14 +257,23 @@ async def select_lightcurve(request: DownloadRequest):
     return {'filepath': filepath}
 
 
-
-
 @router.post('/get-range/')
-async def get_range(request: RangeRequest):
+async def get_range(request: DataRequest):
 
-    lc = lk.read(request.data_filepath)
-    x = lc.time.value
-    range = [int(min(x)),int(max(x))]
+    if request.data_filepath.endswith('.fits'):
+        lc = lk.read(request.data_filepath)
+        x = lc.time.value
+        range = [int(min(x)), int(max(x))]
+
+    elif request.data_filepath.endswith('.csv'):
+        df = pd.read_csv(request.data_filepath)
+
+        time_col = next((col for col in df.columns if 'time' in col.lower()), df.columns[0])
+
+        x = df[time_col].values
+        range = [int(min(x)), int(max(x))]
+    else:
+        raise HTTPException(status_code=400, detail='Filepath not supported: ' + request.data_filepath)
 
     return{'range': range}
 
