@@ -60,6 +60,9 @@ async def generate_sonification(request: SonificationRequest):
     length = request.duration
     system = request.system
 
+    if int(length) > 300:
+        raise HTTPException(status_code=500, detail="Sonification too long, maximum length = 5 minutes.")
+
     try:
         soni = sonify(data, style, category, length, system)
 

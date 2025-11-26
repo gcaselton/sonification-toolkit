@@ -262,7 +262,6 @@ def constellation_sources(data: Path | str , style: BaseStyle, length):
             if mapping.output_range:
                   p_lims[output] = mapping.output_range
 
-      print(data_dict)
       
       sources = Events(data_dict.keys())
       sources.fromdict(data_dict)
@@ -375,10 +374,6 @@ def light_curve_sources(data, style: BaseStyle, length):
             m_lims[mapping.output] = mapping.input_range
             if mapping.output_range:
                   p_lims[mapping.output] = mapping.output_range
-
-      logger.info('m_lims: ' + str(m_lims))
-      logger.info('p_lims: ' + str(p_lims))
-      logger.info('data_dict: ' + str(data_dict))
 
       sources = Objects(data_dict.keys())
       sources.fromdict(data_dict)

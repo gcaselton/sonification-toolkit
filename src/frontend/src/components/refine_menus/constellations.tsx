@@ -15,7 +15,7 @@ import {
   Select,
   Slider,
   Skeleton,
-  HStack
+  HStack,
 } from "@chakra-ui/react";
 import { RefineMenuProps } from "./RefineMenu";
 import React, { useState, useEffect } from "react";
@@ -26,6 +26,7 @@ import ErrorMsg from "../ui/ErrorMsg";
 import { apiUrl, constellationsAPI, coreAPI } from "../../apiConfig";
 import { apiRequest } from "../../utils/requests";
 import { InfoTip } from "../ui/ToggleTip";
+import { Tooltip } from "../ui/Tooltip";
 
 
 export default function Constellations({ dataFilepath, dataName, onApply }: RefineMenuProps) {
@@ -195,9 +196,11 @@ export default function Constellations({ dataFilepath, dataName, onApply }: Refi
           <Button w='40%' onClick={plotConstellation} colorPalette="teal" variant="surface">
             Preview changes
           </Button>
-          <Button w='40%' onClick={handleClickApply} colorPalette="teal" loading={applyLoading} loadingText="Saving...">
+          <Tooltip content='Coming soon!' openDelay={300}>
+          <Button disabled w='40%' onClick={handleClickApply} colorPalette="teal" loading={applyLoading} loadingText="Saving...">
             Apply & Continue
           </Button>
+          </Tooltip>
         </HStack>
       </VStack>
       </Box>

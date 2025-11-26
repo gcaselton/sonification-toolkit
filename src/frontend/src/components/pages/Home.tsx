@@ -97,13 +97,18 @@ export default function Lightcurves() {
         <br />
         <HStack flexWrap="nowrap">
             <Text textStyle="lg" flexShrink={1}>Select a data source to sonify, or </Text>
-            <FileUpload.Root accept=".csv, .fits" w="auto" onFileAccept={({ files }) => handleFileAccept(files)}>
+            
+            <FileUpload.Root disabled accept=".csv, .fits" w="auto" onFileAccept={({ files }) => handleFileAccept(files)}>
               <FileUpload.HiddenInput />
+              <Tooltip content='Coming soon!' openDelay={300}>
               <FileUpload.Trigger asChild>
-                <Button colorPalette='teal'>
+                
+                <Button colorPalette='teal' disabled>
                   <Upload />Upload your own
                 </Button>
+                
               </FileUpload.Trigger>
+              </Tooltip>
               <FileUpload.List />
             </FileUpload.Root>
         </HStack>
@@ -111,6 +116,7 @@ export default function Lightcurves() {
         <br />
         <Stack gap="4" direction="row" wrap="wrap" animation="fade-in 300ms ease-out">
               {astroTypes.map((astroType) => (
+                <Tooltip content='Coming soon!' openDelay={300} disabled={astroType.page !== '/'}>
                 <Card.Root 
                   width="200px" 
                   key={astroType.name} 
@@ -141,6 +147,7 @@ export default function Lightcurves() {
                     <Card.Description>{astroType.description}</Card.Description>
                   </Card.Body>
                 </Card.Root>
+                </Tooltip>
               ))}
         </Stack>
       </Box>
