@@ -35,7 +35,6 @@ export default function Sonify() {
   const dataFilepath = location.state.dataFilepath;
   const [soniReady, setSoniReady] = useState(false)
   const [loading, setLoading] = useState(false)
-  const [showPlot, setShowPlot] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string>("");
 
   const [daysPerSec, setDaysPerSec] = useState('');
@@ -234,11 +233,6 @@ export default function Sonify() {
                             ))}
                         </Select.Content>
                 </Select.Root>
-                <Checkbox.Root checked={showPlot} onCheckedChange={(details) => setShowPlot(details.checked === true)}>
-                  <Checkbox.HiddenInput />
-                  <Checkbox.Control />
-                  <Checkbox.Label>View plot</Checkbox.Label>
-                </Checkbox.Root>
                 <Button type="submit" colorPalette="teal" width='50%' disabled={invalidLength || length === ''}>
                   Generate
                 </Button>
@@ -257,17 +251,15 @@ export default function Sonify() {
             </Box>
           )}
         </Box>
-        {showPlot && (
-            <Box width='50%'>
-              {imageLoading ? (
-                <LoadingMessage msg="" icon="pulsar" />
-              ) : imageSrc ? (
-                <Image src={imageSrc} alt="Lightcurve plot" />
-              ) : (
-                <ErrorMsg message="Unable to plot data."/>
-              )}
-            </Box>
+        <Box width='50%'>
+          {imageLoading ? (
+            <LoadingMessage msg="" icon="pulsar" />
+          ) : imageSrc ? (
+            <Image src={imageSrc} alt="Lightcurve plot" />
+          ) : (
+            <ErrorMsg message="Unable to plot data."/>
           )}
+        </Box>
         </HStack>
       </Box>
     </PageContainer>

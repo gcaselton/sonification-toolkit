@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './StyleCard.css';
 import { Text, IconButton, Box } from "@chakra-ui/react";
 import { Volume2, VolumeOff } from 'lucide-react';
@@ -54,6 +54,16 @@ export default function StyleCard({ title, gradientClass, isCustom = false }: St
     };
   };
 
+  // Force stop audio when component unmounts
+  useEffect(() => {
+    return () => {
+      currentAudio?.pause();
+      currentAudio = null;
+      setIsPlaying(false);
+    };
+  }, []);
+
+
   return (
     <div className={`style-card ${gradientClass}`}>
       {!isCustom &&
@@ -72,7 +82,7 @@ export default function StyleCard({ title, gradientClass, isCustom = false }: St
                   }
                 }}
           >
-            {isPlaying ? <VolumeOff /> : <Volume2 />}
+            {!isPlaying ? <VolumeOff /> : <Volume2 />}
           </IconButton>
         </Box>
       }
