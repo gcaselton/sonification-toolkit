@@ -10,8 +10,35 @@ import Home from './components/pages/Home';
 import Settings from './components/pages/Settings'
 import Refine from './components/pages/Refine';
 import Constellations from './components/pages/Constellations';
+import { useEffect, useState, useRef } from 'react';
+import { coreAPI } from './apiConfig';
 
 function App() {
+
+  const [sessionReady, setSessionReady] = useState(false);
+  const sessionInitialised = useRef(false);
+
+  useEffect(() => {
+    // runs once when the app first loads to get a session ID from backend
+
+    if (sessionInitialised.current) return; // to prevent 
+    sessionInitialised.current = true;
+
+    async function setupSession() {
+      const response = await fetch(`${coreAPI}/session/`, {
+        credentials: 'include'  // Tell browser to send/save cookies
+      });
+      const data = await response.json();
+      console.log('Session ID:', data.session_id);
+      setSessionReady(true);
+    }
+    
+    setupSession();
+  }, []);
+
+  if (!sessionReady) {
+    return <div>Loading...</div>
+  }
 
   return (
     <ChakraProvider value={defaultSystem}>
