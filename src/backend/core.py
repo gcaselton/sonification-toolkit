@@ -23,6 +23,9 @@ router = APIRouter(prefix='/core')
 logging.basicConfig(level=logging.INFO)
 LOG = logging.getLogger(__name__)
 
+class DataRequest(BaseModel):
+    data_filepath: str
+
 class StylePreviewRequest(BaseModel):
     style_filepath: str
 

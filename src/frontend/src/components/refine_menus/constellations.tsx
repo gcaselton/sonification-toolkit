@@ -196,11 +196,9 @@ export default function Constellations({ dataFilepath, dataName, onApply }: Refi
           <Button w='40%' onClick={plotConstellation} colorPalette="teal" variant="surface">
             Preview changes
           </Button>
-          <Tooltip content='Coming soon!' openDelay={300}>
-          <Button disabled w='40%' onClick={handleClickApply} colorPalette="teal" loading={applyLoading} loadingText="Saving...">
+          <Button w='40%' onClick={handleClickApply} colorPalette="teal" loading={applyLoading} loadingText="Saving...">
             Apply & Continue
           </Button>
-          </Tooltip>
         </HStack>
       </VStack>
       </Box>

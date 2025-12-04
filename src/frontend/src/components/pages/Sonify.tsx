@@ -4,7 +4,7 @@ import LoadingMessage from "../ui/LoadingMessage";
 import {BackButton} from "../ui/Buttons";
 import PageContainer from "../ui/PageContainer";
 import ErrorMsg from "../ui/ErrorMsg";
-import { apiUrl, lightCurvesAPI, coreAPI} from "../../apiConfig";
+import { apiUrl, lightCurvesAPI, coreAPI, constellationsAPI} from "../../apiConfig";
 import {
   Box,
   Button,
@@ -22,16 +22,19 @@ import {
   HStack
 } from "@chakra-ui/react";
 import { plotLightcurve } from "./Lightcurves";
+import { apiRequest } from "../../utils/requests";
 
 export default function Sonify() {
 
-  const [length, setLength] = useState('15');
-  const [audioSystem, setAudioSystem] = useState<string[]>(["mono"])
-  const [audioFilepath, setAudioFilepath] = useState("");
   const location = useLocation();
   const soniType = location.state.soniType;
   const styleFilepath = location.state.styleFilepath;
   const dataFilepath = location.state.dataFilepath;
+
+  // states
+  const [length, setLength] = useState('15');
+  const [audioSystem, setAudioSystem] = useState<string[]>([(soniType == 'light_curves') ? "mono" : "stereo"])
+  const [audioFilepath, setAudioFilepath] = useState("");
   const [soniReady, setSoniReady] = useState(false)
   const [loading, setLoading] = useState(false)
   const [showPlot, setShowPlot] = useState(false)
@@ -44,8 +47,22 @@ export default function Sonify() {
   useEffect(() => {
     async function fetchPlot() {
       try {
-        const base64 = await plotLightcurve(dataFilepath);
-        setImageSrc(`data:image/png;base64,${base64}`);
+
+        var imageBase64
+
+        if (soniType === 'light_curves') {
+          imageBase64 = await plotLightcurve(dataFilepath)
+        }
+        else if (soniType === 'constellations') {
+
+          const endpoint = `${constellationsAPI}/plot-csv/`
+          const payload = {data_filepath: dataFilepath}
+          
+          const result = await apiRequest(endpoint, payload)
+          imageBase64 = result.image
+        }
+
+        setImageSrc(`data:image/png;base64,${imageBase64}`);
       } catch (error) {
         console.error("Error generating plot:", error);
       } finally {

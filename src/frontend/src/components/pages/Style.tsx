@@ -47,18 +47,27 @@ export default function Style() {
     const [open, setOpen] = useState(false);
 
     // Suggested styles
-    const [variants, setVariants] = useState<any[]>([]);
+    const [suggestedStyles, setSuggestedStyles] = useState<any[]>([]);
 
     // Reference to the file input
     const inputRef = useRef<HTMLInputElement | null>(null);
 
+    // State information 
+    const location = useLocation();
+    const dataFilepath = location.state.dataFilepath;
+    const soniType = location.state.soniType;
+
     useEffect(() => {
-        fetch(`${coreAPI}/styles/light_curves`)
+        fetch(`${coreAPI}/styles/${soniType}`)
             .then((res) => res.json())
             .then((data) => {
-                data.push({'name': 'Custom'})
-                setVariants(data);
-                console.log(variants)
+
+                if (soniType == 'light_curves'){
+                    data.push({'name': 'Custom'})
+                }
+                
+                setSuggestedStyles(data);
+                console.log(suggestedStyles)
             })
             .catch((err) => {
                 console.error("Failed to fetch presets:", err);
@@ -176,9 +185,7 @@ export default function Style() {
     });
     const parameters = ["Filter Cutoff", "Pitch", "Volume", "Left/Right Pan"] as const;
 
-    const location = useLocation();
-    const dataFilepath = location.state.dataFilepath;
-    const soniType = location.state.soniType;
+    
     
     console.log("Filepath of Selected Lightcurve:", dataFilepath);
     
@@ -570,25 +577,25 @@ export default function Style() {
                     </Dialog.Root>
 
                 <Stack gap="6" direction="row" wrap="wrap" animation="fade-in 300ms ease-out">
-                    {variants.map((variant, index) => {
+                    {suggestedStyles.map((style, index) => {
                         const gradientClasses = ['gradient-aurora', 'gradient-neon', 'gradient-darkwave', 'gradient-sunset', 'gradient-ocean', 'gradient-forest'];
-                        const gradientClass = variant.name === 'Custom' ? 'gradient-custom' : gradientClasses[index % gradientClasses.length];
+                        const gradientClass = style.name === 'Custom' ? 'gradient-custom' : gradientClasses[index % gradientClasses.length];
 
                         return (
                         <Box
-                            key={variant.name} 
-                            onClick={() => handleClick(variant)} 
+                            key={style.name} 
+                            onClick={() => handleClick(style)} 
                             style={{ cursor: 'pointer', width: 200 }}
                             tabIndex={0}
                             role="button"
                             onKeyDown={(e) => {
                                 if (e.key === 'Enter' || e.key === ' ') {
                                     e.preventDefault();
-                                    handleClick(variant);
+                                    handleClick(style);
                                 }}
                             }
                             >
-                            <StyleCard title={variant.name} gradientClass={gradientClass} isCustom={variant.name === 'Custom'}/>
+                            <StyleCard title={style.name} gradientClass={gradientClass} isCustom={style.name === 'Custom'}/>
                         </Box>
                         );
                     })}
