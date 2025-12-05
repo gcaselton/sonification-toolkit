@@ -19,7 +19,7 @@ import pandas as pd
 from io import BytesIO
 from astroquery.simbad import Simbad
 from scipy.ndimage import gaussian_filter1d
-from core import SonificationRequest
+from core import SonificationRequest, DataRequest
 
 
 router = APIRouter(prefix='/light-curves')
@@ -39,9 +39,6 @@ class StarQuery(BaseModel):
 
 class DownloadRequest(BaseModel):
     data_uri: str
-
-class RangeRequest(BaseModel):
-    data_filepath: str
 
 
 class PlotRequest(BaseModel):
@@ -187,8 +184,6 @@ async def plot_lightcurve(request: DownloadRequest):
     - Returns: The image as a base64 string.
     """
 
-    # NOTE To do - Fix this so it plots CSV files as well.
-
     # Check if the requested light curve is from a search (with data URI) or a suggested (local) file.
     if (request.data_uri.startswith('mast:')):
         filepath = download_lightcurve(request.data_uri)
@@ -267,7 +262,7 @@ async def select_lightcurve(request: DownloadRequest):
 
 
 @router.post('/get-range/')
-async def get_range(request: RangeRequest):
+async def get_range(request: DataRequest):
 
     lc = lk.read(request.data_filepath)
     x = lc.time.value

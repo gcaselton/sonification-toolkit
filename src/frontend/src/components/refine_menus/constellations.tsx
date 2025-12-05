@@ -15,7 +15,7 @@ import {
   Select,
   Slider,
   Skeleton,
-  HStack
+  HStack,
 } from "@chakra-ui/react";
 import { RefineMenuProps } from "./RefineMenu";
 import React, { useState, useEffect } from "react";
@@ -26,6 +26,7 @@ import ErrorMsg from "../ui/ErrorMsg";
 import { apiUrl, constellationsAPI, coreAPI } from "../../apiConfig";
 import { apiRequest } from "../../utils/requests";
 import { InfoTip } from "../ui/ToggleTip";
+import { Tooltip } from "../ui/Tooltip";
 
 
 export default function Constellations({ dataFilepath, dataName, onApply }: RefineMenuProps) {

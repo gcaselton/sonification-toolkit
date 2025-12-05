@@ -16,7 +16,7 @@ import matplotlib
 matplotlib.use("Agg") 
 import matplotlib.pyplot as plt
 from io import BytesIO
-from core import SonificationRequest
+from core import SonificationRequest, DataRequest
 
 
 router = APIRouter(prefix='/constellations')
@@ -142,27 +142,35 @@ def get_constellation(constellation_name: str) -> pd.DataFrame:
 
     return stars_sorted
 
-@router.post("/plot-constellation/")
-async def plot_constellation(constellation: ConstellationRequest):
+@router.post("/plot-csv/")
+async def plot_csv(data: DataRequest):
 
-    # select constellation
-    stars_sorted = get_constellation(constellation.name)
+    if not data.data_filepath.endswith('.csv'):
+        raise HTTPException(status_code=400, detail=f'Data file type must be .csv')
+    
+    df = pd.read_csv(data.data_filepath)
+    image = plot_and_format_constellation(df)
 
-    # choose top N stars
-    N = constellation.n_stars
-    top_stars = stars_sorted.head(N).copy()
+    return {'image': image}
+
+def correct_ra(df):
+    pass
+
+
+def plot_and_format_constellation(df):
 
     plt.figure(figsize=(6,6))
 
-    ra = top_stars['ra'].copy()
+    ra = df['ra'].copy()
 
     # Detect if the constellation crosses the 0h line (RA wraparound)
     if ra.max() - ra.min() > 12:  # difference > 12h → likely wraparound
         ra[ra < 12] += 24
+        # Why does this work if RA goes from 0 -2 ?
 
     # RA/Dec as x/y
     x = ra
-    y = top_stars['dec']
+    y = df['dec']
 
     # Calculate ranges for proportional offsets
     ra_range = x.max() - x.min()
@@ -173,7 +181,7 @@ async def plot_constellation(constellation: ConstellationRequest):
     offset_dec = dec_range * 0.04
 
     # smaller marker size inversely proportional to magnitude
-    sizes = np.sqrt(10 / top_stars['magnitude']) * 20
+    sizes = np.sqrt(10 / df['magnitude']) * 20
 
     # sizes = (10/top_stars['mag']) ** 2
 
@@ -186,7 +194,7 @@ async def plot_constellation(constellation: ConstellationRequest):
     plt.ylim(y.min() - padding_dec, y.max() + padding_dec)
 
     # Label stars with proper names if available (using unwrapped RA)
-    for i, row in top_stars.iterrows():
+    for i, row in df.iterrows():
         this_ra = ra.loc[i]  # use the corrected RA value
         if pd.notna(row['proper']) and str(row['proper']).strip() != "":
             plt.text(
@@ -217,7 +225,22 @@ async def plot_constellation(constellation: ConstellationRequest):
     buf.close()
     gc.collect()
 
-    return {'image': img_base64}
+    return img_base64
+
+
+@router.post("/plot-constellation/")
+async def plot_constellation(constellation: ConstellationRequest):
+
+    # select constellation
+    stars_sorted = get_constellation(constellation.name)
+
+    # choose top N stars
+    N = constellation.n_stars
+    top_stars = stars_sorted.head(N).copy()
+
+    image = plot_and_format_constellation(top_stars)
+
+    return {'image': image}
 
 @router.post("/get-max-magnitude/")
 async def get_magnitude(request: ConstellationRequest):

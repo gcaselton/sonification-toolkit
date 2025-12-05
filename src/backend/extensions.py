@@ -192,7 +192,7 @@ def setup_strauss(data: Path | str | tuple, style: BaseStyle, sonify_type, lengt
       
       # Handle chord or scale
       if style.harmony:
-            notes = parse_harmony(style.harmony)
+            notes = parse_harmony(style.harmony, folder, path)
       else:
             notes = [['A3']] # Change this?
       
@@ -200,7 +200,7 @@ def setup_strauss(data: Path | str | tuple, style: BaseStyle, sonify_type, lengt
 
       return score, sources, generator
 
-def parse_harmony(harmony: str):
+def parse_harmony(harmony: str, sound_folder, sound_path):
 
       if ' ' in harmony: 
             
@@ -210,11 +210,11 @@ def parse_harmony(harmony: str):
             notes = [[str(note - 12) for note in notes]] # -12 so it starts on 2nd octave
       else:
             # Likely a chord e.g. 'Cmaj7'
-            notes = voice_chord(harmony)
+            notes = voice_chord(harmony, sound_folder, sound_path)
 
       return notes
 
-def univariate_sources(xy_data: tuple, params, chord_mode, data_mode):
+def univariate_sources(xy_data: tuple, params, chord_mode):
       # NOTE to do: make this into a more generic function for univariate data?
       pass
 
@@ -238,7 +238,6 @@ def constellation_sources(data: Path | str , style: BaseStyle, length):
       my_funcs = {}
 
       special_funcs = {
-      'polar':  lambda x: 90.-x,
       'pitch':  lambda x: -x,
       'volume': lambda x: (1 + np.argsort(x).astype(float))**-0.2}
       
@@ -246,6 +245,13 @@ def constellation_sources(data: Path | str , style: BaseStyle, length):
 
             input = mapping.input
             output = mapping.output
+
+            if output == 'azimuth':
+                  # Rescale input values if using azimuth to restrict to the frontal stereo field
+                  df[input] = rescale_col(df, input, (0.25, 0.75))
+
+                  # Add constant polar of 0.5
+                  data_dict['polar'] = np.full(len(df), 0.5)
 
             # Apply special mapping functions, default to ndarray conversion
             my_funcs[output] = special_funcs.get(
@@ -262,13 +268,28 @@ def constellation_sources(data: Path | str , style: BaseStyle, length):
             if mapping.output_range:
                   p_lims[output] = mapping.output_range
 
-      print(data_dict)
-      
       sources = Events(data_dict.keys())
       sources.fromdict(data_dict)
       sources.apply_mapping_functions(map_funcs=my_funcs, map_lims=m_lims, param_lims=p_lims)
 
       return sources
+
+
+def rescale_col(df, col, target_range=(0.0, 1.0)):
+    t_min, t_max = target_range
+
+    # If the column has one unique value, fallback to center of the target range
+    if df[col].nunique() == 1:
+        center = (t_min + t_max) / 2
+        return pd.Series(center, index=df.index)
+
+    min_val = df[col].min()
+    max_val = df[col].max()
+
+    # Normalize to 0–1, then stretch to target range
+    normalized = (df[col] - min_val) / (max_val - min_val)
+
+    return t_min + normalized * (t_max - t_min)
 
 def convert_percent_to_values(param_lims: tuple):
     """
@@ -363,22 +384,16 @@ def light_curve_sources(data, style: BaseStyle, length):
                         # Change pitch for pitch_shift if we want Objects type
                         mapping.output = 'pitch_shift'
                         
-
       data_dict = {'pitch': pitches, 
               'time_evo': [x]*len(pitches)}
       m_lims = {'time_evo': ('0%', '100%')}
       p_lims = {}
-      
 
       for mapping in style.parameters:
             data_dict[mapping.output] = [y]*len(pitches)
             m_lims[mapping.output] = mapping.input_range
             if mapping.output_range:
                   p_lims[mapping.output] = mapping.output_range
-
-      logger.info('m_lims: ' + str(m_lims))
-      logger.info('p_lims: ' + str(p_lims))
-      logger.info('data_dict: ' + str(data_dict))
 
       sources = Objects(data_dict.keys())
       sources.fromdict(data_dict)
@@ -405,14 +420,16 @@ def normalise(array):
       return (array - array.min()) / (array.max() - array.min())
             
 
-def voice_chord(chord_name):
+def voice_chord(chord_name: str, sound_folder: str, sound_path: str):
 
       # This will raise a ValueError if chord_name is invalid.
       chord = Chord(chord_name)
       notes = chord.components()
       root = chord.root
+      print(notes)
       
       fifth = transpose_note(root, 7)
+      print(fifth)
 
       # Chord needs a fifth to be voiced pleasantly
       if not fifth in notes:
@@ -440,7 +457,20 @@ def voice_chord(chord_name):
       else:
             raise ValueError(f'{chord_name} is too complex, maximum of 5 notes allowed.')
       
-      return[[root + '2', fifth + '3', third_note + '4', fourth_note + '5']]
+      notes = [root + '2', fifth + '3', third_note + '4', fourth_note + '5']
+
+      # Check that the desired octaves are present in the desired sound samples
+      if sound_folder == 'samples':
+            sample_folder = Path(sound_path)
+            available_notes = [p.name for p in sample_folder.iterdir() if p.is_file()]
+
+            # Move lowest note up an octave and highest note down if not available in the sound folder
+            notes[0] = f'{root}3' if f'{root}2' not in available_notes else f'{root}2'
+            notes[3] = f'{fourth_note}4' if f'{fourth_note}5' not in available_notes else f'{fourth_note}5'
+
+      return [notes]
+
+      
 
 def random_chord():
       

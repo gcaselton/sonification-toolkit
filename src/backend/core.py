@@ -23,6 +23,9 @@ router = APIRouter(prefix='/core')
 logging.basicConfig(level=logging.INFO)
 LOG = logging.getLogger(__name__)
 
+class DataRequest(BaseModel):
+    data_filepath: str
+
 class StylePreviewRequest(BaseModel):
     style_filepath: str
 
@@ -59,6 +62,9 @@ async def generate_sonification(request: SonificationRequest):
     style = Path(request.style_filepath)
     length = request.duration
     system = request.system
+
+    if int(length) > 300:
+        raise HTTPException(status_code=500, detail="Sonification too long, maximum length = 5 minutes.")
 
     try:
         soni = sonify(data, style, category, length, system)

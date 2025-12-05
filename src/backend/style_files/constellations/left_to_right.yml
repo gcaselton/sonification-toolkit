@@ -1,18 +1,18 @@
-name: 'Stars Appearing'
+name: 'Left to Right'
 
-description: 'Brightest stars appear first, pitch mapped to colour. Mallets base sound.'
+description: 'The stars in the constellation appear left to right, brighter stars are higher pitched. Mallets base sound.'
 
 sound: 'Mallets'
 
 parameters:
     
-  - input: 'colour'
+  - input: 'magnitude'
     output: 'pitch'
 
   - input: 'magnitude'
     output: 'volume'
 
-  - input: 'magnitude'
+  - input: 'ra'
     input_range: ['0%', '110%']
     output: 'time'
 
@@ -21,7 +21,7 @@ parameters:
     output_range: [0.25, 0.75]
 
 
-harmony: 'Gmaj7'
+harmony: 'E7sus4'
   
 
 
