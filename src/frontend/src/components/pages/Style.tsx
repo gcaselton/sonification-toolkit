@@ -121,6 +121,7 @@ export default function Style() {
         createListCollection<BaseSound & { label: string; value: string }>({ items: [] })
     );
     const [loadingSounds, setLoadingSounds] = useState(true);
+    const [loadingCustomPreview, setLoadingCustomPreview] = useState(false)
 
     const rootNoteOptions = createListCollection({
         items: [
@@ -143,24 +144,15 @@ export default function Style() {
         items: [
             { label: "None", value: "None" },
             { label: "Major", value: "major" },
-            { label: "Minor", value: "minor" },
-            { label: "Augmented", value: "augmented" },
+            { label: "Harmonic Minor", value: "harmonic minor" },
+            { label: "Pentatonic", value: "pentatonic minor" },
             { label: "Blues", value: "blues" },
             { label: "Chromatic", value: "chromatic" },
-            { label: "Dorian", value: "dorian" },
             { label: "Flamenco", value: "flamenco" },
             { label: "Romani", value: "romani" },
-            { label: "Harmonic Major", value: "harmonic major" },
-            { label: "Harmonic Minor", value: "harmonic minor" },
             { label: "Hirajoshi", value: "hijaroshi" },
-            { label: "Locrian", value: "locrian" },
-            { label: "Lydian", value: "lydian" },
-            { label: "Mixolydian", value: "mixolydian" },
-            { label: "Pentatonic Major", value: "pentatonic major" },
-            { label: "Pentatonic Minor", value: "pentatonic minor" },
             { label: "Persian", value: "persian" },
-            { label: "Phrygian Dominant", value: "phrygian dominant" },
-            { label: "Phrygian", value: "phrygian" },            
+            { label: "Phrygian Dominant", value: "phrygian dominant" },           
         ],
     });
     const qualityOptions = createListCollection({
@@ -240,6 +232,7 @@ export default function Style() {
 
     const handlePreviewStyle = async () => {
         try {
+            setLoadingCustomPreview(true)
             ensureSoundAvailable(sound.name);
 
             // Wait for sound settings to save and get filepath
@@ -262,6 +255,7 @@ export default function Style() {
             const audioUrl = `${coreAPI}/audio/${data.filename}`;
             const preview = new Audio(audioUrl);
             preview.play()
+            setLoadingCustomPreview(false)
 
         } catch (err) {
             console.error("Error previewing style settings:", err);
@@ -569,7 +563,7 @@ export default function Style() {
                         </Dialog.Body>
                         <Dialog.Footer display="flex" justifyContent="center">
                             <Button width='30%' colorPalette='teal' variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
-                            <Button width='30%' colorPalette='teal' variant="outline" onClick={() => handlePreviewStyle()}>Preview</Button>
+                            <Button loading={loadingCustomPreview} width='30%' colorPalette='teal' variant="outline" onClick={() => handlePreviewStyle()}>Preview</Button>
                             <Button width='30%' colorPalette='teal' onClick={() => handleSubmit()}>Submit</Button>
                         </Dialog.Footer>
                     </Dialog.Content>

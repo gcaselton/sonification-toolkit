@@ -44,6 +44,7 @@ export default function LightCurves({ dataFilepath, onApply }: RefineMenuProps) 
   const [sigma, setSigma] = useState(0)
 
   const [applyLoading, setApplyLoading] = useState(false)
+  const [hasEdited, setHasEdited] = useState(false)
   
   // fetch plot
   useEffect(() => {
@@ -100,24 +101,30 @@ export default function LightCurves({ dataFilepath, onApply }: RefineMenuProps) 
         { value: cropRange[1], label: String(cropRange[1]) },
       ]
   : [];
+  
 
-  const handleClickPreview = async () => {
+  // preview function
+  const fetchPreviewPlot = async (range: [number, number] | null, sigmaVal: number) => {
+    if (!range) return;
+    setImageLoading(true);
 
-    setImageLoading(true)
-
-    const endpoint = `${lightCurvesAPI}/preview-refined/`
+    const endpoint = `${lightCurvesAPI}/preview-refined/`;
     const payload = {
       data_filepath: dataFilepath,
-      new_range: cropValues,
-      sigma: sigma
+      new_range: range,
+      sigma: sigmaVal,
+    };
+
+    try {
+      const result = await apiRequest(endpoint, payload);
+      setImageSrc(`data:image/png;base64,${result.image}`);
+    } catch (err) {
+      console.error("Error previewing plot:", err);
+    } finally {
+      setImageLoading(false);
     }
+  };
 
-    const result = await apiRequest(endpoint, payload)
-  
-    setImageSrc(`data:image/png;base64,${result.image}`);
-    setImageLoading(false)
-
-  }
 
   const handleClickApply = async () => {
 
@@ -163,8 +170,13 @@ export default function LightCurves({ dataFilepath, onApply }: RefineMenuProps) 
             max={cropRange[1]}
             value={cropValues}
             animation="fade-in 300ms ease-out"
-            onValueChange={(e) => setCropValues(e.value as [number, number])
-            }
+            onValueChange={(e) => {
+              setCropValues(e.value as [number, number]);
+              setHasEdited(true);
+            }}
+            onValueChangeEnd={(e) => {
+              fetchPreviewPlot(e.value as [number, number], sigma); // only runs on mouse release
+            }}
           >
             <Slider.Label textStyle='md'>
               {'Trim start ('}
@@ -194,7 +206,14 @@ export default function LightCurves({ dataFilepath, onApply }: RefineMenuProps) 
             max={10}
             value={[sigma]}
             animation="fade-in 300ms ease-out"
-            onValueChange={(e) => setSigma(e.value[0])}>
+            onValueChange={(e) => {
+              setSigma(e.value[0]);
+              setHasEdited(true)
+            }}
+            onValueChangeEnd={(e) => {
+              fetchPreviewPlot(cropValues, e.value[0]);
+            }}
+            >
             <HStack>
               <Slider.Label textStyle='md'>Smoothing Factor</Slider.Label>
               <InfoTip content='This is the standard deviation to give to a Gaussian filter, removing noise from the signal.' positioning={{placement: 'top'}}/>
@@ -214,9 +233,6 @@ export default function LightCurves({ dataFilepath, onApply }: RefineMenuProps) 
         )}
       {!slidersLoading ? (
       <HStack gap='5' justify="center" w="100%" animation="fade-in 300ms ease-out">
-        <Button w='40%' onClick={handleClickPreview} colorPalette="teal" variant="surface">
-          Preview changes
-        </Button>
         <Button w='40%' onClick={handleClickApply} colorPalette="teal" loading={applyLoading} loadingText="Saving..." variant={applyButtonOn ? 'solid' : 'surface'}>
           {applyButtonOn ? 'Apply & Continue' : 'Skip'}
         </Button>

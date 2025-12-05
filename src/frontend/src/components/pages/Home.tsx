@@ -45,7 +45,7 @@ const astroTypes: AstroType[] = [
     {
         name: 'Constellations',
         description: 'Hear the brightest stars in the night sky appearing.',
-        page: '/constellations'
+        page: '/'
     },
     {
         name: 'Planets',
@@ -102,10 +102,12 @@ export default function Lightcurves() {
               <FileUpload.HiddenInput />
               <Tooltip content='Coming soon!' openDelay={300}>
               <FileUpload.Trigger asChild>
-                
-                <Button colorPalette='teal' disabled>
-                  <Upload />Upload your own
-                </Button>
+                <Tooltip content="Coming soon!" openDelay={300}>
+                  
+                <Button colorPalette='teal' disabled disabled>
+                    <Upload />Upload your own
+                  </Button>
+                </Tooltip>
                 
               </FileUpload.Trigger>
               </Tooltip>
@@ -116,6 +118,7 @@ export default function Lightcurves() {
         <br />
         <Stack gap="4" direction="row" wrap="wrap" animation="fade-in 300ms ease-out">
               {astroTypes.map((astroType) => (
+                <Tooltip content="Coming soon!" openDelay={300} disabled={astroType.page !== '/'}>
                 <Tooltip content='Coming soon!' openDelay={300} disabled={astroType.page !== '/'}>
                 <Card.Root 
                   width="200px" 
