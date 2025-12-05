@@ -140,6 +140,9 @@ def get_constellation(constellation_name: str) -> pd.DataFrame:
     # sort by brightness (smaller magnitude = brighter)
     stars_sorted = stars_in_constellation.sort_values('magnitude')
 
+    # correct RA for wraparound if needed
+    stars_sorted['ra'] = correct_ra(stars_sorted['ra'])
+
     return stars_sorted
 
 @router.post("/plot-csv/")
@@ -153,23 +156,22 @@ async def plot_csv(data: DataRequest):
 
     return {'image': image}
 
-def correct_ra(df):
-    pass
+def correct_ra(ra):
+
+    # Detect if the constellation crosses the 0h line (RA wraparound)
+    
+    if ra.max() - ra.min() > 12:  # difference > 12h → likely wraparound
+        ra[ra < 12] += 24 # add 24h to RA values < 12h to unwrap
+
+    return ra
 
 
 def plot_and_format_constellation(df):
 
     plt.figure(figsize=(6,6))
 
-    ra = df['ra'].copy()
-
-    # Detect if the constellation crosses the 0h line (RA wraparound)
-    if ra.max() - ra.min() > 12:  # difference > 12h → likely wraparound
-        ra[ra < 12] += 24
-        # Why does this work if RA goes from 0 -2 ?
-
     # RA/Dec as x/y
-    x = ra
+    x = df['ra']
     y = df['dec']
 
     # Calculate ranges for proportional offsets
@@ -181,7 +183,7 @@ def plot_and_format_constellation(df):
     offset_dec = dec_range * 0.04
 
     # smaller marker size inversely proportional to magnitude
-    sizes = np.sqrt(10 / df['magnitude']) * 20
+    sizes = 180 * (10 ** (-0.4 * df['magnitude']))
 
     # sizes = (10/top_stars['mag']) ** 2
 
@@ -195,7 +197,7 @@ def plot_and_format_constellation(df):
 
     # Label stars with proper names if available (using unwrapped RA)
     for i, row in df.iterrows():
-        this_ra = ra.loc[i]  # use the corrected RA value
+        this_ra = df['ra'].loc[i]  # use the corrected RA value
         if pd.notna(row['proper']) and str(row['proper']).strip() != "":
             plt.text(
                 this_ra + offset_ra,

@@ -56,7 +56,7 @@ export default function StyleCard({ title, gradientClass, isCustom = false }: St
 
   return (
     <div className={`style-card ${gradientClass}`}>
-      {!isCustom &&
+      {!isCustom && (title !== 'Stars Appearing' && title !== 'Left to Right') &&
         <Box position="absolute" top="0.5rem" left="0.5rem" zIndex={10}>
           <IconButton
             tabIndex={0}
