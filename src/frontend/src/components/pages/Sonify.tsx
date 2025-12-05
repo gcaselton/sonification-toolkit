@@ -32,8 +32,16 @@ export default function Sonify() {
   const styleFilepath = location.state.styleFilepath;
   const dataFilepath = location.state.dataFilepath;
 
+  // Define length limits based on sonification type
+  const lengthDict = {
+    'light_curves': {'max': 60, 'default': 15},
+    'constellations': {'max': 120, 'default': 20}
+  }
+
+  const lengths = lengthDict[soniType as keyof typeof lengthDict];
+
   // states
-  const [length, setLength] = useState('15');
+  const [length, setLength] = useState(lengths.default.toString());
   const [audioSystem, setAudioSystem] = useState<string[]>([(soniType == 'light_curves') ? "mono" : "stereo"])
   const [audioFilepath, setAudioFilepath] = useState("");
   const [soniReady, setSoniReady] = useState(false)
@@ -179,8 +187,10 @@ export default function Sonify() {
     }
   }
 
+  
+
   const invalidLength = (
-    Number(length) > 60 ||
+    Number(length) > lengths.max ||
     length === '0' || 
     length.includes('.') ||
     length.includes('-')
@@ -208,27 +218,31 @@ export default function Sonify() {
                   }
                   inputMode="numeric"
                   min={1}
-                  max={60}>
+                  max={lengths.max}>
                     <NumberInput.Control />
                     <NumberInput.Input />
                   </NumberInput.Root>
-                  <Field.ErrorText>Please enter a whole number up to 60 seconds.</Field.ErrorText>
+                  <Field.ErrorText>Please enter a whole number up to {lengths.max} seconds.</Field.ErrorText>
                 </Field.Root>
-                <Text textStyle='2xl' height='0.5'>=</Text>
-                <Field.Root width='auto'>
-                <Field.Label>Days per Second</Field.Label>
-                <NumberInput.Root
-                  value={String(daysPerSec)} 
-                  onValueChange={(e) => {
-                    handleDaysPerSecChange(e.value)
-                  }}
-                  inputMode="decimal"
-                  min={0}
-                  max={totalDays}>
-                  <NumberInput.Control />
-                    <NumberInput.Input />
-                </NumberInput.Root>
-                </Field.Root>
+                {soniType === 'light_curves' &&
+                <> 
+                  <Text textStyle='2xl' height='0.5'>=</Text>
+                  <Field.Root width='auto'>
+                  <Field.Label>Days per Second</Field.Label>
+                  <NumberInput.Root
+                    value={String(daysPerSec)} 
+                    onValueChange={(e) => {
+                      handleDaysPerSecChange(e.value)
+                    }}
+                    inputMode="decimal"
+                    min={0}
+                    max={totalDays}>
+                    <NumberInput.Control />
+                      <NumberInput.Input />
+                  </NumberInput.Root>
+                  </Field.Root>
+                </>
+                }
                 </HStack>
                 <Select.Root collection={audioSystemOptions} value={audioSystem} onValueChange={(e) => setAudioSystem(e.value)} variant='outline'>
                     <Select.HiddenSelect />

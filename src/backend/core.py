@@ -146,11 +146,12 @@ async def get_styles(category: str):
             with open(file, "r") as f:
                 data = yaml.safe_load(f)
             style_name = data.get("name", file.stem)  # fallback to filename if 'name' missing
+            style_description = data.get("description", "")
         except Exception as e:
             print(f"Failed to read or parse {file}: {e}")
             continue
 
-        style = {'name': style_name, 'filepath': str(file)}
+        style = {'name': style_name, 'description': style_description, 'filepath': str(file)}
 
         styles.append(style)
 

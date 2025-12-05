@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import './StyleCard.css';
-import { Text, IconButton, Box } from "@chakra-ui/react";
+import { Text, IconButton, Box, VStack } from "@chakra-ui/react";
 import { Volume2, VolumeOff } from 'lucide-react';
 import { getAudio } from '../../utils/assets';
 
 interface StyleCardProps {
   title: string;
+  description: string;
   gradientClass: string;
   isCustom?: boolean;
 }
@@ -14,7 +15,7 @@ interface StyleCardProps {
 let currentAudio: HTMLAudioElement | null = null;
 let currentSetIsPlaying: ((playing: boolean) => void) | null = null;
 
-export default function StyleCard({ title, gradientClass, isCustom = false }: StyleCardProps) {
+export default function StyleCard({ title, description, gradientClass, isCustom = false }: StyleCardProps) {
   const [isPlaying, setIsPlaying] = useState(false);
 
   const togglePreview = (e: React.MouseEvent | React.KeyboardEvent) => {

@@ -589,7 +589,7 @@ export default function Style() {
                                 }}
                             }
                             >
-                            <StyleCard title={style.name} gradientClass={gradientClass} isCustom={style.name === 'Custom'}/>
+                            <StyleCard title={style.name} description={style.description} gradientClass={gradientClass} isCustom={style.name === 'Custom'}/>
                         </Box>
                         );
                     })}

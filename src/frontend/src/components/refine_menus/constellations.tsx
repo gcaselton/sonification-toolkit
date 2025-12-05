@@ -45,15 +45,18 @@ export default function Constellations({ dataFilepath, dataName, onApply }: Refi
   const [magnitude, setMagnitude] = useState('')
 
   const [applyLoading, setApplyLoading] = useState(false)
-  
-  // fetch plot on first load
-  useEffect(() => {
-    const fetchPlot = async () => {
-      await plotConstellation();
-    };
 
-    fetchPlot();
-  }, []);
+  // re-plot when nStars or magnitude changes(also on initial magnitude fetch)
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      plotConstellation();
+    }, 300); // wait after the last change
+
+    // cancel the timeout if nStars or magnitude changes again
+    return () => clearTimeout(handler);
+  }, [nStars, magnitude]);
+
+
 
   // set initial magnitude based on nStars (10)
   useEffect(() => {
@@ -193,9 +196,6 @@ export default function Constellations({ dataFilepath, dataName, onApply }: Refi
         </Field.Root>
         </HStack>
         <HStack gap='5' justify="center" w="100%" animation="fade-in 300ms ease-out">
-          <Button w='40%' onClick={plotConstellation} colorPalette="teal" variant="surface">
-            Preview changes
-          </Button>
           <Button w='40%' onClick={handleClickApply} colorPalette="teal" loading={applyLoading} loadingText="Saving...">
             Apply & Continue
           </Button>

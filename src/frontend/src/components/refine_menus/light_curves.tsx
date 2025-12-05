@@ -44,7 +44,6 @@ export default function LightCurves({ dataFilepath, onApply }: RefineMenuProps) 
   const [sigma, setSigma] = useState(0)
 
   const [applyLoading, setApplyLoading] = useState(false)
-  const [hasEdited, setHasEdited] = useState(false)
   
   // fetch plot
   useEffect(() => {
@@ -172,7 +171,6 @@ export default function LightCurves({ dataFilepath, onApply }: RefineMenuProps) 
             animation="fade-in 300ms ease-out"
             onValueChange={(e) => {
               setCropValues(e.value as [number, number]);
-              setHasEdited(true);
             }}
             onValueChangeEnd={(e) => {
               fetchPreviewPlot(e.value as [number, number], sigma); // only runs on mouse release
@@ -208,7 +206,6 @@ export default function LightCurves({ dataFilepath, onApply }: RefineMenuProps) 
             animation="fade-in 300ms ease-out"
             onValueChange={(e) => {
               setSigma(e.value[0]);
-              setHasEdited(true)
             }}
             onValueChangeEnd={(e) => {
               fetchPreviewPlot(cropValues, e.value[0]);

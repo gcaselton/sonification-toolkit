@@ -187,7 +187,14 @@ def plot_and_format_constellation(df):
 
     # sizes = (10/top_stars['mag']) ** 2
 
-    plt.scatter(x, y, s=sizes, c='white', alpha=1.0)
+    # Color stars based on color index (B-V)
+    # Using a colormap that approximates star colors
+    # You can tweak 'plasma', 'inferno', or use custom mapping
+    colors = df['colour']  # assuming 'colour' is B-V
+    scatter = plt.scatter(
+        x, y, s=sizes, c=colors, cmap='RdYlBu_r'
+    )
+    plt.colorbar(scatter, label='B-V Colour Index')  # optional legend for color index
 
     # add padding around stars
     padding_ra = ra_range * 0.2
