@@ -4,7 +4,7 @@ import LoadingMessage from "../ui/LoadingMessage";
 import {BackButton} from "../ui/Buttons";
 import PageContainer from "../ui/PageContainer";
 import ErrorMsg from "../ui/ErrorMsg";
-import { apiUrl, lightCurvesAPI, coreAPI} from "../../apiConfig";
+import { apiUrl, lightCurvesAPI, coreAPI, constellationsAPI} from "../../apiConfig";
 import { apiRequest } from "../../utils/requests";
 import {
   Box,
@@ -23,7 +23,7 @@ import {
   HStack
 } from "@chakra-ui/react";
 import { plotLightcurve } from "./Lightcurves";
-import { apiRequest } from "../../utils/requests";
+
 
 export default function Sonify() {
 
