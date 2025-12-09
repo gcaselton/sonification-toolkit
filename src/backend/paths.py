@@ -83,6 +83,7 @@ STYLE_FILES_DIR = BACKEND_DIR / "style_files"
 SUGGESTED_DATA_DIR = BACKEND_DIR / "suggested_data"
 HYG_DATA = SUGGESTED_DATA_DIR / "constellations" / "hyg.csv"
 TMP_DIR = BACKEND_DIR / "tmp"
+TMP_DIR.mkdir(exist_ok=True)
 SETTINGS_DIR = BACKEND_DIR / "settings"
 SETTINGS_FILE = create_default_settings()
 SOUND_ASSETS_DIR = BACKEND_DIR / "sound_assets"
