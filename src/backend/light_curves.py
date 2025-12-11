@@ -3,7 +3,7 @@ from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from extensions import sonify
 from pathlib import Path
-from paths import TMP_DIR, STYLE_FILES_DIR, SUGGESTED_DATA_DIR, SAMPLES_DIR, SETTINGS_FILE
+from paths import TMP_DIR, STYLE_FILES_DIR, SUGGESTED_DATA_DIR, SAMPLES_DIR
 from strauss.sources import param_lim_dict
 from sounds import all_sounds, online_sounds, local_sounds, asset_cache, format_name
 from config import GITHUB_USER, GITHUB_REPO
@@ -81,7 +81,7 @@ async def search_lightcurves(query: StarQuery):
 
     # Return 404 and error message if no results (for those filters)
     if len(idents) == 0:
-        raise HTTPException(status_code=404, detail=f'No {formatted} light curves found for {query.star_name}.')
+        raise HTTPException(status_code=400, detail=f'No {formatted} light curves found for {query.star_name}.')
     
     results_metadata = []
 

@@ -9,6 +9,7 @@ import { Tooltip } from "../ui/Tooltip";
 import ErrorMsg from "../ui/ErrorMsg";
 import { getImage } from "../../utils/assets";
 import { apiUrl, lightCurvesAPI, coreAPI} from "../../apiConfig";
+import { apiRequest } from "../../utils/requests";
 
 import {
   Box,
@@ -63,17 +64,10 @@ function capitaliseWords(str: string) {
 export const plotLightcurve = async (filepath: string) => {
 
   const url_plot = `${lightCurvesAPI}/plot-lightcurve`
-  const response = await fetch(url_plot, {
-    method: 'POST',
-    headers: {
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ 'data_uri': filepath })
-  });
-  const plotData = await response.json();
+  const payload = {'data_uri': filepath}
+  const plotData = await apiRequest(url_plot, payload)
   const image = plotData.image; 
-  
+
   return image;
 }
 
@@ -138,41 +132,11 @@ export default function Lightcurves() {
       "filters": filters
     };
 
-    const config = {
-      method: 'POST',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(data)
-    };
     try {
-      const response = await fetch(url_search, config);
-      if (!response.ok) {
-        //setErrorMessage("Error fetching lightcurves: " + response.formData);
-        console.error(`Error ${response.status}: ${response.statusText}`);
-        let errorDetail;
-        try {
-          const contentType = response.headers.get("Content-Type");
-
-          if (contentType && contentType.includes("application/json")) {
-            const errorJson = await response.json();
-            console.error("Error details:", errorJson);
-            errorDetail = errorJson;
-          } else {
-            const errorText = await response.text();
-            console.error("Error details:", errorText);
-            errorDetail = errorText;
-          }
-        } catch (e) {
-          console.error("Failed to read error body:", e);
-        }
-        throw new Error(errorDetail.detail || "Unknown error");
-      }
-      const result = await response.json();
-      setLightcurves(result.results);
-      console.log("Search results:", result.results);
-      setErrorMessage(result.details); // Clear any previous error messages
+      const response = await apiRequest(url_search, data);
+      setLightcurves(response.results);
+      console.log("Search results:", response.results);
+      setErrorMessage(response.details); // Clear any previous error messages
     } catch (error) {
       console.error("Error: " + error);
       if (String(error).includes('Failed to fetch')) {
@@ -190,23 +154,9 @@ export default function Lightcurves() {
   const selectLightcurve = async (dataURI: string) => {
     // Call the API endpoint to select the lightcurve and get the filepath
     const url_selectlightcurve = `${lightCurvesAPI}/select-lightcurve`;
-    const data = {
-      "data_uri": dataURI
-    }
-    const config = {
-      method: 'POST',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(data)
-    }
+    const data = { "data_uri": dataURI }
     try {
-      const response = await fetch(url_selectlightcurve, config);
-      if (!response.ok) {
-        throw new Error("Network response was not ok");
-      }
-      const result = await response.json();
+      const result = await apiRequest(url_selectlightcurve, data);
       console.log("Select Lightcurve API response:", result);
       return result.filepath;
     } catch (error) {

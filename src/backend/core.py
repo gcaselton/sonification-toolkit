@@ -3,7 +3,7 @@ from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from extensions import sonify
 from pathlib import Path
-from paths import TMP_DIR, STYLE_FILES_DIR, SUGGESTED_DATA_DIR, SAMPLES_DIR, SETTINGS_FILE, HYG_DATA
+from paths import TMP_DIR, STYLE_FILES_DIR, SUGGESTED_DATA_DIR, SAMPLES_DIR, HYG_DATA
 from strauss.sources import param_lim_dict
 from sounds import all_sounds, online_sounds, local_sounds, asset_cache, format_name
 from config import GITHUB_USER, GITHUB_REPO
@@ -75,7 +75,10 @@ async def get_or_create_session(
 
 
 @router.post('/generate-sonification/')
-async def generate_sonification(request: SonificationRequest):
+async def generate_sonification(request: SonificationRequest, session_id: str | None = Cookie(None)):
+
+    if not session_id:
+        raise HTTPException(status_code=400, detail="No session cookie found")
 
     category = request.category
     data = Path(request.data_filepath)
@@ -89,15 +92,25 @@ async def generate_sonification(request: SonificationRequest):
         id = str(uuid.uuid4().hex)
         ext = '.wav'
         filename = f'{category}_{id}{ext}'
-        filepath = os.path.join(TMP_DIR, filename)
+        filepath = os.path.join(TMP_DIR, session_id, filename)
         soni.save(filepath)
 
         return {'filename': filename}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+    
+
+@router.get('/audio/{filename}')
+async def get_audio(filename: str, session_id: str = Cookie(None)):
+
+    filepath = TMP_DIR / session_id / filename
+    ext = filepath.suffix.split('.')[1]
+
+    return FileResponse(filepath, media_type=f"audio/{ext}")
+
 
 @router.post('/upload-data/')
-async def uploadData(file: UploadFile):
+async def uploadData(file: UploadFile, session_id: str = Cookie(None)):
     """
     Function for the user to upload their own data to the system, which is then written
     to the tmp directory.
@@ -107,7 +120,7 @@ async def uploadData(file: UploadFile):
     """
     ext = os.path.splitext(file.filename)[-1]
     filename = f'{uuid.uuid4()}{ext}'
-    filepath = os.path.join(TMP_DIR, filename)
+    filepath = os.path.join(TMP_DIR, session_id, filename)
 
     contents = await file.read()
 
@@ -178,7 +191,11 @@ async def get_sound_info():
     return all_sounds()
 
 @router.post('/preview-style-settings/{category}')
-async def preview_style_settings(request: StylePreviewRequest, category: str):
+async def preview_style_settings(
+    request: StylePreviewRequest, 
+    category: str, 
+    session_id: str = Cookie(None)):
+
     style = Path(request.style_filepath)
 
     # Generate simple ramp to sonify
@@ -193,7 +210,7 @@ async def preview_style_settings(request: StylePreviewRequest, category: str):
         id = str(uuid.uuid4().hex)
         ext = '.wav'
         filename = f'{category}_{id}{ext}'
-        filepath = os.path.join(TMP_DIR, filename)
+        filepath = os.path.join(TMP_DIR, session_id, filename)
         soni.save(filepath)
 
         return {'filename': filename}
@@ -201,7 +218,7 @@ async def preview_style_settings(request: StylePreviewRequest, category: str):
         raise HTTPException(status_code=404, detail=str(e))
     
 @router.post('/save-sound-settings/')
-async def save_sound_settings(settings: SoundSettings):
+async def save_sound_settings(settings: SoundSettings, session_id: str = Cookie(None)):
     """
     Save sound settings for the sonification.
 
@@ -213,7 +230,7 @@ async def save_sound_settings(settings: SoundSettings):
 
     yaml_text = yaml.dump(style, default_flow_style=False)
     filename = f'style_{uuid.uuid4()}.yaml'
-    filepath = os.path.join(TMP_DIR, filename)
+    filepath = os.path.join(TMP_DIR, session_id, filename)
     f = open(filepath, "x")
     f.write(yaml_text)
     f.close()
@@ -268,13 +285,8 @@ def format_settings(settings: SoundSettings):
     return style
 
 
-@router.get('/audio/{filename}')
-async def get_audio(filename: str):
-    filepath = TMP_DIR / filename
-    return FileResponse(filepath, media_type="audio/wav")
 
-
-async def download_online_asset(target_name: str):
+async def download_online_asset(target_name: str, session_id: str):
 
     print(target_name)
 
@@ -300,7 +312,7 @@ async def download_online_asset(target_name: str):
         return {"status": "skipped", "message": "File already exists locally."}
     
     # Define local path
-    write_path = Path(TMP_DIR) / file_name
+    write_path = TMP_DIR / session_id / file_name
 
     print(write_path)
     
@@ -323,15 +335,15 @@ async def download_online_asset(target_name: str):
 
 
 @router.post('/ensure-sound-available/')
-async def ensure_sound_available(request: SoundRequest):
+async def ensure_sound_available(request: SoundRequest, session_id: str = Cookie(None)):
 
     if request.sound_name not in [s.name for s in local_sounds()]:
-        await download_online_asset(request.sound_name)
+        await download_online_asset(request.sound_name, session_id)
     else: print('Sound already exists in local dir')
 
 
 @router.post("/upload-yaml/")
-async def upload_yaml(file: UploadFile = File(...)):
+async def upload_yaml(file: UploadFile = File(...), session_id: str = Cookie(None)):
     if not file.filename.endswith(('.yaml', '.yml')):
         return {"error": "Only YAML files are allowed"}
     
@@ -339,7 +351,7 @@ async def upload_yaml(file: UploadFile = File(...)):
     try:
         parsed_yaml = yaml.safe_load(contents)
         # Save the file to a temporary location
-        tmp_file_path = TMP_DIR / file.filename
+        tmp_file_path = TMP_DIR / session_id / file.filename
         with open(tmp_file_path, 'wb') as f:
             f.write(contents)
     except yaml.YAMLError as e:
@@ -347,52 +359,60 @@ async def upload_yaml(file: UploadFile = File(...)):
 
     return {"filepath": tmp_file_path, "parsed": parsed_yaml}
 
-def load_settings_from_file():
+
+def load_settings_from_file(session_id: str):
     """Load settings from YAML file"""
-    if not SETTINGS_FILE.exists():
+
+    settings_file = TMP_DIR / session_id / 'settings.yml'
+
+    if not settings_file.exists():
         # Create default settings if file doesn't exist
         default_settings = {"data_resolution": 10}
-        save_settings_to_file(default_settings)
+        save_settings_to_file(default_settings, settings_file)
         return default_settings
     
     try:
-        with open(SETTINGS_FILE, 'r') as file:
+        with open(settings_file, 'r') as file:
             settings = yaml.safe_load(file) or {}
             return settings
     except Exception as e:
         print(f"Error loading settings: {e}")
         return {"data_resolution": 10}
 
-def save_settings_to_file(settings: dict):
+
+def save_settings_to_file(settings: dict, settings_path: Path):
     """Save settings to YAML file"""
     try:
-        with open(SETTINGS_FILE, 'w') as file:
+        with open(settings_path, 'w') as file:
             yaml.dump(settings, file, default_flow_style=False)
     except Exception as e:
         print(f"Error saving settings: {e}")
         raise
 
+
 @router.get("/load-settings")
-async def load_settings():
+async def load_settings(session_id : str = Cookie(None)):
     """Endpoint to load current settings"""
     try:
-        settings = load_settings_from_file()
+        settings = load_settings_from_file(session_id)
         return settings
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to load settings: {str(e)}")
 
 @router.post("/save-settings")
-async def save_settings(settings: UserSettings):
+async def save_settings(settings: UserSettings, session_id: str = Cookie(None)):
     """Endpoint to save settings"""
     try:
         # Load existing settings
-        current_settings = load_settings_from_file()
+        current_settings = load_settings_from_file(session_id)
         
         # Update with new values
         current_settings.update(settings.model_dump())
         
+        settings_path = TMP_DIR / session_id / 'settings.yml'
+
         # Save back to file
-        save_settings_to_file(current_settings)
+        save_settings_to_file(current_settings, settings_path)
         
         return {"message": "Settings saved successfully", "settings": current_settings}
     except Exception as e:

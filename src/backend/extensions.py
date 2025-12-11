@@ -43,7 +43,7 @@ def sonify(data_filepath, style_filepath, sonify_type, length=15, system='mono')
 
       # Validate the merged result
       validated_style = BaseStyle.model_validate(merged)
-        
+      
       # Set up Sonification elements
       score, sources, generator = setup_strauss(data_filepath, validated_style, sonify_type, length)
 
