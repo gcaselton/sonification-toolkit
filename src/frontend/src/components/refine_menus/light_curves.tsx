@@ -28,7 +28,7 @@ import { apiRequest } from "../../utils/requests";
 import { InfoTip } from "../ui/ToggleTip";
 
 
-export default function LightCurves({ dataFilepath, onApply }: RefineMenuProps) {
+export default function LightCurves({ dataName, dataFilepath, onApply }: RefineMenuProps) {
   const [imageSrc, setImageSrc] = useState<string | null>(null);
   const [imageLoading, setImageLoading] = useState(true);
 
@@ -109,6 +109,7 @@ export default function LightCurves({ dataFilepath, onApply }: RefineMenuProps) 
 
     const endpoint = `${lightCurvesAPI}/preview-refined/`;
     const payload = {
+      data_name: dataName,
       data_filepath: dataFilepath,
       new_range: range,
       sigma: sigmaVal,
@@ -131,6 +132,7 @@ export default function LightCurves({ dataFilepath, onApply }: RefineMenuProps) 
 
     const endpoint = `${lightCurvesAPI}/save-refined/`
     const payload = {
+      data_name: dataName,
       data_filepath: dataFilepath,
       new_range: cropValues,
       sigma: sigma

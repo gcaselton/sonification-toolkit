@@ -4,7 +4,7 @@ from strauss.score import Score
 from strauss.generator import Synthesizer, Sampler
 from strauss.notes import notesharps
 from musical_scales import scale as parse_scale
-from style_schemas import BaseStyle, defaults
+from style_schemas import BaseStyle, ParameterMapping
 from settings import load_settings_from_file
 from pychord import Chord
 from pychord.utils import transpose_note
@@ -99,25 +99,6 @@ def validate_input_params(style: dict, data: Path | str | tuple):
                   # if col_data.min() < in_min or col_data.max() > in_max:
                   #       raise ValidationError(f'Input parameter "{input_param}" has data outside specified input_range [{in_min}, {in_max}]. Actual data range: [{col_data.min()}, {col_data.max()}]')
             
-      
-
-def quick_sonify(x_data, y_data, sound='default', y_params=['cutoff'], chordal=True, length=15, system='mono'):
-
-      # NOTE - re-structure this function to use the new sonify function
-
-        # Covert data to numpy array
-        x_data = ensure_array(x_data)
-        y_data = ensure_array(y_data)
-
-        # Set up Sonification elements
-        generator = setup_generator(sound)
-        score =  setup_score(chordal, length)
-        sources = setup_sources(x_data, y_data, y_params)
-        
-        # Render and play sonification
-        soni = Sonification(score, sources, generator, system)
-        soni.render()
-        soni.hear()
 
 def ensure_array(data):
       return data if isinstance(data, np.ndarray) else np.array(data)

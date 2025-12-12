@@ -45,6 +45,7 @@ class PlotRequest(BaseModel):
     new_range: list[int]
 
 class RefineRequest(BaseModel):
+    data_name: str
     data_filepath: str
     new_range: list[int]
     sigma: int
@@ -305,24 +306,17 @@ async def save_refined(request: RefineRequest):
 
     lc = refine_lightcurve(request)
 
-    # Make a hash of the refined data (reproducible for identical refine parameters)
-    data = json.dumps(request.model_dump(), sort_keys=True)
-    hash = hashlib.md5(data.encode()).hexdigest()
-
-    filename = f'{hash}.csv'
+    filename = f'{request.data_name}.csv'
     session_id = session_id_var.get()
     filepath = os.path.join(TMP_DIR, session_id, filename)
 
-    if not os.path.exists(filepath):
-
-        df = pd.DataFrame({
+    df = pd.DataFrame({
             'time': lc.time.value,
             'flux': lc.flux.value
         })
-        
-        # Save to CSV
-        df.to_csv(filepath, index=False)
-
+    
+    # Save to CSV
+    df.to_csv(filepath, index=False)
 
     return {'data_filepath': filepath}
 
