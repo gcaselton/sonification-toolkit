@@ -35,7 +35,7 @@ You can find the documentation of the API available at http://127.0.0.1:8000/doc
 
 ### Run the React app
 
-Go into the frontend directory
+Open a new terminal, and go into the frontend directory
 
 `cd .\src\frontend\`
 
