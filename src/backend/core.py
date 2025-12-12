@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, UploadFile, File
+from fastapi import APIRouter, HTTPException, UploadFile, File, Cookie, Response
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from extensions import sonify
@@ -52,6 +52,29 @@ class SonificationRequest(BaseModel):
     style_filepath: str
     duration: int
     system: str
+
+
+@router.get('/session/')
+async def get_or_create_session(
+    response: Response,
+    session_id: str | None = Cookie(None)
+):
+    if not session_id:
+        session_id = str(uuid.uuid4())
+        response.set_cookie(
+            key="session_id",
+            value=session_id,
+            httponly=True,
+            # max_age=24*60*60,  # could use this to make sessions persist across days?
+            samesite="none",
+            secure=True,
+            path='/'
+        )
+
+    user_dir = TMP_DIR / session_id
+    user_dir.mkdir(exist_ok=True)
+
+    return {'session_id': session_id}
 
 
 @router.post('/generate-sonification/')
