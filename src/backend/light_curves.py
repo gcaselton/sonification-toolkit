@@ -1,13 +1,9 @@
-from fastapi import APIRouter, HTTPException, UploadFile, File
-from fastapi.responses import FileResponse
+from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
-from extensions import sonify
 from pathlib import Path
 from paths import TMP_DIR, STYLE_FILES_DIR, SUGGESTED_DATA_DIR, SAMPLES_DIR
-from strauss.sources import param_lim_dict
-from sounds import all_sounds, online_sounds, local_sounds, asset_cache, format_name
-from config import GITHUB_USER, GITHUB_REPO
-import logging, httpx, yaml, requests, os, base64, hashlib, uuid, aiofiles, zipfile, json, gc
+from context import session_id_var
+import logging, requests, os, base64, hashlib, json, gc
 
 import lightkurve as lk
 from lightkurve import LightCurve
@@ -19,7 +15,6 @@ import pandas as pd
 from io import BytesIO
 from astroquery.simbad import Simbad
 from scipy.ndimage import gaussian_filter1d
-from core import SonificationRequest
 
 
 router = APIRouter(prefix='/light-curves')
@@ -160,7 +155,8 @@ def download_lightcurve(data_uri):
     ext = os.path.splitext(data_uri)[-1]
 
     filename = f'{hash}{ext}'
-    filepath = os.path.join(TMP_DIR, filename)
+    session_id = session_id_var.get()
+    filepath = os.path.join(TMP_DIR, session_id, filename)
 
     if not os.path.exists(filepath):
 
@@ -313,8 +309,8 @@ async def save_refined(request: RefineRequest):
     hash = hashlib.md5(data.encode()).hexdigest()
 
     filename = f'{hash}.csv'
-
-    filepath = os.path.join(TMP_DIR, filename)
+    session_id = session_id_var.get()
+    filepath = os.path.join(TMP_DIR, session_id, filename)
 
     if not os.path.exists(filepath):
 

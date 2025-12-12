@@ -5,11 +5,13 @@ for lib in ["uvicorn", "matplotlib", "httpcore", "asyncio", "httpx", "urllib3", 
 
 logger = logging.getLogger("uvicorn.error")
 
-from fastapi import FastAPI, BackgroundTasks
+from fastapi import FastAPI, BackgroundTasks, Request
+
 from light_curves import router as light_curve_router
 from constellations import router as constellations_router
 from performance import router as performance_router
 from core import router as core_router
+from settings import router as settings_router
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse
@@ -18,6 +20,7 @@ from sounds import cache_online_assets
 from contextlib import asynccontextmanager
 from config import GITHUB_USER, GITHUB_REPO
 from StorageManager import StorageManager
+from context import session_id_var
 from datetime import datetime
 import asyncio, os, httpx, psutil, tracemalloc, time, threading, shutil
 
@@ -30,7 +33,6 @@ async def safe_cache_assets():
         print("Error caching assets:", e)
 
 
-
 # Initialize storage/cleanup manager
 storage_manager = StorageManager(
     target_dir=TMP_DIR,
@@ -40,8 +42,6 @@ storage_manager = StorageManager(
     emergency_threshold_percent=80.0,
     min_free_gb=2.0
 )
-
-
 
 
 @asynccontextmanager
@@ -82,12 +82,25 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Import API endpoints
-app.include_router(light_curve_router)
-app.include_router(constellations_router)
-app.include_router(core_router)
-app.include_router(performance_router)
+# Middleware to set the session_id from cookie
+@app.middleware("http")
+async def session_middleware(request: Request, call_next):
+    session_id = request.cookies.get("session_id")
+    
+    # Set the context variable
+    token = session_id_var.set(session_id)
+    
+    try:
+        response = await call_next(request)
+        return response
+    finally:
+        # Reset the context variable for the next request
+        session_id_var.reset(token)
 
+
+# Import API endpoints
+for router in [light_curve_router, constellations_router, core_router, performance_router, settings_router]:
+    app.include_router(router)
 
 @app.get("/")
 def get_status():

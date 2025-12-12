@@ -5,7 +5,7 @@ from strauss.generator import Synthesizer, Sampler
 from strauss.notes import notesharps
 from musical_scales import scale as parse_scale
 from style_schemas import BaseStyle, defaults
-
+from settings import load_settings_from_file
 from pychord import Chord
 from pychord.utils import transpose_note
 from paths import *
@@ -54,25 +54,6 @@ def sonify(data_filepath, style_filepath, sonify_type, length=15, system='mono')
 
       return sonification
 
-
-
-def quick_sonify(x_data, y_data, sound='default', y_params=['cutoff'], chordal=True, length=15, system='mono'):
-
-      # NOTE - re-structure this function to use the new sonify function
-
-        # Covert data to numpy array
-        x_data = ensure_array(x_data)
-        y_data = ensure_array(y_data)
-
-        # Set up Sonification elements
-        generator = setup_generator(sound)
-        score =  setup_score(chordal, length)
-        sources = setup_sources(x_data, y_data, y_params)
-        
-        # Render and play sonification
-        soni = Sonification(score, sources, generator, system)
-        soni.render()
-        soni.hear()
 
 def ensure_array(data):
       return data if isinstance(data, np.ndarray) else np.array(data)
@@ -161,7 +142,7 @@ def univariate_sources(xy_data: tuple, params, chord_mode, data_mode):
 
 def scale_events(x, y, params, length):
 
-      user_settings = read_YAML_file(SETTINGS_FILE)
+      user_settings = load_settings_from_file()
       resolution = user_settings['data_resolution']
 
       new_x, new_y = downsample_data(x, y, length, resolution)

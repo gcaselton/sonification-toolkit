@@ -2,7 +2,7 @@ import React, { useEffect, useState, ChangeEvent } from "react";
 import { useNavigate } from 'react-router-dom';
 import LoadingMessage from '../ui/LoadingMessage';
 import PageContainer from "../ui/PageContainer";
-import { apiUrl, coreAPI } from "../../apiConfig";
+import { settingsAPI } from "../../apiConfig";
 
 import {
   Box,
@@ -32,7 +32,7 @@ export default function Settings() {
 
   const loadSettings = async () => {
     try {
-      const settings = await apiRequest(`${coreAPI}/load-settings`,{}, 'GET');
+      const settings = await apiRequest(`${settingsAPI}/load-settings`,{}, 'GET');
     
       setDataResolution(settings.data_resolution || 10);
     } catch (error) {
@@ -49,7 +49,7 @@ export default function Settings() {
     setSuccessMessage("");
     
     try {
-      const url = `${coreAPI}/save-settings`
+      const url = `${settingsAPI}/save-settings`
       const data = {
         data_resolution: newResolution
       }

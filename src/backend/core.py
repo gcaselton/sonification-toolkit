@@ -7,6 +7,7 @@ from paths import TMP_DIR, STYLE_FILES_DIR, SUGGESTED_DATA_DIR, SAMPLES_DIR, HYG
 from strauss.sources import param_lim_dict
 from sounds import all_sounds, online_sounds, local_sounds, asset_cache, format_name
 from config import GITHUB_USER, GITHUB_REPO
+from context import session_id_var
 import logging, httpx, yaml, requests, os, base64, hashlib, uuid, aiofiles, zipfile, json, gc
 
 import lightkurve as lk
@@ -40,8 +41,7 @@ class SoundSettings(BaseModel):
 class SoundRequest(BaseModel):
     sound_name: str
 
-class UserSettings(BaseModel):
-    data_resolution: int
+
 
 class SonificationRequest(BaseModel):
     category: str
@@ -75,7 +75,9 @@ async def get_or_create_session(
 
 
 @router.post('/generate-sonification/')
-async def generate_sonification(request: SonificationRequest, session_id: str | None = Cookie(None)):
+async def generate_sonification(request: SonificationRequest):
+
+    session_id = session_id_var.get()
 
     if not session_id:
         raise HTTPException(status_code=400, detail="No session cookie found")
@@ -101,8 +103,9 @@ async def generate_sonification(request: SonificationRequest, session_id: str | 
     
 
 @router.get('/audio/{filename}')
-async def get_audio(filename: str, session_id: str = Cookie(None)):
+async def get_audio(filename: str):
 
+    session_id = session_id_var.get()
     filepath = TMP_DIR / session_id / filename
     ext = filepath.suffix.split('.')[1]
 
@@ -110,7 +113,7 @@ async def get_audio(filename: str, session_id: str = Cookie(None)):
 
 
 @router.post('/upload-data/')
-async def uploadData(file: UploadFile, session_id: str = Cookie(None)):
+async def uploadData(file: UploadFile):
     """
     Function for the user to upload their own data to the system, which is then written
     to the tmp directory.
@@ -118,8 +121,11 @@ async def uploadData(file: UploadFile, session_id: str = Cookie(None)):
     - **file**: The user-uploaded data file.
     - Returns: The filepath of the saved data file.
     """
+    
     ext = os.path.splitext(file.filename)[-1]
     filename = f'{uuid.uuid4()}{ext}'
+
+    session_id = session_id_var.get()
     filepath = os.path.join(TMP_DIR, session_id, filename)
 
     contents = await file.read()
@@ -191,10 +197,7 @@ async def get_sound_info():
     return all_sounds()
 
 @router.post('/preview-style-settings/{category}')
-async def preview_style_settings(
-    request: StylePreviewRequest, 
-    category: str, 
-    session_id: str = Cookie(None)):
+async def preview_style_settings(request: StylePreviewRequest, category: str):
 
     style = Path(request.style_filepath)
 
@@ -210,6 +213,7 @@ async def preview_style_settings(
         id = str(uuid.uuid4().hex)
         ext = '.wav'
         filename = f'{category}_{id}{ext}'
+        session_id = session_id_var.get()
         filepath = os.path.join(TMP_DIR, session_id, filename)
         soni.save(filepath)
 
@@ -218,7 +222,7 @@ async def preview_style_settings(
         raise HTTPException(status_code=404, detail=str(e))
     
 @router.post('/save-sound-settings/')
-async def save_sound_settings(settings: SoundSettings, session_id: str = Cookie(None)):
+async def save_sound_settings(settings: SoundSettings):
     """
     Save sound settings for the sonification.
 
@@ -230,6 +234,7 @@ async def save_sound_settings(settings: SoundSettings, session_id: str = Cookie(
 
     yaml_text = yaml.dump(style, default_flow_style=False)
     filename = f'style_{uuid.uuid4()}.yaml'
+    session_id = session_id_var.get()
     filepath = os.path.join(TMP_DIR, session_id, filename)
     f = open(filepath, "x")
     f.write(yaml_text)
@@ -286,7 +291,7 @@ def format_settings(settings: SoundSettings):
 
 
 
-async def download_online_asset(target_name: str, session_id: str):
+async def download_online_asset(target_name: str):
 
     print(target_name)
 
@@ -312,6 +317,7 @@ async def download_online_asset(target_name: str, session_id: str):
         return {"status": "skipped", "message": "File already exists locally."}
     
     # Define local path
+    session_id = session_id_var.get()
     write_path = TMP_DIR / session_id / file_name
 
     print(write_path)
@@ -335,15 +341,15 @@ async def download_online_asset(target_name: str, session_id: str):
 
 
 @router.post('/ensure-sound-available/')
-async def ensure_sound_available(request: SoundRequest, session_id: str = Cookie(None)):
+async def ensure_sound_available(request: SoundRequest):
 
     if request.sound_name not in [s.name for s in local_sounds()]:
-        await download_online_asset(request.sound_name, session_id)
+        await download_online_asset(request.sound_name)
     else: print('Sound already exists in local dir')
 
 
 @router.post("/upload-yaml/")
-async def upload_yaml(file: UploadFile = File(...), session_id: str = Cookie(None)):
+async def upload_yaml(file: UploadFile = File(...)):
     if not file.filename.endswith(('.yaml', '.yml')):
         return {"error": "Only YAML files are allowed"}
     
@@ -351,6 +357,7 @@ async def upload_yaml(file: UploadFile = File(...), session_id: str = Cookie(Non
     try:
         parsed_yaml = yaml.safe_load(contents)
         # Save the file to a temporary location
+        session_id = session_id_var.get()
         tmp_file_path = TMP_DIR / session_id / file.filename
         with open(tmp_file_path, 'wb') as f:
             f.write(contents)
@@ -360,60 +367,3 @@ async def upload_yaml(file: UploadFile = File(...), session_id: str = Cookie(Non
     return {"filepath": tmp_file_path, "parsed": parsed_yaml}
 
 
-def load_settings_from_file(session_id: str):
-    """Load settings from YAML file"""
-
-    settings_file = TMP_DIR / session_id / 'settings.yml'
-
-    if not settings_file.exists():
-        # Create default settings if file doesn't exist
-        default_settings = {"data_resolution": 10}
-        save_settings_to_file(default_settings, settings_file)
-        return default_settings
-    
-    try:
-        with open(settings_file, 'r') as file:
-            settings = yaml.safe_load(file) or {}
-            return settings
-    except Exception as e:
-        print(f"Error loading settings: {e}")
-        return {"data_resolution": 10}
-
-
-def save_settings_to_file(settings: dict, settings_path: Path):
-    """Save settings to YAML file"""
-    try:
-        with open(settings_path, 'w') as file:
-            yaml.dump(settings, file, default_flow_style=False)
-    except Exception as e:
-        print(f"Error saving settings: {e}")
-        raise
-
-
-@router.get("/load-settings")
-async def load_settings(session_id : str = Cookie(None)):
-    """Endpoint to load current settings"""
-    try:
-        settings = load_settings_from_file(session_id)
-        return settings
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to load settings: {str(e)}")
-
-@router.post("/save-settings")
-async def save_settings(settings: UserSettings, session_id: str = Cookie(None)):
-    """Endpoint to save settings"""
-    try:
-        # Load existing settings
-        current_settings = load_settings_from_file(session_id)
-        
-        # Update with new values
-        current_settings.update(settings.model_dump())
-        
-        settings_path = TMP_DIR / session_id / 'settings.yml'
-
-        # Save back to file
-        save_settings_to_file(current_settings, settings_path)
-        
-        return {"message": "Settings saved successfully", "settings": current_settings}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to save settings: {str(e)}")
