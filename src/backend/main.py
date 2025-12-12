@@ -5,21 +5,24 @@ for lib in ["uvicorn", "matplotlib", "httpcore", "asyncio", "httpx", "urllib3", 
 
 logger = logging.getLogger("uvicorn.error")
 
-from fastapi import FastAPI
+from fastapi import FastAPI, BackgroundTasks, Request
+
 from light_curves import router as light_curve_router
 from constellations import router as constellations_router
 from performance import router as performance_router
 from core import router as core_router
+from settings import router as settings_router
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse
-from paths import SYNTHS_DIR, SAMPLES_DIR, TMP_DIR
+from paths import SYNTHS_DIR, SAMPLES_DIR, TMP_DIR, ROOT_DIR
 from sounds import cache_online_assets
 from contextlib import asynccontextmanager
 from config import GITHUB_USER, GITHUB_REPO
+from StorageManager import StorageManager
+from context import session_id_var
 from datetime import datetime
-import asyncio, os, httpx, psutil, tracemalloc, time, threading
-
+import asyncio, os, httpx, psutil, tracemalloc, time, threading, shutil
 
 
 async def safe_cache_assets():
@@ -30,60 +33,36 @@ async def safe_cache_assets():
         print("Error caching assets:", e)
 
 
-def clear_tmp_dir():
-    """Completely clear tmp directory - to be used once at startup"""
-    try:
-        for file_path in TMP_DIR.glob('*'):
-            if file_path.is_file():
-                file_path.unlink()
-    except PermissionError as e:
-        logger.warning(f"Could not clear tmp directory: {e}")
-
-
-def cleanup_tmp_dir(interval_minutes=60, max_age_minutes=120):
-    """Periodically clean up tmp directory by deleting files older than max_age_minutes"""
-
-    interval_seconds = interval_minutes * 60
-    max_age_seconds = max_age_minutes * 60
-
-    while True:
-        
-        logger.info("Starting TMP directory cleanup.")
-        now = time.time()
-        count = 0
-
-        for filename in os.listdir(TMP_DIR):
-            path = os.path.join(TMP_DIR, filename)
-            if os.path.isfile(path):
-                age = now - os.path.getmtime(path)
-                if age > max_age_seconds:
-                    try:
-                        os.remove(path)
-                        count += 1
-                    except (Exception, PermissionError) as e:
-                        logger.warning(f"Could not delete tmp file {path}: {e}")
-                        continue
-
-        logger.info(f"TMP directory cleanup complete. Deleted {count} files.")
-        time.sleep(interval_seconds)
+# Initialize storage/cleanup manager
+storage_manager = StorageManager(
+    target_dir=TMP_DIR,
+    max_age_days=2,
+    disk_threshold_percent=70.0,
+    cleanup_interval_hours=6,
+    emergency_threshold_percent=80.0,
+    min_free_gb=2.0
+)
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Lifespan context manager to handle startup tasks"""
 
-    # Clear TMP directory at startup
-    await asyncio.to_thread(clear_tmp_dir)
-    logger.info("Cleared TMP directory at startup.")
-
     # Run caching in background
     asyncio.create_task(safe_cache_assets())
-
-    # Start background thread for periodic TMP cleanup
-    thread = threading.Thread(target=cleanup_tmp_dir, daemon=True)
-    thread.start()
-
+    
+    # Start background cleanup task
+    cleanup_task = asyncio.create_task(storage_manager.start_background_cleanup())
+    
     yield
+    
+    # Shutdown: cancel background task
+    cleanup_task.cancel()
+    try:
+        await cleanup_task
+    except asyncio.CancelledError:
+        pass
+
 
 
 app = FastAPI(lifespan=lifespan)
@@ -103,12 +82,25 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Import API endpoints
-app.include_router(light_curve_router)
-app.include_router(constellations_router)
-app.include_router(core_router)
-app.include_router(performance_router)
+# Middleware to set the session_id from cookie
+@app.middleware("http")
+async def session_middleware(request: Request, call_next):
+    session_id = request.cookies.get("session_id")
+    
+    # Set the context variable
+    token = session_id_var.set(session_id)
+    
+    try:
+        response = await call_next(request)
+        return response
+    finally:
+        # Reset the context variable for the next request
+        session_id_var.reset(token)
 
+
+# Import API endpoints
+for router in [light_curve_router, constellations_router, core_router, performance_router, settings_router]:
+    app.include_router(router)
 
 @app.get("/")
 def get_status():
@@ -120,6 +112,37 @@ def get_status():
     return {'message': 'Hello! The server is up and running.'}
 
 
+@app.get("/cleanup/status")
+async def cleanup_status():
+    """Get current disk usage and cleanup status."""
+    used_percent, used_gb, free_gb = storage_manager.get_disk_usage()
+    sessions = storage_manager.get_session_dirs()
+    
+    return {
+        "disk_usage_percent": round(used_percent, 2),
+        "used_gb": round(used_gb, 2),
+        "free_gb": round(free_gb, 2),
+        "total_sessions": len(sessions),
+        "thresholds": {
+            "normal_cleanup": storage_manager.disk_threshold,
+            "emergency_cleanup": storage_manager.emergency_threshold,
+            "min_free_gb": storage_manager.min_free_bytes / (1024**3)
+        },
+        "config": {
+            "max_age_days": storage_manager.max_age_seconds / (24 * 60 * 60),
+            "cleanup_interval_hours": storage_manager.cleanup_interval / 3600
+        }
+    }
+
+@app.post("/cleanup/manual")
+async def manual_cleanup(background_tasks: BackgroundTasks):
+    """Trigger manual cleanup."""
+    result = storage_manager.run_cleanup()
+    return {
+        "message": "Manual cleanup completed",
+        "result": result
+    }
+
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="127.0.0.1", port=8000)
+    uvicorn.run(app)

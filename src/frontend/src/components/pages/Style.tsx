@@ -26,6 +26,7 @@ import {
   Switch,
   Text  
 } from "@chakra-ui/react";
+import { apiRequest } from "../../utils/requests";
 
 export default function Style() {
 
@@ -183,29 +184,22 @@ export default function Style() {
     
     const saveSoundSettings = async () => {
 
-        const save_sound_settings_url = `${coreAPI}/save-sound-settings/`;
+        const url = `${coreAPI}/save-sound-settings/`;
+        const data = { 
+            "sound": sound.name.replace(/\s*🎹$/, ""),
+            "filterCutOff": filterCutoff,
+            "pitch": pitch,
+            "volume": volume,
+            "leftRightPan": leftRightPan,
+            "chordMode": chordMode,
+            "rootNote": rootNote,
+            "scale": scale,
+            "quality": quality 
+        }
 
-        const response = await fetch(save_sound_settings_url, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ 
-                "sound": sound.name.replace(/\s*🎹$/, ""),
-                "filterCutOff": filterCutoff,
-                "pitch": pitch,
-                "volume": volume,
-                "leftRightPan": leftRightPan,
-                "chordMode": chordMode,
-                "rootNote": rootNote,
-                "scale": scale,
-                "quality": quality 
-            }),
-        });
+        const response = await apiRequest(url, data);
 
-        const data = await response.json();
-
-        return data.filepath;
+        return response.filepath;
     }
 
     const handleClick  = async (style: any) => {
@@ -223,11 +217,7 @@ export default function Style() {
 
     const ensureSoundAvailable = async (soundName: string) => {
         // ensure the sound is available by downloading if necessary
-        await fetch(`${coreAPI}/ensure-sound-available/`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ sound_name: soundName }),
-        });
+        await apiRequest(`${coreAPI}/ensure-sound-available/`, {sound_name: soundName});
     }
 
     const handlePreviewStyle = async () => {
@@ -241,18 +231,8 @@ export default function Style() {
 
             const preview_endpoint = `${coreAPI}/preview-style-settings/light_curves`;
 
-            const response = await fetch(preview_endpoint, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ 
-                    style_filepath: filepath 
-                }),
-            });
-
-            const data = await response.json();
-            const audioUrl = `${coreAPI}/audio/${data.filename}`;
+            const response = await apiRequest(preview_endpoint,{style_filepath: filepath});
+            const audioUrl = `${coreAPI}/audio/${response.filename}`;
             const preview = new Audio(audioUrl);
             preview.play()
             setLoadingCustomPreview(false)
@@ -363,21 +343,13 @@ export default function Style() {
 
     const onFileSelect = async (file: File) => {
         console.log("File selected:", file);
-        // You can handle the file upload logic here
-        // For example, you can upload the file to the server or process it
         const formData = new FormData();
         formData.append("file", file);
 
         try {
-            const res = await fetch(`${coreAPI}/upload-yaml/`, {
-                method: "POST",
-                body: formData,
-            });
-
-            const data = await res.json();
-            //setFilepath(data.filepath); // Save the filepath returned by the server
-            console.log("File uploaded successfully:", data.filepath);
-            const styleFilepath = data.filepath;
+            const res = await apiRequest(`${coreAPI}/upload-yaml/`, formData);
+            console.log("File uploaded successfully:", res.filepath);
+            const styleFilepath = res.filepath;
             // Navigate to the Sonify page with the uploaded file
             navigate('/sonify', { state: { dataFilepath, styleFilepath, soniType } });
             //setResponse(data);

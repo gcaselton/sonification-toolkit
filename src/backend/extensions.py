@@ -4,8 +4,8 @@ from strauss.score import Score
 from strauss.generator import Synthesizer, Sampler
 from strauss.notes import notesharps
 from musical_scales import scale as parse_scale
-from style_schemas import BaseStyle, ParameterMapping
-
+from style_schemas import BaseStyle, defaults
+from settings import load_settings_from_file
 from pychord import Chord
 from pychord.utils import transpose_note
 from paths import *
@@ -314,7 +314,7 @@ def convert_percent_to_values(param_lims: tuple):
 
 def scale_events(x, y, params: list[ParameterMapping], length):
 
-      user_settings = read_YAML_file(SETTINGS_FILE)
+      user_settings = load_settings_from_file()
       resolution = user_settings['data_resolution']
 
       new_x, new_y = downsample_data(x, y, length, resolution)

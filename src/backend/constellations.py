@@ -1,15 +1,11 @@
-from fastapi import APIRouter, HTTPException, UploadFile, File
-from fastapi.responses import FileResponse
-from pydantic import BaseModel
-from extensions import sonify
-from pathlib import Path
-from paths import TMP_DIR, STYLE_FILES_DIR, SUGGESTED_DATA_DIR, SAMPLES_DIR, SETTINGS_FILE
-from strauss.sources import param_lim_dict
-from sounds import all_sounds, online_sounds, local_sounds, asset_cache, format_name
-from config import GITHUB_USER, GITHUB_REPO
-import logging, httpx, yaml, requests, os, base64, hashlib, uuid, aiofiles, zipfile, json, gc
+from fastapi import APIRouter
 
-import lightkurve as lk
+from pydantic import BaseModel
+from pathlib import Path
+from paths import TMP_DIR, STYLE_FILES_DIR, SUGGESTED_DATA_DIR
+from context import session_id_var
+import logging, base64, uuid, gc
+
 import numpy as np
 import pandas as pd
 import matplotlib
@@ -286,8 +282,9 @@ async def save_refined(request: ConstellationRequest):
     stars = get_constellation(request.name)
     refined_stars = stars.head(request.n_stars).copy()
 
-    # save to tmp directory
-    filepath = TMP_DIR / f'{request.name}_{uuid.uuid4().hex}.csv'
+    # save to tmp directory (overwriting any existing dataset)
+    session_id = session_id_var.get()
+    filepath = TMP_DIR / session_id / f'{request.name}.csv'
     refined_stars.to_csv(filepath, index=False)
 
     return {'data_filepath': filepath}

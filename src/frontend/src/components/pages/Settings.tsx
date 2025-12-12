@@ -2,7 +2,7 @@ import React, { useEffect, useState, ChangeEvent } from "react";
 import { useNavigate } from 'react-router-dom';
 import LoadingMessage from '../ui/LoadingMessage';
 import PageContainer from "../ui/PageContainer";
-import { apiUrl, coreAPI } from "../../apiConfig";
+import { settingsAPI } from "../../apiConfig";
 
 import {
   Box,
@@ -14,6 +14,7 @@ import {
   Slider,
   Field,
 } from "@chakra-ui/react";
+import { apiRequest } from "../../utils/requests";
 
 export default function Settings() {
 
@@ -31,11 +32,8 @@ export default function Settings() {
 
   const loadSettings = async () => {
     try {
-      const response = await fetch(`${coreAPI}/load-settings`);
-      if (!response.ok) {
-        throw new Error('Failed to load settings');
-      }
-      const settings = await response.json();
+      const settings = await apiRequest(`${settingsAPI}/load-settings`,{}, 'GET');
+    
       setDataResolution(settings.data_resolution || 10);
     } catch (error) {
       console.error('Error loading settings:', error);
@@ -51,19 +49,11 @@ export default function Settings() {
     setSuccessMessage("");
     
     try {
-      const response = await fetch(`${coreAPI}/save-settings`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          data_resolution: newResolution
-        })
-      });
-      
-      if (!response.ok) {
-        throw new Error('Failed to save settings');
+      const url = `${settingsAPI}/save-settings`
+      const data = {
+        data_resolution: newResolution
       }
+      const response = await apiRequest(url, data);
       
       setSuccessMessage('Settings saved successfully!');
       // Clear success message after 3 seconds

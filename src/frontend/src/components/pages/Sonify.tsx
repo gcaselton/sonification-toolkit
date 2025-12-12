@@ -27,6 +27,7 @@ import { plotLightcurve } from "./Lightcurves";
 
 export default function Sonify() {
 
+
   const location = useLocation();
   const soniType = location.state.soniType;
   const styleFilepath = location.state.styleFilepath;
@@ -43,7 +44,7 @@ export default function Sonify() {
   // states
   const [length, setLength] = useState(lengths.default.toString());
   const [audioSystem, setAudioSystem] = useState<string[]>([(soniType == 'light_curves') ? "mono" : "stereo"])
-  const [audioFilepath, setAudioFilepath] = useState("");
+  const [audioFilename, setAudioFilename] = useState("");
   const [soniReady, setSoniReady] = useState(false)
   const [loading, setLoading] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string>("");
@@ -117,7 +118,7 @@ export default function Sonify() {
 
     setErrorMessage("")
     
-    const url_sonification = `${coreAPI}/generate-sonification/`;
+    const url = `${coreAPI}/generate-sonification/`;
   
     const data = {
       "category": soniType,
@@ -126,24 +127,13 @@ export default function Sonify() {
       "duration": length,
       "system": audioSystem[0]
     };
-    const config = {
-      method: 'POST',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(data)
-    };
+    
     try {
-      const response = await fetch(url_sonification, config);
-      if (!response.ok) {
-        setErrorMessage("Error generating sonification. Please try again with different Style settings.")
-        throw new Error("Network response was not ok");
-      }
-      const result = await response.json();
-      console.log("Sonification result:", result);
-      return result.filename; 
+      const response = await apiRequest(url, data);
+      console.log("Sonification result:", response);
+      return response.filename; 
     } catch (error) {
+      setErrorMessage("Error generating sonification. Please try again with different Style settings.")
       console.error("Error fetching sonification:", error);
     }
   }
@@ -160,7 +150,7 @@ export default function Sonify() {
       setLoading(false)
       if (filename) {
         console.log("Sonification file created:", filename);
-        setAudioFilepath(filename);
+        setAudioFilename(filename);
         setSoniReady(true)
       } else {
         console.error("No sonification file returned.");
@@ -275,7 +265,7 @@ export default function Sonify() {
           {!loading && soniReady && (
             <Box mt={4} animation="fade-in" animationDuration="0.3s">
               <audio
-                src={`${coreAPI}/audio/${audioFilepath}`}
+                src={`${coreAPI}/audio/${audioFilename}`}
                 controls
                 style={{ width: "100%" }}
               />

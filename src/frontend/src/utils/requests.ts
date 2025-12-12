@@ -1,13 +1,21 @@
 
 
 export async function apiRequest(url: string, payload = {}, method: string = 'POST') {
-  const options = {
+  const options: RequestInit = method != 'GET' ? {
     method,
+    credentials: 'include', 
     headers: {
       Accept: "application/json",
       "Content-Type": "application/json",
     },
     body: JSON.stringify(payload)
+  } : {
+    method,
+    credentials: 'include', 
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+    }
   };
 
   try {
