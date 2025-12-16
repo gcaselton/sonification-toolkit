@@ -134,6 +134,7 @@ def setup_strauss(data: Path | str | tuple, style: BaseStyle, sonify_type, lengt
             generator = Synthesizer()
             path_stem = str(path.with_suffix(""))
             generator.load_preset(path_stem)
+            generator.modify_preset({'volume_envelope': {'A':0.05, 'R':0.5}})
 
             # NOTE To do: Modify preset for ADSR if using scale
       else:
@@ -147,7 +148,7 @@ def setup_strauss(data: Path | str | tuple, style: BaseStyle, sonify_type, lengt
             else:
                   generator.load_preset('sustain')
                   generator.modify_preset({'looping': 'forwardback', 'loop_start': 0.2, 'loop_end': 5.})
-            
+
       
       # generator = Synthesizer() if folder == 'synths' else Sampler()
       # path_stem = str(path.with_suffix(""))
@@ -250,8 +251,10 @@ def constellation_sources(data: Path | str , style: BaseStyle, length):
                   p_lims[output] = mapping.output_range
 
       sources = Events(data_dict.keys())
+     
       sources.fromdict(data_dict)
       sources.apply_mapping_functions(map_funcs=my_funcs, map_lims=m_lims, param_lims=p_lims)
+
 
       return sources
 
@@ -407,10 +410,8 @@ def voice_chord(chord_name: str, sound_folder: str, sound_path: str):
       chord = Chord(chord_name)
       notes = chord.components()
       root = chord.root
-      print(notes)
-      
       fifth = transpose_note(root, 7)
-      print(fifth)
+    
 
       # Chord needs a fifth to be voiced pleasantly
       if not fifth in notes:

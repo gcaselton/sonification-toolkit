@@ -159,6 +159,9 @@ def correct_ra(ra):
     if ra.max() - ra.min() > 12:  # difference > 12h → likely wraparound
         ra[ra < 12] += 24 # add 24h to RA values < 12h to unwrap
 
+    # Invert so RA increases left → right
+    ra = -ra
+
     return ra
 
 
@@ -215,7 +218,7 @@ def plot_and_format_constellation(df):
     plt.gca().set_facecolor('black')
     plt.xlabel("RA")
     plt.ylabel("Dec")
-    plt.gca().invert_xaxis()
+    # plt.gca().invert_xaxis()
     plt.xticks([])
     plt.yticks([])
 

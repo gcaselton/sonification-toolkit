@@ -9,9 +9,6 @@ parameters:
   - input: 'magnitude'
     output: 'pitch'
 
-  - input: 'magnitude'
-    output: 'volume'
-
   - input: 'ra'
     input_range: ['0%', '110%']
     output: 'time'
