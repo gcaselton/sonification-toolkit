@@ -117,7 +117,7 @@ export default function Style() {
     const [chordMode, setChordMode] = useState(false);
     const [rootNote, setRootNote] = useState('C');
     const [scale, setScale] = useState('None');
-    const [quality, setQuality] = useState('Major');
+    const [quality, setQuality] = useState('maj');
     const [soundOptions, setSoundOptions] = useState(
         createListCollection<BaseSound & { label: string; value: string }>({ items: [] })
     );
@@ -128,16 +128,16 @@ export default function Style() {
         items: [
             //C, C#/Db, D, D#/Eb, E, F, F#/Gb, G, G#/Ab, A, A#/Bb, B
             { label: "C", value: "C" },
-            { label: "C#/Db", value: "C#/Db" },
+            { label: "C#/Db", value: "C#" },
             { label: "D", value: "D" },
-            { label: "D#/Eb", value: "D#/Eb" },
+            { label: "D#/Eb", value: "D#" },
             { label: "E", value: "E" },
             { label: "F", value: "F" },
-            { label: "F#/Gb", value: "F#/Gb" },
+            { label: "F#/Gb", value: "F#" },
             { label: "G", value: "G" },
-            { label: "G#/Ab", value: "G#/Ab" },
+            { label: "G#/Ab", value: "G#" },
             { label: "A", value: "A" },
-            { label: "A#/Bb", value: "A#/Bb" },
+            { label: "A#/Bb", value: "A#" },
             { label: "B", value: "B" },
         ],
     });
@@ -513,7 +513,7 @@ export default function Style() {
                                                 <Select.Label>Chord</Select.Label>
                                                 <Select.Control>
                                                     <Select.Trigger>
-                                                    <Select.ValueText placeholder={quality} />
+                                                    <Select.ValueText placeholder={'Major'} />
                                                     </Select.Trigger>
                                                     <Select.IndicatorGroup>
                                                     <Select.Indicator />

@@ -134,7 +134,6 @@ def setup_strauss(data: Path | str | tuple, style: BaseStyle, sonify_type, lengt
             generator = Synthesizer()
             path_stem = str(path.with_suffix(""))
             generator.load_preset(path_stem)
-            generator.modify_preset({'volume_envelope': {'A':0.05, 'R':0.5}})
 
             # NOTE To do: Modify preset for ADSR if using scale
       else:

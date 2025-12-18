@@ -45,10 +45,10 @@ note_length: 0.1
 # define the note volume envelope applied to the samples
 # A,D,S & R correspond to 'attack', 'decay', 'sustain' and 'release'
 volume_envelope:
-  A: 0.
+  A: 0.05
   D: 0.1
   S: 1.
-  R: 0.
+  R: 0.05
   Ac: 0.
   Dc: 0.
   Rc: 0.
