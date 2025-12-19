@@ -122,7 +122,7 @@ export default function Lightcurves() {
                 <Card.Root 
                   width="200px" 
                   key={astroType.name} 
-                  variant='elevated' 
+                  variant='elevated'
                   _hover={{transform: "scale(1.05)"}} 
                   transition="transform 0.2s ease"
                   >

@@ -246,6 +246,7 @@ export default function Lightcurves() {
                     placeholder="Search for a star by name, KIC or EPIC identifier"
                     type="text"
                     name="star_name"
+                    variant='outline'
                     value={selectedStar}
                     onChange={ (e) => {
                       const value = e.target.value;
@@ -362,9 +363,7 @@ export default function Lightcurves() {
                       }}
                     >
                       <Tooltip content='View plot'>
-                        <Button 
-                          colorPalette='gray' 
-                          variant='solid' 
+                        <Button
                           size='xs'
                           aria-label={`View plot for ${variant.name}`}
                         >
