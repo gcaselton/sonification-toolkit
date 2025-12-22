@@ -93,7 +93,7 @@ export default function Lightcurves() {
   return (
     <PageContainer hideBackButton>
       <Box as='main' role="main">
-        <Heading size="4xl">Step 1: Data</Heading>
+        <Heading size="4xl" as='h1'>Step 1: Data</Heading>
         <br />
         <HStack flexWrap="nowrap">
             <Text textStyle="lg" flexShrink={1}>Select a data source to sonify, or </Text>

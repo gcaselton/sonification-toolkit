@@ -188,7 +188,7 @@ export default function Constellations() {
   return (
     <PageContainer>
       <Box as='main' role="main">
-        <Heading size="4xl">Constellations</Heading>
+        <Heading size="4xl" as='h1'>Constellations</Heading>
         <br />
         <Text textStyle="lg">Search for a specific constellation or choose from the suggestions below.</Text>
         <br />
@@ -233,7 +233,7 @@ export default function Constellations() {
         <br />
         <br />
         <Box animation="fade-in 300ms ease-out">
-        <Heading size="2xl">Suggested</Heading>
+        <Heading size="2xl" as='h2'>Suggested</Heading>
         <br />
         <Stack gap="4" direction="row" wrap="wrap">
                       {suggested.map((suggestion) => (

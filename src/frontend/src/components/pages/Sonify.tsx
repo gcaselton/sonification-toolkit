@@ -29,6 +29,7 @@ export default function Sonify() {
 
 
   const location = useLocation();
+  const dataName = location.state.dataName;
   const soniType = location.state.soniType;
   const styleFilepath = location.state.styleFilepath;
   const dataFilepath = location.state.dataFilepath;
@@ -186,11 +187,18 @@ export default function Sonify() {
     length.includes('-')
   );
 
+  function formatSoniType(value: string) {
+    return value
+      .replace(/_/g, ' ')
+      .replace(/\b\w/g, c => c.toLowerCase())
+      .replace(/s$/, '')
+  }
+
 
   return (
     <PageContainer>
       <Box position='relative' as="main" role="main">
-        <Heading size="4xl">Step 3: Sonify</Heading>
+        <Heading size="4xl" as='h1'>Step 3: Sonify</Heading>
         <br />
         <Text textStyle='lg'>Set the length of the sonification and specify the audio system you intend to play it on.</Text>
         <br />
@@ -276,7 +284,7 @@ export default function Sonify() {
           {imageLoading ? (
             <LoadingMessage msg="" icon="pulsar" />
           ) : imageSrc ? (
-            <Image src={imageSrc} alt="Lightcurve plot" />
+            <Image src={imageSrc} alt={`A plot of the ${dataName} ${formatSoniType(soniType)}`} />
           ) : (
             <ErrorMsg message="Unable to plot data."/>
           )}

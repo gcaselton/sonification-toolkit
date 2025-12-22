@@ -27,7 +27,6 @@ import { apiUrl, lightCurvesAPI, coreAPI } from "../../apiConfig";
 import { apiRequest } from "../../utils/requests";
 import { InfoTip } from "../ui/ToggleTip";
 
-
 export default function LightCurves({ dataName, dataFilepath, onApply }: RefineMenuProps) {
   const [imageSrc, setImageSrc] = useState<string | null>(null);
   const [imageLoading, setImageLoading] = useState(true);
@@ -156,6 +155,7 @@ export default function LightCurves({ dataName, dataFilepath, onApply }: RefineM
                             : true
                           : false
 
+  
 
   return (
     <HStack gap="4" align="start" justify="center">
@@ -247,7 +247,7 @@ export default function LightCurves({ dataName, dataFilepath, onApply }: RefineM
         {imageLoading ? (
           <LoadingMessage msg="" icon="pulsar" />
         ) : imageSrc ? (
-          <Image src={imageSrc} alt="Light curve plot" animation="fade-in 300ms ease-out"/>
+            <Image src={imageSrc} alt={`Plot of the ${dataName} light curve.`} animation="fade-in 300ms ease-out"/>
         ) : (
           <ErrorMsg message="Unable to plot data." />
         )}

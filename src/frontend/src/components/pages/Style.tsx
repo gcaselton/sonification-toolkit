@@ -55,6 +55,7 @@ export default function Style() {
 
     // State information 
     const location = useLocation();
+    const dataName = location.state.dataName;
     const dataFilepath = location.state.dataFilepath;
     const soniType = location.state.soniType;
 
@@ -211,7 +212,7 @@ export default function Style() {
             const styleFilepath = style.filepath;
             console.log("Filepath of selected style:", styleFilepath);
             // Navigate to the Sonify page with the selected style
-            navigate('/sonify', { state: { dataFilepath, styleFilepath, soniType } });
+            navigate('/sonify', { state: { dataName, dataFilepath, styleFilepath, soniType } });
         }
     }
 
@@ -251,7 +252,7 @@ export default function Style() {
         saveSoundSettings().then((styleFilepath) => {
             console.log("Saved sound settings to:", styleFilepath);
             // navigate
-            navigate('/sonify', { state: { dataFilepath, styleFilepath, soniType } });
+            navigate('/sonify', { state: {dataName, dataFilepath, styleFilepath, soniType } });
         });
     } catch (err) {
         console.error("Error saving style settings:", err);
@@ -351,7 +352,7 @@ export default function Style() {
             console.log("File uploaded successfully:", res.filepath);
             const styleFilepath = res.filepath;
             // Navigate to the Sonify page with the uploaded file
-            navigate('/sonify', { state: { dataFilepath, styleFilepath, soniType } });
+            navigate('/sonify', { state: {dataName, dataFilepath, styleFilepath, soniType } });
             //setResponse(data);
         } catch (err: any) {
             //setResponse({ error: err.message });
@@ -367,7 +368,7 @@ export default function Style() {
     return (
         <PageContainer>
             <Box position='relative' as="main" role="main">
-                <Heading size="4xl">  Step 2: Style</Heading>
+                <Heading size="4xl" as='h1'>  Step 2: Style</Heading>
                 <br />
                 <Text textStyle="lg">Choose from the styles below, or configure your own.</Text>
                 <br />

@@ -207,7 +207,7 @@ export default function Constellations({ dataFilepath, dataName, onApply }: Refi
         {imageLoading ? (
           <LoadingMessage msg="" icon="pulsar" />
         ) : imageSrc ? (
-          <Image src={imageSrc} alt="Constellation plot" animation="fade-in 300ms ease-out"/>
+          <Image src={imageSrc} alt={`A plot of the ${nStars} brightest stars in ${dataName}.`} animation="fade-in 300ms ease-out"/>
         ) : (
           <ErrorMsg message="Unable to plot data." />
         )}

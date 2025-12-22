@@ -232,7 +232,7 @@ export default function Lightcurves() {
   return (
     <PageContainer>
       <Box as='main' role="main">
-        <Heading size="4xl">Light Curves</Heading>
+        <Heading size="4xl" as='h1'>Light Curves</Heading>
         <br />
         <Text textStyle="lg">Search for a specific star or choose from the suggestions below.</Text>
         <br />
@@ -317,7 +317,7 @@ export default function Lightcurves() {
         />
         {!searched && (
           <Box animation="fade-in 300ms ease-out">
-            <Heading size="2xl">Suggested</Heading>
+            <Heading size="2xl" as='h2'>Suggested</Heading>
             <br />
             <Stack gap="4" direction="row" wrap="wrap">
               {variants.map((variant) => (
