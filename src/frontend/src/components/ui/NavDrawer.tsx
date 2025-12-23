@@ -28,7 +28,7 @@ export function NavDrawer() {
   ]
 
   return (
-    <Drawer.Root placement='end' size='xs'>
+    <Drawer.Root placement='start' size='xs'>
       <Drawer.Trigger asChild>
         <IconButton
           variant="ghost"
