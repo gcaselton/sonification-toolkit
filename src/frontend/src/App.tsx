@@ -44,7 +44,7 @@ function App() {
   return (
     <ChakraProvider value={defaultSystem}>
       <ColorModeProvider>
-        <Flex direction="column" align="center" justify="flex-start" minH="100vh" p={8} bg="bg">
+        <Flex direction="column" align="center" justify="flex-start" minH="100vh" p={8} bg='bg'>
           <HashRouter>
             <Routes>
               <Route path="/" element={<Home />} />
