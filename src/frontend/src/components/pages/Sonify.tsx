@@ -8,11 +8,14 @@ import { apiUrl, lightCurvesAPI, coreAPI, constellationsAPI} from "../../apiConf
 import { apiRequest } from "../../utils/requests";
 import {
   Box,
+  ActionBar,
   Button,
   createListCollection,
   Checkbox,
+  DataList,
   Field,
   Heading,
+  IconButton,
   Image,
   Input,
   Text,
@@ -22,6 +25,7 @@ import {
   Select,
   HStack
 } from "@chakra-ui/react";
+import { LuAudioLines, LuDownload } from "react-icons/lu";
 import { plotLightcurve } from "./Lightcurves";
 
 
@@ -30,6 +34,7 @@ export default function Sonify() {
 
   const location = useLocation();
   const dataName = location.state.dataName;
+  const styleName = location.state.styleName;
   const soniType = location.state.soniType;
   const styleFilepath = location.state.styleFilepath;
   const dataFilepath = location.state.dataFilepath;
@@ -47,6 +52,7 @@ export default function Sonify() {
   const [audioSystem, setAudioSystem] = useState<string[]>([(soniType == 'light_curves') ? "mono" : "stereo"])
   const [audioFilename, setAudioFilename] = useState("");
   const [soniReady, setSoniReady] = useState(false)
+  const [soniClicked, setSoniClicked] = useState(false)
   const [loading, setLoading] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string>("");
 
@@ -141,6 +147,7 @@ export default function Sonify() {
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    setSoniClicked(true)
     setSoniReady(false)
     setLoading(true)
 
@@ -178,7 +185,6 @@ export default function Sonify() {
     }
   }
 
-  
 
   const invalidLength = (
     Number(length) > lengths.max ||
@@ -194,6 +200,13 @@ export default function Sonify() {
       .replace(/s$/, '')
   }
 
+  const styleFileName = styleFilepath.split("/").pop()!
+  const dataFileName = dataFilepath.split("/").pop()!
+
+  const summaryItems = [
+  { label: "Data", value: dataName, filename: dataFileName},
+  { label: "Style", value: styleName, filepath: styleFileName},
+]
 
   return (
     <PageContainer>
@@ -206,6 +219,7 @@ export default function Sonify() {
         <Box width='50%'>
           <form onSubmit={handleSubmit}>
               <VStack align='start' justify='center' w='80%' gap={8}>
+                
                 <HStack gap={10}>
                 <Field.Root invalid={invalidLength} width='auto'>
                   <Field.Label>Duration (seconds)</Field.Label>
@@ -263,22 +277,31 @@ export default function Sonify() {
                         </Select.Content>
                 </Select.Root>
                 <Button type="submit" colorPalette="teal" width='50%' disabled={invalidLength || length === ''}>
-                  Generate
+                  <LuAudioLines/> Sonify
                 </Button>
+                <DataList.Root orientation="horizontal" divideY="1px" variant='bold' w='100%'>
+                  {summaryItems.map((item) => (
+                    
+                    <DataList.Item key={item.label} pt="4">
+                      <DataList.ItemLabel fontWeight='bold'>{item.label}</DataList.ItemLabel>
+                      <DataList.ItemValue>{item.value}</DataList.ItemValue>
+                      <DataList.ItemValue>
+                        <IconButton
+                        asChild 
+                        colorPalette='teal' 
+                        size='sm' 
+                        variant='ghost' 
+                        >
+                          <a href={`${coreAPI}/download?filename=${encodeURIComponent(item.filename)}`}><LuDownload /></a>
+                        </IconButton>
+                      </DataList.ItemValue>
+                    </DataList.Item>
+                  ))}
+                </DataList.Root>
               </VStack>
           </form>
           <br/>
-          {loading && <LoadingMessage msg="Generating Sonification..."/>}
-          {errorMessage && <ErrorMsg message={errorMessage}/>}
-          {!loading && soniReady && (
-            <Box mt={4} animation="fade-in" animationDuration="0.3s">
-              <audio
-                src={`${coreAPI}/audio/${audioFilename}`}
-                controls
-                style={{ width: "100%" }}
-              />
-            </Box>
-          )}
+          
         </Box>
         <Box width='50%'>
           {imageLoading ? (
@@ -290,6 +313,21 @@ export default function Sonify() {
           )}
         </Box>
         </HStack>
+        <ActionBar.Root open={soniClicked}>
+          <ActionBar.Positioner>
+            <ActionBar.Content w={loading ? '20%' : '50%'} justifyContent='center'>
+              {loading && <LoadingMessage msg="Generating Sonification..."/>}
+              {errorMessage && <ErrorMsg message={errorMessage}/>}
+              {soniReady && 
+              <audio
+                  src={`${coreAPI}/audio/${audioFilename}`}
+                  controls
+                  style={{ width: "100%" }}
+                />}
+            </ActionBar.Content>
+          </ActionBar.Positioner>
+        </ActionBar.Root>
+        <Box h='4em'/>
       </Box>
     </PageContainer>
   );

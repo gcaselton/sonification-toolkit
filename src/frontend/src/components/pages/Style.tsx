@@ -210,9 +210,10 @@ export default function Style() {
         } else {
             console.log("Selected style:", style.name);
             const styleFilepath = style.filepath;
+            const styleName = style.name;
             console.log("Filepath of selected style:", styleFilepath);
             // Navigate to the Sonify page with the selected style
-            navigate('/sonify', { state: { dataName, dataFilepath, styleFilepath, soniType } });
+            navigate('/sonify', { state: { dataName, dataFilepath, styleName, styleFilepath, soniType } });
         }
     }
 
@@ -251,8 +252,9 @@ export default function Style() {
         // save sound settings
         saveSoundSettings().then((styleFilepath) => {
             console.log("Saved sound settings to:", styleFilepath);
+            const styleName = 'Custom'
             // navigate
-            navigate('/sonify', { state: {dataName, dataFilepath, styleFilepath, soniType } });
+            navigate('/sonify', { state: { dataName, dataFilepath, styleName, styleFilepath, soniType } });
         });
     } catch (err) {
         console.error("Error saving style settings:", err);

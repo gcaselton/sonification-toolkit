@@ -53,6 +53,10 @@ class SonificationRequest(BaseModel):
     duration: int
     system: str
 
+class DownloadRequest(BaseModel):
+    path: str
+    filename: str
+
 
 @router.get('/session/')
 async def get_or_create_session(
@@ -116,6 +120,23 @@ async def get_audio(filename: str):
     ext = filepath.suffix.split('.')[1]
 
     return FileResponse(filepath, media_type=f"audio/{ext}")
+
+
+@router.get("/download")
+def download_file(filename: str):
+
+    session_id = session_id_var.get()
+    file_path = TMP_DIR / session_id / filename
+    file_path = Path(file_path).resolve()
+
+    if not file_path.exists():
+        raise HTTPException(status_code=404, detail="File not found")
+
+    return FileResponse(
+        file_path,
+        filename=file_path.name,
+        media_type="application/octet-stream",
+    )
 
 
 @router.post('/upload-data/')

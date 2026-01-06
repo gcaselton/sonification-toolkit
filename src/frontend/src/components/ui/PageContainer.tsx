@@ -6,16 +6,20 @@ export default function PageContainer({ children, hideBackButton = false, showHo
 
   const steps = [
     {
-      title: "Step 1",
+      title: "Data",
       description: "Step 1 description",
     },
     {
-      title: "Step 2",
+      title: "Refine",
       description: "Step 2 description",
     },
     {
-      title: "Step 3",
+      title: "Style",
       description: "Step 3 description",
+    },
+    {
+      title: "Sonify",
+      description: "Step 4 description",
     },
   ]
 
