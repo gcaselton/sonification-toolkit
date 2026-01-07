@@ -201,7 +201,9 @@ export default function Sonify() {
   }
 
   const styleFileName = styleFilepath.split("/").pop()!
+  console.log('style name:' + styleFileName)
   const dataFileName = dataFilepath.split("/").pop()!
+  console.log('data name:' + dataFileName)
 
   const summaryItems = [
   { label: "Data", value: dataName, filename: dataFileName},

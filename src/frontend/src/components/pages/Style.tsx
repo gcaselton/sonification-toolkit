@@ -31,6 +31,11 @@ import { apiRequest } from "../../utils/requests";
 export default function Style() {
 
     const navigate = useNavigate();
+    // location and state information 
+    const location = useLocation();
+    const dataName = location.state.dataName;
+    const dataFilepath = location.state.dataFilepath;
+    const soniType = location.state.soniType;
 
     interface BaseSound { 
         name: string
@@ -53,11 +58,7 @@ export default function Style() {
     // Reference to the file input
     const inputRef = useRef<HTMLInputElement | null>(null);
 
-    // State information 
-    const location = useLocation();
-    const dataName = location.state.dataName;
-    const dataFilepath = location.state.dataFilepath;
-    const soniType = location.state.soniType;
+    
 
     useEffect(() => {
         fetch(`${coreAPI}/styles/${soniType}`)
@@ -209,11 +210,10 @@ export default function Style() {
             setOpen(true);
         } else {
             console.log("Selected style:", style.name);
-            const styleFilepath = style.filepath;
-            const styleName = style.name;
-            console.log("Filepath of selected style:", styleFilepath);
+            const styleFilename = style.name + '.yml';
+            console.log("Filename of selected style:", styleFilename);
             // Navigate to the Sonify page with the selected style
-            navigate('/sonify', { state: { dataName, dataFilepath, styleName, styleFilepath, soniType } });
+            navigate('/sonify', { state: { dataName, dataFilename, styleFilename, soniType } });
         }
     }
 
@@ -250,17 +250,18 @@ export default function Style() {
     try {
         ensureSoundAvailable(sound.name)
         // save sound settings
-        saveSoundSettings().then((styleFilepath) => {
-            console.log("Saved sound settings to:", styleFilepath);
-            const styleName = 'Custom'
+        saveSoundSettings().then((styleFilename) => {
+            console.log("Saved custom style as:", styleFilename);
             // navigate
-            navigate('/sonify', { state: { dataName, dataFilepath, styleName, styleFilepath, soniType } });
+            navigate('/sonify', { state: { dataName, dataFilename, styleFilename, soniType } });
         });
     } catch (err) {
-        console.error("Error saving style settings:", err);
+        console.error("Error saving custom style:", err);
     }
     };
 
+
+    // TO DO: Move all the below into the actual onClick props in the JSX?
 
     const handleChangeFilterCutoff = (details: { checked: boolean | "indeterminate" }) => {
         setFilterCutoff(details.checked);
@@ -352,9 +353,9 @@ export default function Style() {
         try {
             const res = await apiRequest(`${coreAPI}/upload-yaml/`, formData);
             console.log("File uploaded successfully:", res.filepath);
-            const styleFilepath = res.filepath;
+            const styleFilename = res.filename;
             // Navigate to the Sonify page with the uploaded file
-            navigate('/sonify', { state: {dataName, dataFilepath, styleFilepath, soniType } });
+            navigate('/sonify', { state: {dataName, dataFilename, styleFilename, soniType } });
             //setResponse(data);
         } catch (err: any) {
             //setResponse({ error: err.message });

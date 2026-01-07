@@ -158,7 +158,7 @@ def download_lightcurve(data_uri):
 
     filename = f'{hash}{ext}'
     session_id = session_id_var.get()
-    filepath = os.path.join(TMP_DIR, session_id, filename)
+    filepath = TMP_DIR / session_id / filename
 
     if not os.path.exists(filepath):
 
@@ -246,11 +246,12 @@ async def select_lightcurve(request: DownloadRequest):
     This can then be used later to sonify the light curve.
 
     - **request**: The URI of the chosen light curve
-    - Returns: The unique ID of the downloaded light curve.
+    - Returns: The filename of the downloaded light curve
     """
-    filepath = download_lightcurve(request.data_uri)
+    filepath = Path(download_lightcurve(request.data_uri))
+    file_ref = f'session:{filepath.name}'
     
-    return {'filepath': filepath}
+    return {'file_ref': file_ref}
 
 
 @router.post('/get-range/')
@@ -308,7 +309,7 @@ async def save_refined(request: RefineRequest):
 
     filename = f'{request.data_name}.csv'
     session_id = session_id_var.get()
-    filepath = os.path.join(TMP_DIR, session_id, filename)
+    filepath = TMP_DIR / session_id / filename
 
     df = pd.DataFrame({
             'time': lc.time.value,
@@ -318,7 +319,9 @@ async def save_refined(request: RefineRequest):
     # Save to CSV
     df.to_csv(filepath, index=False)
 
-    return {'data_filepath': filepath}
+    file_ref = f'session:{filename}'
+
+    return {'file_ref': file_ref}
 
 
 

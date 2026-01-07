@@ -48,8 +48,8 @@ class SoundRequest(BaseModel):
 
 class SonificationRequest(BaseModel):
     category: str
-    data_filepath: str
-    style_filepath: str
+    data_filename: str
+    style_filename: str
     duration: int
     system: str
 
@@ -80,6 +80,30 @@ async def get_or_create_session(
 
     return {'session_id': session_id}
 
+def resolve_file(file_ref: str) -> Path:
+    """
+    Helper function to resolve a filename to it's full filepath in the backend
+    
+    :param session_id: The session ID
+    :type session_id: str
+    :param filename: The name of the requested file e.g. 'Sci-Fi.yml'
+    :type filename: str
+  
+    :return: The full filepath of the requested file
+    :rtype: Path
+    """
+    session_id = session_id_var.get()
+
+    # path = TMP_DIR / session_id / filename
+
+    # if not path.exists():
+    #     raise HTTPException(
+    #         status_code=400,
+    #         detail=f"File not found: {filename}"
+    #     )
+    
+    # return path
+
 
 @router.post('/generate-sonification/')
 async def generate_sonification(request: SonificationRequest):
@@ -88,15 +112,19 @@ async def generate_sonification(request: SonificationRequest):
 
     if not session_id:
         raise HTTPException(status_code=400, detail="No session cookie found")
+    
+    # Resolve data and style file names to actual paths in backend
+    data_filepath = resolve_file(session_id, request.data_filename)
+    style_filepath = resolve_file(session_id, request.style_filename)
 
     category = request.category
-    data = Path(request.data_filepath)
-    style = Path(request.style_filepath)
+    data = data_filepath
+    style = style_filepath
     length = request.duration
     system = request.system
 
     if int(length) > 300:
-        raise HTTPException(status_code=500, detail="Sonification too long, maximum length = 5 minutes.")
+        raise HTTPException(status_code=400, detail="Sonification too long, maximum length = 5 minutes.")
 
     try:
         soni = sonify(data, style, category, length, system)
@@ -104,7 +132,7 @@ async def generate_sonification(request: SonificationRequest):
         id = str(uuid.uuid4().hex)
         ext = '.wav'
         filename = f'{category}_{id}{ext}'
-        filepath = os.path.join(TMP_DIR, session_id, filename)
+        filepath = TMP_DIR / session_id / filename
         soni.save(filepath)
 
         return {'filename': filename}
@@ -123,18 +151,12 @@ async def get_audio(filename: str):
 
 
 @router.get("/download")
-def download_file(filename: str):
-
-    session_id = session_id_var.get()
-    file_path = TMP_DIR / session_id / filename
-    file_path = Path(file_path).resolve()
-
-    if not file_path.exists():
-        raise HTTPException(status_code=404, detail="File not found")
+def download_file(file_ref: str):
+    
+    file_path = resolve_file(file_ref)
 
     return FileResponse(
         file_path,
-        filename=file_path.name,
         media_type="application/octet-stream",
     )
 
@@ -160,7 +182,9 @@ async def uploadData(file: UploadFile):
     with open(filepath, 'wb') as f:
         f.write(contents)
 
-    return {'filepath': filepath}
+    file_ref = f'session:{filename}'
+
+    return {'file_ref': file_ref}
 
 @router.get('/suggested-data/{category}/')
 async def get_suggested(category: str):
@@ -182,14 +206,16 @@ async def get_suggested(category: str):
             print(f'Failed to read or parse {file}: {e}')
             continue
 
-        filepaths = {
-            'light_curves': os.path.join(str(data_dir), str(file.stem) + '.fits'),
-            'constellations': HYG_DATA 
+        filenames = {
+            'light_curves': str(file.stem) + '.fits',
+            'constellations': 'hyg.csv'
         }
+
+        file_ref = f'suggested_data:{category}:{filenames[category]}'
 
         data = {'name': name,
                 'description': desc,
-                'filepath': filepaths[category]}
+                'file_ref': file_ref}
 
         data_list.append(data)
         
@@ -214,7 +240,9 @@ async def get_styles(category: str):
             print(f"Failed to read or parse {file}: {e}")
             continue
 
-        style = {'name': style_name, 'description': style_description, 'filepath': str(file)}
+        file_ref = f'style_files:{category}:{file.name}'
+
+        style = {'name': style_name, 'description': style_description, 'file_ref': file_ref}
 
         styles.append(style)
 
@@ -235,12 +263,9 @@ async def preview_style_settings(request: StylePreviewRequest, category: str):
 
     data = (x, y)
 
-    print('hello')
-
     try:
         soni = sonify(data, style, category, length=5,  system='mono')
 
-        print('soni generated')
 
         id = str(uuid.uuid4().hex)
         ext = '.wav'
@@ -249,7 +274,9 @@ async def preview_style_settings(request: StylePreviewRequest, category: str):
         filepath = os.path.join(TMP_DIR, session_id, filename)
         soni.save(filepath)
 
-        return {'filename': filename}
+        file_ref = f'session:{filename}'
+
+        return {'file_ref': file_ref}
     except Exception as e:
         raise HTTPException(status_code=404, detail=str(e))
     
@@ -272,8 +299,10 @@ async def save_sound_settings(settings: SoundSettings):
     f.write(yaml_text)
     f.close()
 
-    # Return the filename for reference
-    return {'filepath': filepath}
+    file_ref = f'session:{filename}'
+
+    # Return the file reference
+    return {'file_ref': file_ref}
 
 default_lims = {
     'cutoff': [0.1, 0.9],
@@ -384,7 +413,9 @@ async def upload_yaml(file: UploadFile = File(...)):
             f.write(contents)
     except yaml.YAMLError as e:
         return {"error": "Invalid YAML", "details": str(e)}
+    
+    file_ref = f'session:{file.filename}'
 
-    return {"filepath": tmp_file_path, "parsed": parsed_yaml}
+    return {"file_ref": file_ref, "parsed": parsed_yaml}
 
 

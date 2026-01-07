@@ -177,12 +177,12 @@ export default function Lightcurves() {
     console.log("Sonify button clicked for star:", selectedStar);
     console.log("Data URI:", dataURI);
     // Call the select lightcurve function with the dataURI
-    selectLightcurve(dataURI).then((dataFilepath) => {
-      if (dataFilepath) {
-        console.log("Lightcurve selected, filepath:", dataFilepath);
+    selectLightcurve(dataURI).then((dataFilename) => {
+      if (dataFilename) {
+        console.log("Lightcurve selected, filename:", dataFilename);
         // Navigate to the style page with the filepath and star name
         const dataName = searchTerm
-        navigate('/refine', { state: { dataFilepath, dataName, soniType } });
+        navigate('/refine', { state: { dataFilename, dataName, soniType } });
       }
     });
   };
