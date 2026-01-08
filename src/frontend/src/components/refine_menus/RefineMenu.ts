@@ -1,7 +1,7 @@
 
 
 export interface RefineMenuProps {
-  dataFilepath: string;
+  dataRef: string;
   dataName?: string;
-  onApply?: (newFilepath: string) => void;
+  onApply?: (newRef: string) => void;
 }

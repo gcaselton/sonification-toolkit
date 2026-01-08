@@ -12,6 +12,7 @@ import matplotlib
 matplotlib.use("Agg") 
 import matplotlib.pyplot as plt
 from io import BytesIO
+from utils import resolve_file
 from core import SonificationRequest, DataRequest
 
 
@@ -144,10 +145,12 @@ def get_constellation(constellation_name: str) -> pd.DataFrame:
 @router.post("/plot-csv/")
 async def plot_csv(data: DataRequest):
 
-    if not data.data_filepath.endswith('.csv'):
+    data_filepath = str(resolve_file(data.file_ref))
+
+    if not data_filepath.endswith('.csv'):
         raise HTTPException(status_code=400, detail=f'Data file type must be .csv')
     
-    df = pd.read_csv(data.data_filepath)
+    df = pd.read_csv(data_filepath)
     image = plot_and_format_constellation(df)
 
     return {'image': image}

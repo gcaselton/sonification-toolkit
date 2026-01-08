@@ -29,7 +29,7 @@ import { InfoTip } from "../ui/ToggleTip";
 import { Tooltip } from "../ui/Tooltip";
 
 
-export default function Constellations({ dataFilepath, dataName, onApply }: RefineMenuProps) {
+export default function Constellations({ dataRef, dataName, onApply }: RefineMenuProps) {
 
   const [imageSrc, setImageSrc] = useState<string | null>(null);
   const [imageLoading, setImageLoading] = useState(true);

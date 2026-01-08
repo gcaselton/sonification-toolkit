@@ -16,6 +16,7 @@ from io import BytesIO
 from astroquery.simbad import Simbad
 from scipy.ndimage import gaussian_filter1d
 from core import SonificationRequest, DataRequest
+from utils import resolve_file
 
 
 router = APIRouter(prefix='/light-curves')
@@ -36,21 +37,15 @@ class StarQuery(BaseModel):
 class DownloadRequest(BaseModel):
     data_uri: str
 
-class DataRequest(BaseModel):
-    data_filepath: str
-
-
 class PlotRequest(BaseModel):
-    data_filepath: str
+    file_ref: str
     new_range: list[int]
 
 class RefineRequest(BaseModel):
     data_name: str
-    data_filepath: str
+    file_ref: str
     new_range: list[int]
     sigma: int
-
-
 
 
 @router.post('/search-lightcurves/')
@@ -257,20 +252,22 @@ async def select_lightcurve(request: DownloadRequest):
 @router.post('/get-range/')
 async def get_range(request: DataRequest):
 
-    if request.data_filepath.endswith('.fits'):
-        lc = lk.read(request.data_filepath)
+    filepath = str(resolve_file(request.file_ref))
+
+    if filepath.endswith('.fits'):
+        lc = lk.read(filepath)
         x = lc.time.value
         range = [int(min(x)), int(max(x))]
 
-    elif request.data_filepath.endswith('.csv'):
-        df = pd.read_csv(request.data_filepath)
+    elif filepath.endswith('.csv'):
+        df = pd.read_csv(filepath)
 
         time_col = next((col for col in df.columns if 'time' in col.lower()), df.columns[0])
 
         x = df[time_col].values
         range = [int(min(x)), int(max(x))]
     else:
-        raise HTTPException(status_code=400, detail='Filepath not supported: ' + request.data_filepath)
+        raise HTTPException(status_code=400, detail='File extension not supported: ' + request.file_ref.split(':')[-1])
 
     return{'range': range}
 
@@ -279,9 +276,11 @@ async def get_range(request: DataRequest):
 async def preview_refined(request: RefineRequest):
 
     lc_csv = await save_refined(request)
+
+    filepath = resolve_file(lc_csv['file_ref'])
        
     # Plot, format, and convert image to Base64
-    img_base64 = plot_and_format_lc(lc_csv['data_filepath'])
+    img_base64 = plot_and_format_lc(filepath)
 
     return{'image': img_base64}
 
@@ -289,7 +288,9 @@ def refine_lightcurve(request: RefineRequest):
 
     # Truncate x-axis to new range
     new_start, new_end = request.new_range
-    lc = lk.read(request.data_filepath)
+
+    filepath = resolve_file(request.file_ref)
+    lc = lk.read(filepath)
     lc = lc.truncate(new_start, new_end)
 
     if request.sigma > 0:

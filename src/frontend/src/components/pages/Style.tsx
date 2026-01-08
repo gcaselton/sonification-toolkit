@@ -34,7 +34,7 @@ export default function Style() {
     // location and state information 
     const location = useLocation();
     const dataName = location.state.dataName;
-    const dataFilepath = location.state.dataFilepath;
+    const dataRef = location.state.dataRef;
     const soniType = location.state.soniType;
 
     interface BaseSound { 
@@ -59,7 +59,6 @@ export default function Style() {
     const inputRef = useRef<HTMLInputElement | null>(null);
 
     
-
     useEffect(() => {
         fetch(`${coreAPI}/styles/${soniType}`)
             .then((res) => res.json())

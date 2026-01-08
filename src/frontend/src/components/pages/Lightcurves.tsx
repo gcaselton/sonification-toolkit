@@ -50,7 +50,7 @@ const soniType = 'light_curves'
 export interface SuggestedData {
   name: string;
   description: string;
-  filepath: string;
+  fileRef: string;
 }
 
 const LightcurvesContext = createContext({
@@ -61,10 +61,10 @@ function capitaliseWords(str: string) {
   return str.replace(/\b\w/g, char => char.toUpperCase());
 }
 
-export const plotLightcurve = async (filepath: string) => {
+export const plotLightcurve = async (fileRef: string) => {
 
   const url_plot = `${lightCurvesAPI}/plot-lightcurve`
-  const payload = {'data_uri': filepath}
+  const payload = {'data_uri': fileRef}
   const plotData = await apiRequest(url_plot, payload)
   const image = plotData.image; 
 
@@ -76,14 +76,13 @@ export const plotLightcurve = async (filepath: string) => {
 export default function Lightcurves() {
 
   
-
   const navigate = useNavigate();
   const [selectedStar, setSelectedStar] = useState("");
   const [lightcurves, setLightcurves] = useState([])
   const [image, setImage] = useState("");
   const [title, setTitle] = useState("");
   const [plotOpen, setPlotOpen] = useState(false);
-  const [variants, setVariants] = useState<SuggestedData[]>([]);
+  const [suggested, setSuggested] = useState<SuggestedData[]>([]);
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false)
@@ -96,16 +95,21 @@ export default function Lightcurves() {
   const [k2Checked, setK2Checked] = useState(true);
   
   useEffect(() => {
-        fetch(`${coreAPI}/suggested-data/${soniType}/`)
-            .then((res) => res.json())
-            .then((data) => {
-                setVariants(data);
-                console.log(variants)
-            })
-            .catch((err) => {
-                console.error("Failed to fetch suggested data:", err);
-            });
-    }, []);
+    fetch(`${coreAPI}/suggested-data/${soniType}/`)
+      .then((res) => res.json())
+      .then((data) => {
+        const mapped: SuggestedData[] = data.map((item: any) => ({
+          name: item.name,
+          description: item.description,
+          fileRef: item.file_ref,
+        }));
+
+        setSuggested(mapped);
+      })
+      .catch((err) => {
+        console.error("Failed to fetch suggested data:", err);
+      });
+  }, []);
 
   const searchLightcurves = async () => {
 
@@ -158,7 +162,7 @@ export default function Lightcurves() {
     try {
       const result = await apiRequest(url_selectlightcurve, data);
       console.log("Select Lightcurve API response:", result);
-      return result.filepath;
+      return result.file_ref;
     } catch (error) {
       console.error("Error fetching sonification:", error);
     }
@@ -177,12 +181,12 @@ export default function Lightcurves() {
     console.log("Sonify button clicked for star:", selectedStar);
     console.log("Data URI:", dataURI);
     // Call the select lightcurve function with the dataURI
-    selectLightcurve(dataURI).then((dataFilename) => {
-      if (dataFilename) {
-        console.log("Lightcurve selected, filename:", dataFilename);
+    selectLightcurve(dataURI).then((dataRef) => {
+      if (dataRef) {
+        console.log("Lightcurve selected, file ref:", dataRef);
         // Navigate to the style page with the filepath and star name
         const dataName = searchTerm
-        navigate('/refine', { state: { dataFilename, dataName, soniType } });
+        navigate('/refine', { state: { dataRef, dataName, soniType } });
       }
     });
   };
@@ -191,14 +195,14 @@ export default function Lightcurves() {
 
     console.log("Plot button clicked for star:", selectedStar);
 
-    let filepath, plotTitle
+    let fileRef, plotTitle
 
     if ('dataURI' in item) {
-      filepath = item.dataURI
+      fileRef = item.dataURI
       plotTitle = `${item.period}, ${item.pipeline}, ${item.year}`
     }
     else {
-      filepath = item.filepath
+      fileRef = item.fileRef
       plotTitle = item.name
     }
     
@@ -208,7 +212,7 @@ export default function Lightcurves() {
     
     try {
       setImage("");
-      const image = await plotLightcurve(filepath);
+      const image = await plotLightcurve(fileRef);
 
       if (image) {
         setImage("data:image/png;base64," + image);
@@ -222,11 +226,11 @@ export default function Lightcurves() {
     }
   };
 
-  const handleClickStar = (star: any) => {
+  const handleClickSuggested = (star: any) => {
     console.log("Star clicked:", star.name);
-    const dataFilepath = star.filepath;
-    const dataName = star.name
-    navigate('/refine', { state: { dataFilepath, dataName, soniType }});
+    const dataRef = star.fileRef;
+    const dataName = star.name;
+    navigate('/refine', { state: { dataRef, dataName, soniType }});
   };
 
   return (
@@ -320,28 +324,28 @@ export default function Lightcurves() {
             <Heading size="2xl" as='h2'>Suggested</Heading>
             <br />
             <Stack gap="4" direction="row" wrap="wrap">
-              {variants.map((variant) => (
+              {suggested.map((star) => (
                 <Card.Root
                 width="200px" 
-                key={variant.name} 
+                key={star.name} 
                 variant='elevated' 
                 _hover={{transform: "scale(1.05)"}} 
                 transition="transform 0.2s ease"
                 cursor='pointer'
                 tabIndex={0}
                 role="button"
-                aria-label={`Sonify ${variant.name}: ${variant.description}`}
-                onClick={() => handleClickStar(variant)}
+                aria-label={`Sonify ${star.name}: ${star.description}`}
+                onClick={() => handleClickSuggested(star)}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' || e.key === ' ') {
                     e.preventDefault();
-                    handleClickStar(variant);
+                    handleClickSuggested(star);
                   }
                 }}>
                   <Box position="relative">
                       <img
-                        src={getImage(variant.name)}
-                        alt={`${variant.name} star`}
+                        src={getImage(star.name)}
+                        alt={`${star.name} star`}
                         style={{ width: "100%", borderRadius: "8px" }}
                       />
                   
@@ -352,20 +356,20 @@ export default function Lightcurves() {
                       zIndex={10}
                       onClick={(e) => {
                         e.stopPropagation() // prevent the card click
-                        handleClickPlot(variant)
+                        handleClickPlot(star)
                       }}
                       onKeyDown={(e) => {
                         if (e.key === 'Enter' || e.key === ' ') {
                           e.preventDefault();
                           e.stopPropagation(); // prevent the card's keyboard handler
-                          handleClickPlot(variant);
+                          handleClickPlot(star);
                         }
                       }}
                     >
                       <Tooltip content='View plot'>
                         <Button
                           size='xs'
-                          aria-label={`View plot for ${variant.name}`}
+                          aria-label={`View plot for ${star.name}`}
                         >
                           <LuChartSpline/>
                         </Button>
@@ -373,8 +377,8 @@ export default function Lightcurves() {
                     </Box>
                   </Box>
                   <Card.Body>
-                    <Card.Title mb="2">{variant.name}</Card.Title>
-                    <Card.Description>{variant.description}</Card.Description>
+                    <Card.Title mb="2">{star.name}</Card.Title>
+                    <Card.Description>{star.description}</Card.Description>
                   </Card.Body>
                 </Card.Root>
               ))}

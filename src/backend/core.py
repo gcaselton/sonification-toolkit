@@ -8,6 +8,7 @@ from strauss.sources import param_lim_dict
 from sounds import all_sounds, online_sounds, local_sounds, asset_cache, format_name
 from config import GITHUB_USER, GITHUB_REPO
 from context import session_id_var
+from utils import resolve_file
 import logging, httpx, yaml, requests, os, base64, hashlib, uuid, aiofiles, zipfile, json, gc
 
 import lightkurve as lk
@@ -25,10 +26,7 @@ logging.basicConfig(level=logging.INFO)
 LOG = logging.getLogger(__name__)
 
 class DataRequest(BaseModel):
-    data_filepath: str
-
-class StylePreviewRequest(BaseModel):
-    style_filepath: str
+    file_ref: str
 
 class SoundSettings(BaseModel):
     sound: str
@@ -44,18 +42,12 @@ class SoundSettings(BaseModel):
 class SoundRequest(BaseModel):
     sound_name: str
 
-
-
 class SonificationRequest(BaseModel):
     category: str
     data_filename: str
     style_filename: str
     duration: int
     system: str
-
-class DownloadRequest(BaseModel):
-    path: str
-    filename: str
 
 
 @router.get('/session/')
@@ -80,29 +72,7 @@ async def get_or_create_session(
 
     return {'session_id': session_id}
 
-def resolve_file(file_ref: str) -> Path:
-    """
-    Helper function to resolve a filename to it's full filepath in the backend
-    
-    :param session_id: The session ID
-    :type session_id: str
-    :param filename: The name of the requested file e.g. 'Sci-Fi.yml'
-    :type filename: str
-  
-    :return: The full filepath of the requested file
-    :rtype: Path
-    """
-    session_id = session_id_var.get()
 
-    # path = TMP_DIR / session_id / filename
-
-    # if not path.exists():
-    #     raise HTTPException(
-    #         status_code=400,
-    #         detail=f"File not found: {filename}"
-    #     )
-    
-    # return path
 
 
 @router.post('/generate-sonification/')
@@ -253,9 +223,9 @@ async def get_sound_info():
     return all_sounds()
 
 @router.post('/preview-style-settings/{category}')
-async def preview_style_settings(request: StylePreviewRequest, category: str):
+async def preview_style_settings(request: DataRequest, category: str):
 
-    style = Path(request.style_filepath)
+    style = resolve_file(request.file_ref)
 
     # Generate simple ramp to sonify
     x = np.arange(0, 100) 

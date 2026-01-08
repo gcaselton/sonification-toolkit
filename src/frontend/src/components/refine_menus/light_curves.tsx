@@ -27,7 +27,7 @@ import { apiUrl, lightCurvesAPI, coreAPI } from "../../apiConfig";
 import { apiRequest } from "../../utils/requests";
 import { InfoTip } from "../ui/ToggleTip";
 
-export default function LightCurves({ dataName, dataFilepath, onApply }: RefineMenuProps) {
+export default function LightCurves({ dataName, dataRef, onApply }: RefineMenuProps) {
   const [imageSrc, setImageSrc] = useState<string | null>(null);
   const [imageLoading, setImageLoading] = useState(true);
 
@@ -49,7 +49,7 @@ export default function LightCurves({ dataName, dataFilepath, onApply }: RefineM
     let mounted = true;
     async function fetchPlot() {
       try {
-        const base64 = await plotLightcurve(dataFilepath);
+        const base64 = await plotLightcurve(dataRef);
         if (!mounted) return;
         setImageSrc(`data:image/png;base64,${base64}`);
       } catch (err) {
@@ -60,19 +60,19 @@ export default function LightCurves({ dataName, dataFilepath, onApply }: RefineM
     }
     fetchPlot();
     return () => { mounted = false; };
-  }, [dataFilepath]);
+  }, [dataRef]);
 
   // fetch cropRange
   useEffect(() => {
     
-    if (!dataFilepath) return;
+    if (!dataRef) return;
 
     let mounted = true;
     async function fetchCropRange() {
     
       const endpoint = `${lightCurvesAPI}/get-range/`;
       try {
-        const payload = { data_filepath: dataFilepath}
+        const payload = { file_ref: dataRef}
         const result = await apiRequest(endpoint, payload, 'POST')
 
         if (mounted && Array.isArray(result.range) && result.range.length === 2) {
@@ -91,7 +91,7 @@ export default function LightCurves({ dataName, dataFilepath, onApply }: RefineM
     return () => { 
       mounted = false; 
     };
-  }, [dataFilepath]);
+  }, [dataRef]);
 
   // prepare marks when cropRange exists
   const sliderMarks = cropRange ? [
@@ -109,7 +109,7 @@ export default function LightCurves({ dataName, dataFilepath, onApply }: RefineM
     const endpoint = `${lightCurvesAPI}/preview-refined/`;
     const payload = {
       data_name: dataName,
-      data_filepath: dataFilepath,
+      file_ref: dataRef,
       new_range: range,
       sigma: sigmaVal,
     };
@@ -132,7 +132,7 @@ export default function LightCurves({ dataName, dataFilepath, onApply }: RefineM
     const endpoint = `${lightCurvesAPI}/save-refined/`
     const payload = {
       data_name: dataName,
-      data_filepath: dataFilepath,
+      file_ref: dataRef,
       new_range: cropValues,
       sigma: sigma
     }

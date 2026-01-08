@@ -42,7 +42,7 @@ export default function Refine() {
     const navigate = useNavigate();
     const location = useLocation();
     const dataName = location.state.dataName
-    var dataFilepath = location.state.dataFilepath
+    var dataRef = location.state.dataRef
     const soniType = location.state.soniType
 
     // Dynamically import the menu component
@@ -59,12 +59,12 @@ export default function Refine() {
                 <br />
                 <Suspense>
                     <Menu 
-                        dataFilepath={dataFilepath}
+                        dataRef={dataRef}
                         dataName={dataName} 
-                        onApply={(newFilepath: string) => {
+                        onApply={(newRef: string) => {
                             // Navigate with refined data
-                            dataFilepath = newFilepath;
-                            navigate('/style', { state: { dataFilepath, dataName, soniType } });
+                            dataRef = newRef;
+                            navigate('/style', { state: { dataRef, dataName, soniType } });
                             }}/>
                 </Suspense>
             </Box>

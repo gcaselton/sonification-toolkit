@@ -39,11 +39,6 @@ import {
   Portal
 } from "@chakra-ui/react";
 
-
-function capitaliseWords(str: string) {
-  return str.replace(/\b\w/g, char => char.toUpperCase());
-}
-
 export const constellations = [
   { label: "Pisces", value: "Pisces" },
   { label: "Cetus", value: "Cetus" },
@@ -142,12 +137,6 @@ export default function Constellations() {
   const navigate = useNavigate();
   
   const [suggested, setSuggested] = useState<SuggestedData[]>([])
-  const [errorMessage, setErrorMessage] = useState<string>("");
-  const [loading, setLoading] = useState(false);
-  const [searched, setSearched] = useState(false)
-  const [searchTerm, setSearchTerm] = useState("")
-  const [loadingId, setLoadingId] = useState("fake ID")
-
   
   useEffect(() => {
         fetch(`${coreAPI}/suggested-data/${soniType}/`)
@@ -167,10 +156,10 @@ export default function Constellations() {
 
     console.log("Constellation clicked:", constellationName);
     const dataName = constellationName
-    const dataFilepath = ""
+    const dataRef = ""
     
     navigate('/refine', { 
-      state: { dataName, soniType, dataFilepath } // Navigate to step 2
+      state: { dataName, dataRef, soniType } // Navigate to step 2
     });
   };
 
