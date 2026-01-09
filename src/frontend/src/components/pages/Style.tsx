@@ -178,10 +178,6 @@ export default function Style() {
         ],
     });
     const parameters = ["Filter Cutoff", "Pitch", "Volume", "Left/Right Pan"] as const;
-
-    
-    
-    console.log("Filepath of Selected Lightcurve:", dataFilepath);
     
     const saveSoundSettings = async () => {
 
@@ -208,11 +204,12 @@ export default function Style() {
             console.log("Custom sound settings selected, opening dialog...");
             setOpen(true);
         } else {
-            console.log("Selected style:", style.name);
-            const styleFilename = style.name + '.yml';
-            console.log("Filename of selected style:", styleFilename);
+            const styleName = style.name
+            console.log("Selected style:", styleName);
+            const styleRef = style.file_ref;
+            console.log("File reference of selected style:", styleRef);
             // Navigate to the Sonify page with the selected style
-            navigate('/sonify', { state: { dataName, dataFilename, styleFilename, soniType } });
+            navigate('/sonify', { state: { dataName, dataRef, styleName, styleRef, soniType } });
         }
     }
 
@@ -227,13 +224,12 @@ export default function Style() {
             ensureSoundAvailable(sound.name);
 
             // Wait for sound settings to save and get filepath
-            const filepath = await saveSoundSettings();
-            console.log("Saved sound settings to:", filepath);
+            const fileRef = await saveSoundSettings();
 
-            const preview_endpoint = `${coreAPI}/preview-style-settings/light_curves`;
+            const preview_endpoint = `${coreAPI}/preview-style-settings/${soniType}`;
 
-            const response = await apiRequest(preview_endpoint,{style_filepath: filepath});
-            const audioUrl = `${coreAPI}/audio/${response.filename}`;
+            const response = await apiRequest(preview_endpoint,{file_ref: fileRef});
+            const audioUrl = `${coreAPI}/audio/${response.file_ref}`;
             const preview = new Audio(audioUrl);
             preview.play()
             setLoadingCustomPreview(false)
@@ -243,16 +239,15 @@ export default function Style() {
         }
     };
 
-
-
     const handleSubmit = async () => {
     try {
         ensureSoundAvailable(sound.name)
         // save sound settings
-        saveSoundSettings().then((styleFilename) => {
-            console.log("Saved custom style as:", styleFilename);
+        saveSoundSettings().then((styleRef) => {
+            console.log("Saved custom style as:", styleRef);
             // navigate
-            navigate('/sonify', { state: { dataName, dataFilename, styleFilename, soniType } });
+            const styleName = 'Custom'
+            navigate('/sonify', { state: { dataName, dataRef, styleName, styleRef, soniType } });
         });
     } catch (err) {
         console.error("Error saving custom style:", err);
@@ -351,11 +346,12 @@ export default function Style() {
 
         try {
             const res = await apiRequest(`${coreAPI}/upload-yaml/`, formData);
-            console.log("File uploaded successfully:", res.filepath);
-            const styleFilename = res.filename;
+            console.log("File uploaded successfully:", res.file_ref);
+            const styleRef = res.file_ref;
+            const styleName = 
             // Navigate to the Sonify page with the uploaded file
-            navigate('/sonify', { state: {dataName, dataFilename, styleFilename, soniType } });
-            //setResponse(data);
+            navigate('/sonify', { state: {dataName, dataRef, styleRef, soniType } });
+        
         } catch (err: any) {
             //setResponse({ error: err.message });
         }

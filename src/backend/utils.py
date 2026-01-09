@@ -19,6 +19,10 @@ def resolve_file(file_ref: str) -> Path:
     if ref_parts[0] == 'session':
 
         session_id = session_id_var.get()
+        
+        if not session_id:
+            raise HTTPException(status_code=400, detail="No session cookie found")
+    
         path = TMP_DIR / session_id / ref_parts[-1]
     else:
         path = BACKEND_DIR / ref_parts[0] / ref_parts[1] / ref_parts[-1]

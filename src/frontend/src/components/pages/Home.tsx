@@ -103,12 +103,10 @@ export default function Lightcurves() {
               <Tooltip content='Coming soon!' openDelay={300}>
               <FileUpload.Trigger asChild>
                 <Tooltip content="Coming soon!" openDelay={300}>
-                  
-                <Button colorPalette='teal' disabled>
-                    <Upload />Upload your own
+                  <Button colorPalette='teal' disabled>
+                      <Upload />Upload your own
                   </Button>
                 </Tooltip>
-                
               </FileUpload.Trigger>
               </Tooltip>
               <FileUpload.List />

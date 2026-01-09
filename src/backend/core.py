@@ -44,8 +44,8 @@ class SoundRequest(BaseModel):
 
 class SonificationRequest(BaseModel):
     category: str
-    data_filename: str
-    style_filename: str
+    data_ref: str
+    style_ref: str
     duration: int
     system: str
 
@@ -77,15 +77,10 @@ async def get_or_create_session(
 
 @router.post('/generate-sonification/')
 async def generate_sonification(request: SonificationRequest):
-
-    session_id = session_id_var.get()
-
-    if not session_id:
-        raise HTTPException(status_code=400, detail="No session cookie found")
     
     # Resolve data and style file names to actual paths in backend
-    data_filepath = resolve_file(session_id, request.data_filename)
-    style_filepath = resolve_file(session_id, request.style_filename)
+    data_filepath = resolve_file(session_id, request.data_ref)
+    style_filepath = resolve_file(session_id, request.style_ref)
 
     category = request.category
     data = data_filepath
@@ -99,23 +94,30 @@ async def generate_sonification(request: SonificationRequest):
     try:
         soni = sonify(data, style, category, length, system)
 
+        session_id = session_id_var.get()
+
+        if not session_id:
+            raise HTTPException(status_code=400, detail="No session cookie found")
+
         id = str(uuid.uuid4().hex)
         ext = '.wav'
         filename = f'{category}_{id}{ext}'
         filepath = TMP_DIR / session_id / filename
         soni.save(filepath)
 
-        return {'filename': filename}
+        file_ref = f'session:{filename}'
+
+        return {'file_ref': file_ref}
+    
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     
 
-@router.get('/audio/{filename}')
-async def get_audio(filename: str):
+@router.get('/audio/{file_ref}')
+async def get_audio(file_ref: str):
 
-    session_id = session_id_var.get()
-    filepath = TMP_DIR / session_id / filename
-    ext = filepath.suffix.split('.')[1]
+    filepath = resolve_file(file_ref)
+    ext = filepath.suffix.lstrip('.')
 
     return FileResponse(filepath, media_type=f"audio/{ext}")
 
@@ -123,7 +125,7 @@ async def get_audio(filename: str):
 @router.get("/download")
 def download_file(file_ref: str):
     
-    file_path = resolve_file(file_ref)
+    file_path = str(resolve_file(file_ref))
 
     return FileResponse(
         file_path,

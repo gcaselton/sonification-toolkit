@@ -34,10 +34,11 @@ export default function Sonify() {
 
   const location = useLocation();
   const dataName = location.state.dataName;
+  const dataRef = location.state.dataRef;
   const styleName = location.state.styleName;
+  const styleRef = location.state.styleRef;
   const soniType = location.state.soniType;
-  const styleFilepath = location.state.styleFilepath;
-  const dataFilepath = location.state.dataFilepath;
+
 
   // Define length limits based on sonification type
   const lengthDict = {
@@ -70,12 +71,12 @@ export default function Sonify() {
         var imageBase64
 
         if (soniType === 'light_curves') {
-          imageBase64 = await plotLightcurve(dataFilepath)
+          imageBase64 = await plotLightcurve(dataRef)
         }
         else if (soniType === 'constellations') {
 
           const endpoint = `${constellationsAPI}/plot-csv/`
-          const payload = {data_filepath: dataFilepath}
+          const payload = {file_ref: dataRef}
           
           const result = await apiRequest(endpoint, payload)
           imageBase64 = result.image
@@ -89,14 +90,14 @@ export default function Sonify() {
       }
     }
     fetchPlot();
-  }, [dataFilepath]);
+  }, [dataRef]);
 
   // Fetch data range once on load
   useEffect(() => {
     const fetchDataRange = async () => {
       const url_range = `${lightCurvesAPI}/get-range/`;
       const data = {
-        "data_filepath": dataFilepath
+        file_ref: dataRef
       };
       try {
         const response = await apiRequest(url_range, data, 'POST');
@@ -129,8 +130,8 @@ export default function Sonify() {
   
     const data = {
       "category": soniType,
-      "data_filepath": dataFilepath,
-      "style_filepath": styleFilepath,
+      "data_ref": dataRef,
+      "style_ref": styleRef,
       "duration": length,
       "system": audioSystem[0]
     };
@@ -138,7 +139,7 @@ export default function Sonify() {
     try {
       const response = await apiRequest(url, data);
       console.log("Sonification result:", response);
-      return response.filename; 
+      return response.file_ref; 
     } catch (error) {
       setErrorMessage("Error generating sonification. Please try again with different Style settings.")
       console.error("Error fetching sonification:", error);
@@ -154,11 +155,11 @@ export default function Sonify() {
     console.log("Sonification Length:", length);
     console.log("Audio System:", audioSystem);
 
-    requestSonification().then((filename) => {
+    requestSonification().then((fileRef) => {
       setLoading(false)
-      if (filename) {
-        console.log("Sonification file created:", filename);
-        setAudioFilename(filename);
+      if (fileRef) {
+        console.log("Sonification file created:", fileRef);
+        setAudioFilename(`${dataName} - ${styleName}`);
         setSoniReady(true)
       } else {
         console.error("No sonification file returned.");
@@ -200,14 +201,9 @@ export default function Sonify() {
       .replace(/s$/, '')
   }
 
-  const styleFileName = styleFilepath.split("/").pop()!
-  console.log('style name:' + styleFileName)
-  const dataFileName = dataFilepath.split("/").pop()!
-  console.log('data name:' + dataFileName)
-
   const summaryItems = [
-  { label: "Data", value: dataName, filename: dataFileName},
-  { label: "Style", value: styleName, filepath: styleFileName},
+  { label: "Data", value: dataName, fileRef: dataRef},
+  { label: "Style", value: styleName, fileRef: styleRef},
 ]
 
   return (
@@ -294,7 +290,7 @@ export default function Sonify() {
                         size='sm' 
                         variant='ghost' 
                         >
-                          <a href={`${coreAPI}/download?filename=${encodeURIComponent(item.filename)}`}><LuDownload /></a>
+                          <a href={`${coreAPI}/download?filename=${encodeURIComponent(item.fileRef)}`}><LuDownload /></a>
                         </IconButton>
                       </DataList.ItemValue>
                     </DataList.Item>
