@@ -140,7 +140,7 @@ export default function LightCurves({ dataName, dataRef, onApply }: RefineMenuPr
     const result = await apiRequest(endpoint, payload)
 
     if (onApply) {
-        onApply(result.data_filepath); // pass new filepath up to parent Refine.tsx
+        onApply(result.file_ref); // pass new filepath up to parent Refine.tsx
       }
     
       setApplyLoading(false)

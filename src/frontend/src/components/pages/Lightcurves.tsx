@@ -63,9 +63,9 @@ function capitaliseWords(str: string) {
 
 export const plotLightcurve = async (fileRef: string) => {
 
-  const url_plot = `${lightCurvesAPI}/plot-lightcurve`
+  const url = `${lightCurvesAPI}/plot-lightcurve/`
   const payload = {'data_uri': fileRef}
-  const plotData = await apiRequest(url_plot, payload)
+  const plotData = await apiRequest(url, payload)
   const image = plotData.image; 
 
   return image;
@@ -157,7 +157,7 @@ export default function Lightcurves() {
 
   const selectLightcurve = async (dataURI: string) => {
     // Call the API endpoint to select the lightcurve and get the filepath
-    const url_selectlightcurve = `${lightCurvesAPI}/select-lightcurve`;
+    const url_selectlightcurve = `${lightCurvesAPI}/select-lightcurve/`;
     const data = { "data_uri": dataURI }
     try {
       const result = await apiRequest(url_selectlightcurve, data);
@@ -229,6 +229,7 @@ export default function Lightcurves() {
   const handleClickSuggested = (star: any) => {
     console.log("Star clicked:", star.name);
     const dataRef = star.fileRef;
+    console.log('dataRef:' + dataRef)
     const dataName = star.name;
     navigate('/refine', { state: { dataRef, dataName, soniType }});
   };

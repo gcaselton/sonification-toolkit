@@ -35,6 +35,7 @@ export default function Sonify() {
   const location = useLocation();
   const dataName = location.state.dataName;
   const dataRef = location.state.dataRef;
+  console.log(dataRef)
   const styleName = location.state.styleName;
   const styleRef = location.state.styleRef;
   const soniType = location.state.soniType;
@@ -97,7 +98,7 @@ export default function Sonify() {
     const fetchDataRange = async () => {
       const url_range = `${lightCurvesAPI}/get-range/`;
       const data = {
-        file_ref: dataRef
+        'file_ref': dataRef
       };
       try {
         const response = await apiRequest(url_range, data, 'POST');
@@ -159,7 +160,7 @@ export default function Sonify() {
       setLoading(false)
       if (fileRef) {
         console.log("Sonification file created:", fileRef);
-        setAudioFilename(`${dataName} - ${styleName}`);
+        setAudioFilename(`${fileRef}`);
         setSoniReady(true)
       } else {
         console.error("No sonification file returned.");
@@ -289,8 +290,13 @@ export default function Sonify() {
                         colorPalette='teal' 
                         size='sm' 
                         variant='ghost' 
-                        >
-                          <a href={`${coreAPI}/download?filename=${encodeURIComponent(item.fileRef)}`}><LuDownload /></a>
+                        >       
+                          <a 
+                            href={`${coreAPI}/download?file_ref=${encodeURIComponent(item.fileRef)}`}
+                            style={{'color': 'inherit'}}
+                            >
+                            <LuDownload />
+                          </a>
                         </IconButton>
                       </DataList.ItemValue>
                     </DataList.Item>

@@ -79,8 +79,8 @@ async def get_or_create_session(
 async def generate_sonification(request: SonificationRequest):
     
     # Resolve data and style file names to actual paths in backend
-    data_filepath = resolve_file(session_id, request.data_ref)
-    style_filepath = resolve_file(session_id, request.style_ref)
+    data_filepath = resolve_file(request.data_ref)
+    style_filepath = resolve_file(request.style_ref)
 
     category = request.category
     data = data_filepath
@@ -124,13 +124,19 @@ async def get_audio(file_ref: str):
 
 @router.get("/download")
 def download_file(file_ref: str):
-    
-    file_path = str(resolve_file(file_ref))
 
-    return FileResponse(
-        file_path,
+    file_path = str(resolve_file(file_ref))
+    file_name = file_ref.split(':')[-1]
+ 
+    response = FileResponse(
+        path=file_path,
+        filename=file_name,
         media_type="application/octet-stream",
     )
+
+    response.headers["Cache-Control"] = "no-store, max-age=0"
+
+    return response
 
 
 @router.post('/upload-data/')

@@ -170,7 +170,7 @@ def download_lightcurve(data_uri):
 
     return filepath
 
-@router.post('/plot-lightcurve')
+@router.post('/plot-lightcurve/')
 async def plot_lightcurve(request: DownloadRequest):
     """
     Download the target light curve (if not already downloaded) and convert it to a png image.
@@ -184,7 +184,7 @@ async def plot_lightcurve(request: DownloadRequest):
     if (request.data_uri.startswith('mast:')):
         filepath = download_lightcurve(request.data_uri)
     else:
-        filepath = request.data_uri
+        filepath = str(resolve_file(request.data_uri))
 
     img_base64 = plot_and_format_lc(filepath)
 
@@ -277,7 +277,7 @@ async def preview_refined(request: RefineRequest):
 
     lc_csv = await save_refined(request)
 
-    filepath = resolve_file(lc_csv['file_ref'])
+    filepath = str(resolve_file(lc_csv['file_ref']))
        
     # Plot, format, and convert image to Base64
     img_base64 = plot_and_format_lc(filepath)
@@ -289,7 +289,7 @@ def refine_lightcurve(request: RefineRequest):
     # Truncate x-axis to new range
     new_start, new_end = request.new_range
 
-    filepath = resolve_file(request.file_ref)
+    filepath = str(resolve_file(request.file_ref))
     lc = lk.read(filepath)
     lc = lc.truncate(new_start, new_end)
 
