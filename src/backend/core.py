@@ -117,9 +117,12 @@ async def generate_sonification(request: SonificationRequest):
 async def get_audio(file_ref: str):
 
     filepath = resolve_file(file_ref)
+    file_name = file_ref.split(':')[-1]
     ext = filepath.suffix.lstrip('.')
 
-    return FileResponse(filepath, media_type=f"audio/{ext}")
+    return FileResponse(path=filepath, 
+                        filename=file_name,
+                        media_type=f"audio/{ext}")
 
 
 @router.get("/download")
