@@ -38,6 +38,7 @@ export default function Sonify() {
   console.log(dataRef)
   const styleName = location.state.styleName;
   const styleRef = location.state.styleRef;
+  console.log('Style: ' + styleRef)
   const soniType = location.state.soniType;
 
 

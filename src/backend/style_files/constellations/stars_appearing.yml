@@ -11,6 +11,7 @@ parameters:
 
   - input: 'magnitude'
     output: 'volume'
+    output_range: [0.2, 1]
 
   - input: 'magnitude'
     input_range: ['0%', '110%']
