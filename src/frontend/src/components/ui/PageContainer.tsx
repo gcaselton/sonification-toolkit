@@ -34,7 +34,7 @@ export default function PageContainer({ children, hideBackButton = false, showHo
       <Flex as="header" justify="space-between" align="center" mb={6}>
         <VStack w='100%' align='flex-start'>
         <NavDrawer />
-        <Steps.Root defaultStep={1} count={steps.length} colorPalette='teal'>
+        {/*<Steps.Root defaultStep={1} count={steps.length} colorPalette='teal'>
           <Steps.List>
             {steps.map((step, index) => (
               <Steps.Item key={index} index={index} title={step.title}>
@@ -60,7 +60,7 @@ export default function PageContainer({ children, hideBackButton = false, showHo
               <Button>Next</Button>
             </Steps.NextTrigger>
           </ButtonGroup>
-        </Steps.Root>
+        </Steps.Root>*/}
         </VStack>
       </Flex>
       {children}

@@ -184,9 +184,9 @@ async def plot_lightcurve(request: DownloadRequest):
     if (request.data_uri.startswith('mast:')):
         filepath = download_lightcurve(request.data_uri)
     else:
-        filepath = str(resolve_file(request.data_uri))
+        filepath = resolve_file(request.data_uri)
 
-    img_base64 = plot_and_format_lc(filepath)
+    img_base64 = plot_and_format_lc(str(filepath))
 
     return {'image': img_base64}
 

@@ -196,7 +196,7 @@ export default function Style() {
 
         const response = await apiRequest(url, data);
 
-        return response.filepath;
+        return response.file_ref;
     }
 
     const handleClick  = async (style: any) => {
@@ -225,6 +225,7 @@ export default function Style() {
 
             // Wait for sound settings to save and get filepath
             const fileRef = await saveSoundSettings();
+            console.log(fileRef)
 
             const preview_endpoint = `${coreAPI}/preview-style-settings/${soniType}`;
 

@@ -165,7 +165,7 @@ export default function LightCurves({ dataName, dataRef, onApply }: RefineMenuPr
         {!slidersLoading && cropRange && cropValues ? (
           <Slider.Root
             w="100%"
-            minStepsBetweenThumbs={1}
+            step={0.01}
             colorPalette="teal"
             min={cropRange[0]}
             max={cropRange[1]}
