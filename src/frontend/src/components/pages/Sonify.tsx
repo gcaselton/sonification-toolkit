@@ -172,7 +172,7 @@ export default function Sonify() {
   const handleLengthChange = (value: string) => {
     setLength(value);
     if (totalDays > 0 && value) {
-      const rounded = Number(totalDays / Number(value)).toFixed(1);
+      const rounded = Number(totalDays / Number(value)).toFixed(2);
       setDaysPerSec(rounded);
     }
   }
@@ -183,7 +183,7 @@ export default function Sonify() {
     const floatValue = parseFloat(value);
   
     if (totalDays > 0 && floatValue > 0) {
-      const rounded = Number(totalDays / floatValue).toFixed(0);
+      const rounded = Number(totalDays / floatValue).toFixed(2);
       setLength(rounded);
     }
   }
@@ -192,7 +192,6 @@ export default function Sonify() {
   const invalidLength = (
     Number(length) > lengths.max ||
     length === '0' || 
-    length.includes('.') ||
     length.includes('-')
   );
 
@@ -228,13 +227,14 @@ export default function Sonify() {
                   onValueChange={(e) => 
                     handleLengthChange(e.value)
                   }
-                  inputMode="numeric"
+                  inputMode="decimal"
+                  step={1}
                   min={1}
                   max={lengths.max}>
                     <NumberInput.Control />
                     <NumberInput.Input />
                   </NumberInput.Root>
-                  <Field.ErrorText>Please enter a whole number up to {lengths.max} seconds.</Field.ErrorText>
+                  <Field.ErrorText>Please enter a number up to {lengths.max} seconds.</Field.ErrorText>
                 </Field.Root>
                 {soniType === 'light_curves' &&
                 <> 

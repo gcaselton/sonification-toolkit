@@ -46,7 +46,7 @@ class SonificationRequest(BaseModel):
     category: str
     data_ref: str
     style_ref: str
-    duration: int
+    duration: float
     system: str
 
 

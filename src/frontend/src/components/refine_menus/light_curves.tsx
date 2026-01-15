@@ -32,17 +32,20 @@ export default function LightCurves({ dataName, dataRef, onApply }: RefineMenuPr
   const [imageLoading, setImageLoading] = useState(true);
 
   // fetched range from backend (x axis min/max)
-  const [cropRange, setCropRange] = useState<[number, number] | null>(null);
+  const [cropRange, setCropRange] = useState<[number, number]>([0,0]);
 
   // controlled slider value
-  const [cropValues, setCropValues] = useState<[number, number] | null>(null);
+  const [cropValues, setCropValues] = useState<[number, number]>([0,0]);
+  
+  const [startText, setStartText] = useState(String(cropValues[0]));
+  const [endText, setEndText] = useState(String(cropValues[1]));
 
-  const [slidersLoading, setSlidersLoading] = useState(true)
+  const [slidersLoading, setSlidersLoading] = useState(true);
 
   // sigma value for data smoothing
-  const [sigma, setSigma] = useState(0)
+  const [sigma, setSigma] = useState(0);
 
-  const [applyLoading, setApplyLoading] = useState(false)
+  const [applyLoading, setApplyLoading] = useState(false);
   
   // fetch plot
   useEffect(() => {
@@ -79,6 +82,8 @@ export default function LightCurves({ dataName, dataRef, onApply }: RefineMenuPr
           const r: [number, number] = [Number(result.range[0]), Number(result.range[1])];
           setCropRange(r);
           setCropValues(r);
+          setStartText(String(r[0]));
+          setEndText(String(r[1]));
           setSlidersLoading(false)
         }
 
@@ -163,6 +168,50 @@ export default function LightCurves({ dataName, dataRef, onApply }: RefineMenuPr
         <VStack align='start' justify='center' gap='16' w='80%'>
         {/* render slider only when we have cropRange & cropValues */}
         {!slidersLoading && cropRange && cropValues ? (
+          <VStack>
+          <HStack align="center">
+            <Text textStyle="md">Trim start</Text>
+
+            <NumberInput.Root
+              value={startText}
+              min={cropRange[0]}
+              max={cropValues[1]}
+              onValueChange={(e) => setStartText(e.value)}
+              onBlur={() => {
+                const n = Number(startText)
+                if (!Number.isNaN(n)) {
+                  setCropValues(([_, end]) => [n, end]);
+                  fetchPreviewPlot([n, cropValues[1]], sigma);
+                } else {
+                  setStartText(String(cropValues[0]))
+                }
+              }}
+            >
+              <NumberInput.Input />
+            </NumberInput.Root>
+
+            <Text textStyle="md">and end</Text>
+
+            <NumberInput.Root
+              value={endText}
+              min={cropValues[0]}
+              max={cropRange[1]}
+              onValueChange={(e) => setEndText(e.value)}
+              onBlur={() => {
+                const n = Number(endText)
+                if (!Number.isNaN(n)) {
+                  setCropValues(([start, _]) => [start, n]);
+                  fetchPreviewPlot([cropValues[0], n], sigma);
+                } else {
+                  setEndText(String(cropValues[1]))
+                }
+              }}
+            >
+              <NumberInput.Input />
+            </NumberInput.Root>
+
+            <Text textStyle="md">points</Text>
+          </HStack>
           <Slider.Root
             w="100%"
             step={0.01}
@@ -173,18 +222,13 @@ export default function LightCurves({ dataName, dataRef, onApply }: RefineMenuPr
             animation="fade-in 300ms ease-out"
             onValueChange={(e) => {
               setCropValues(e.value as [number, number]);
+              setStartText(String(e.value[0]));
+              setEndText(String(e.value[1]));
             }}
             onValueChangeEnd={(e) => {
               fetchPreviewPlot(e.value as [number, number], sigma); // only runs on mouse release
             }}
           >
-            <Slider.Label textStyle='md'>
-              {'Trim start ('}
-              <Code textStyle='md'>{cropValues[0]}</Code>
-              {') and end ('}
-              <Code textStyle='md'>{cropValues[1]}</Code>
-              {') points'}
-            </Slider.Label>
             <Slider.Control>
               <Slider.Track>
                 <Slider.Range />
@@ -193,6 +237,7 @@ export default function LightCurves({ dataName, dataRef, onApply }: RefineMenuPr
               <Slider.Marks marks={sliderMarks} />
             </Slider.Control>
           </Slider.Root>
+          </VStack>
         ) : (
           <Box width="100%">
             <Skeleton height='4em'/>

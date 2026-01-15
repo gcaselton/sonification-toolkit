@@ -44,7 +44,7 @@ class PlotRequest(BaseModel):
 class RefineRequest(BaseModel):
     data_name: str
     file_ref: str
-    new_range: list[int]
+    new_range: list[float]
     sigma: int
 
 
@@ -257,7 +257,7 @@ async def get_range(request: DataRequest):
     if filepath.endswith('.fits'):
         lc = lk.read(filepath)
         x = lc.time.value
-        range = [int(min(x)), int(max(x))]
+        range = [min(x), max(x)]
 
     elif filepath.endswith('.csv'):
         df = pd.read_csv(filepath)
@@ -265,7 +265,7 @@ async def get_range(request: DataRequest):
         time_col = next((col for col in df.columns if 'time' in col.lower()), df.columns[0])
 
         x = df[time_col].values
-        range = [int(min(x)), int(max(x))]
+        range = [min(x), max(x)]
     else:
         raise HTTPException(status_code=400, detail='File extension not supported: ' + request.file_ref.split(':')[-1])
 
