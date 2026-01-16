@@ -79,7 +79,8 @@ export default function LightCurves({ dataName, dataRef, onApply }: RefineMenuPr
         const result = await apiRequest(endpoint, payload, 'POST')
 
         if (mounted && Array.isArray(result.range) && result.range.length === 2) {
-          const r: [number, number] = [Number(result.range[0]), Number(result.range[1])];
+          const r: [number, number] = [Number(result.range[0].toFixed(2)),
+                                       Number(result.range[1].toFixed(2))];
           setCropRange(r);
           setCropValues(r);
           setStartText(String(r[0]));
