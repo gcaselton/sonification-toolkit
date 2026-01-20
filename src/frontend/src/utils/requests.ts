@@ -1,30 +1,53 @@
-
-
-export async function apiRequest(url: string, payload = {}, method: string = 'POST') {
-  const options: RequestInit = method != 'GET' ? {
+export async function apiRequest(
+  url: string,
+  payload: any = {},
+  method: string = "POST",
+  options: { signal?: AbortSignal } = {}
+) {
+  const baseOptions: RequestInit = {
     method,
-    credentials: 'include', 
+    credentials: "include",
     headers: {
       Accept: "application/json",
       "Content-Type": "application/json",
     },
-    body: JSON.stringify(payload)
-  } : {
-    method,
-    credentials: 'include', 
-    headers: {
-      Accept: "application/json",
-      "Content-Type": "application/json",
-    }
+    signal: options.signal,
   };
 
-  try {
-    const res = await fetch(url, options);
+  const requestOptions: RequestInit =
+    method !== "GET"
+      ? {
+        ...baseOptions,
+        body: JSON.stringify(payload),
+      }
+      : baseOptions;
 
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  try {
+    const res = await fetch(url, requestOptions);
+
+    if (!res.ok) {
+      let message = `HTTP ${res.status}`;
+
+      try {
+        const errorData = await res.json();
+        if (errorData?.detail) {
+          message = errorData.detail;
+        }
+      } catch {
+        // response was not JSON — ignore
+      }
+
+      throw new Error(message);
+    }
+
 
     return await res.json();
-  } catch (err) {
+  } catch (err: any) {
+
+    if (err.name === "AbortError") {
+      throw err;
+    }
+
     console.error(`${method} error:`, err);
     throw err;
   }

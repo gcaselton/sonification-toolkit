@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel
 from pathlib import Path
 from paths import TMP_DIR, STYLE_FILES_DIR, SUGGESTED_DATA_DIR, SAMPLES_DIR
@@ -8,11 +8,13 @@ import logging, requests, os, base64, hashlib, json, gc
 import lightkurve as lk
 from lightkurve import LightCurve
 import numpy as np
+import asyncio
 import matplotlib
 matplotlib.use("Agg") 
 import matplotlib.pyplot as plt
 import pandas as pd
 from io import BytesIO
+from concurrent.futures import ThreadPoolExecutor
 from astroquery.simbad import Simbad
 from scipy.ndimage import gaussian_filter1d
 from core import SonificationRequest, DataRequest
@@ -20,6 +22,8 @@ from utils import resolve_file
 
 
 router = APIRouter(prefix='/light-curves')
+
+executor = ThreadPoolExecutor(max_workers=4)
 
 CATEGORY = 'light_curves'
 
@@ -48,8 +52,35 @@ class RefineRequest(BaseModel):
     sigma: int
 
 
+def run_lightkurve_search(idents, authors):
+    results_metadata = []
+
+    for ident in idents:
+        id_type = ident.split(" ")[0]
+
+        # Search lightkurve using all idents
+        search_result = lk.search_lightcurve(
+            ident,
+            author=authors[id_type],
+            limit=20    # Max number of results to return
+        )
+
+        for row in search_result.table:
+            results_metadata.append({
+                "mission": str(row.get("project")),
+                "exposure": int(row.get("exptime")),
+                "pipeline": str(row.get("author")),
+                "year": int(row.get("year")),
+                "period": str(row.get("mission")),
+                "dataURI": str(row.get("dataURI")),
+            })
+
+    return results_metadata
+
+
+
 @router.post('/search-lightcurves/')
-async def search_lightcurves(query: StarQuery):
+async def search_lightcurves(query: StarQuery, request: Request):
     """
     Search lightcurves in the lightkurve package, given the name of a star.
 
@@ -71,7 +102,7 @@ async def search_lightcurves(query: StarQuery):
         case 3:
             formatted = f'{missions[0]}, {missions[1]}, or {missions[2]}'
 
-    # Return 404 and error message if no results (for those filters)
+    # Return error message if no results (for those filters)
     if len(idents) == 0:
         raise HTTPException(status_code=400, detail=f'No {formatted} light curves found for {query.star_name}.')
     
@@ -83,25 +114,58 @@ async def search_lightcurves(query: StarQuery):
             'EPIC': 'K2SFF'
         }
 
-    for ident in idents:
-        
-        id_type = ident.split(' ')[0]
+    loop = asyncio.get_running_loop()
 
-        # Search lightkurve using all idents
-        search_result = lk.search_lightcurve(ident, author=authors[id_type], limit=15)
+    task = loop.run_in_executor(
+        executor,
+        run_lightkurve_search,
+        idents,
+        authors
+    )
 
-        # Append selected metadata to a list of dictionaries
-        for row in search_result.table:
-            results_metadata.append({
-                "mission": str(row.get("project")),
-                "exposure": int(row.get("exptime")),
-                "pipeline": str(row.get("author")),
-                "year": int(row.get("year")),
-                "period": str(row.get("mission")),
-                "dataURI": str(row.get("dataURI"))
-            })
+    # Add timeout 
+    MAX_SECONDS = 20
+    start_time = loop.time()
 
-    return {'results': results_metadata}
+
+    try:
+        while True:
+            # cancel search if frontend navigates away/aborts
+            if await request.is_disconnected():
+                task.cancel()
+                print('Search cancelled by user!')
+                raise HTTPException(
+                    status_code=499,
+                    detail="Client disconnected"
+                )
+            
+            # Cancel task if search has passed timeout
+            elapsed = loop.time() - start_time
+            if elapsed > MAX_SECONDS:
+                task.cancel()
+                raise HTTPException(
+                    status_code=408,
+                    detail="Search timed out"
+                )
+
+
+            done, _ = await asyncio.wait(
+                [task],
+                timeout=0.2,
+                return_when=asyncio.FIRST_COMPLETED
+            )
+
+            if done:
+                results_metadata = task.result()
+                return {"results": results_metadata}
+
+    except asyncio.CancelledError:
+        raise HTTPException(
+            status_code=499,
+            detail="Search cancelled"
+        )
+
+
 
 
 def get_identifiers(query: StarQuery):

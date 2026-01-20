@@ -1,14 +1,14 @@
-import React, { useEffect, useState, createContext, ChangeEvent } from "react";
+import React, { useEffect, useState, createContext, useRef } from "react";
 import { useNavigate } from 'react-router-dom';
 import LoadingMessage from '../ui/LoadingMessage';
 import { LuX, LuChartSpline, LuAudioLines, LuSearch, LuSlidersHorizontal, LuTelescope } from "react-icons/lu";
 import PageContainer from "../ui/PageContainer";
-import { SonifyButton, PlotButton} from "../ui/Buttons";
+import { SonifyButton, PlotButton } from "../ui/Buttons";
 import { PlotDialog } from "../ui/PlotDialog";
 import { Tooltip } from "../ui/Tooltip";
 import ErrorMsg from "../ui/ErrorMsg";
 import { getImage } from "../../utils/assets";
-import { apiUrl, lightCurvesAPI, coreAPI} from "../../apiConfig";
+import { apiUrl, lightCurvesAPI, coreAPI } from "../../apiConfig";
 import { apiRequest } from "../../utils/requests";
 
 import {
@@ -21,7 +21,7 @@ import {
   LinkOverlay,
   Link,
   Image,
-  Field, 
+  Field,
   Input,
   InputGroup,
   Dialog,
@@ -37,7 +37,7 @@ import {
 
 const soniType = 'light_curves'
 
- export interface Lightcurve {
+export interface Lightcurve {
   id: string;
   mission: string;
   exposure: number;
@@ -54,7 +54,7 @@ export interface SuggestedData {
 }
 
 const LightcurvesContext = createContext({
-  lightcurves: [], fetchLightcurves: () => {}
+  lightcurves: [], fetchLightcurves: () => { }
 })
 
 function capitaliseWords(str: string) {
@@ -64,19 +64,20 @@ function capitaliseWords(str: string) {
 export const plotLightcurve = async (fileRef: string) => {
 
   const url = `${lightCurvesAPI}/plot-lightcurve/`
-  const payload = {'data_uri': fileRef}
+  const payload = { 'data_uri': fileRef }
   const plotData = await apiRequest(url, payload)
-  const image = plotData.image; 
+  const image = plotData.image;
 
   return image;
 }
 
 
-
 export default function Lightcurves() {
 
-  
+  // Instantiate navigation
   const navigate = useNavigate();
+
+  // Set up states
   const [selectedStar, setSelectedStar] = useState("");
   const [lightcurves, setLightcurves] = useState([])
   const [image, setImage] = useState("");
@@ -93,7 +94,10 @@ export default function Lightcurves() {
   const [tessChecked, setTessChecked] = useState(true);
   const [keplerChecked, setKeplerChecked] = useState(true);
   const [k2Checked, setK2Checked] = useState(true);
-  
+
+  const abortControllerRef = useRef<AbortController | null>(null);
+
+  // Fetch suggested data sets on first load
   useEffect(() => {
     fetch(`${coreAPI}/suggested-data/${soniType}/`)
       .then((res) => res.json())
@@ -111,12 +115,26 @@ export default function Lightcurves() {
       });
   }, []);
 
+  // Ensure search is aborted if user navigates away
+  useEffect(() => {
+    return () => {
+      abortControllerRef.current?.abort();
+    };
+  }, []);
+
+
   const searchLightcurves = async () => {
 
-    if(!selectedStar.trim()) {
+    if (!selectedStar.trim()) {
       setErrorMessage("Please enter a star name before searching.")
       return;
     }
+
+    // Cancel any existing search
+    abortControllerRef.current?.abort();
+
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
 
     setLoading(true);
     setErrorMessage("");
@@ -137,23 +155,41 @@ export default function Lightcurves() {
     };
 
     try {
-      const response = await apiRequest(url_search, data);
+      const response = await apiRequest(
+        url_search,
+        data,
+        'POST',
+        { signal: controller.signal }
+      );
       setLightcurves(response.results);
+
       console.log("Search results:", response.results);
-      setErrorMessage(response.details); // Clear any previous error messages
-    } catch (error) {
+
+    } catch (error: any) {
+
       console.error("Error: " + error);
+
+      if (error.name === 'AbortError') {
+        console.log("Search cancelled by user")
+        return;
+      }
+
       if (String(error).includes('Failed to fetch')) {
         error = 'Network error: Please check your internet connection or use a suggested dataset.'
       }
+
       setErrorMessage(String(error)); // Set error message to display
       setSearched(false)
+
     } finally {
-      setLoading(false)
+
+      if (abortControllerRef.current === controller) {
+        setLoading(false);
+      }
     }
   }
 
-  
+
 
   const selectLightcurve = async (dataURI: string) => {
     // Call the API endpoint to select the lightcurve and get the filepath
@@ -205,11 +241,11 @@ export default function Lightcurves() {
       fileRef = item.fileRef
       plotTitle = item.name
     }
-    
+
     setTitle(`Light Curve Graph for ${plotTitle}`);
     setLoadingPlot(true);
     setPlotOpen(true);
-    
+
     try {
       setImage("");
       const image = await plotLightcurve(fileRef);
@@ -221,8 +257,8 @@ export default function Lightcurves() {
     } catch (err) {
       console.error("Error plotting light curve:", err)
     }
-    finally{
-      setLoadingPlot(false); 
+    finally {
+      setLoadingPlot(false);
     }
   };
 
@@ -231,7 +267,7 @@ export default function Lightcurves() {
     const dataRef = star.fileRef;
     console.log('dataRef:' + dataRef)
     const dataName = star.name;
-    navigate('/refine', { state: { dataRef, dataName, soniType }});
+    navigate('/refine', { state: { dataRef, dataName, soniType } });
   };
 
   return (
@@ -246,29 +282,29 @@ export default function Lightcurves() {
           <Box display="flex" justifyContent="center">
             <VStack gap={4} width="50%">
               <HStack width='100%'>
-                <InputGroup startElement={<LuTelescope size="1.1rem"/>} width='100%'>
+                <InputGroup startElement={<LuTelescope size="1.1rem" />} width='100%'>
                   <Input
                     placeholder="Search for a star by name, KIC or EPIC identifier"
                     type="text"
                     name="star_name"
                     variant='outline'
                     value={selectedStar}
-                    onChange={ (e) => {
+                    onChange={(e) => {
                       const value = e.target.value;
                       setSelectedStar(value);
                       if (value.trim() === "") {
-                        setSearched(false); 
+                        setSearched(false);
                         setLightcurves([]);
                       }
                     }}
                   />
                 </InputGroup>
                 <Button
-                  variant='outline' 
+                  variant='outline'
                   onClick={() => setShowFilters(!showFilters)}
                   aria-label="Show filters"
-                  >
-                    <LuSlidersHorizontal/>
+                >
+                  <LuSlidersHorizontal />
                 </Button>
               </HStack>
               {/* Collapsible filters */}
@@ -277,48 +313,48 @@ export default function Lightcurves() {
                   <Box borderWidth='1px' padding={3} borderRadius="md">
                     <Text mb={3}>Missions</Text>
                     <HStack align="start" gap={3}>
-                        <Checkbox.Root
-                          checked={tessChecked}
-                          onCheckedChange={(e) => setTessChecked(!!e.checked)}
-                        >
-                          <Checkbox.HiddenInput />
-                          <Checkbox.Control />
-                          <Checkbox.Label>TESS</Checkbox.Label>
-                        </Checkbox.Root>
+                      <Checkbox.Root
+                        checked={tessChecked}
+                        onCheckedChange={(e) => setTessChecked(!!e.checked)}
+                      >
+                        <Checkbox.HiddenInput />
+                        <Checkbox.Control />
+                        <Checkbox.Label>TESS</Checkbox.Label>
+                      </Checkbox.Root>
 
-                        <Checkbox.Root
-                          checked={keplerChecked}
-                          onCheckedChange={(e) => setKeplerChecked(!!e.checked)}
-                        >
-                          <Checkbox.HiddenInput />
-                          <Checkbox.Control />
-                          <Checkbox.Label>Kepler</Checkbox.Label>
-                        </Checkbox.Root>
+                      <Checkbox.Root
+                        checked={keplerChecked}
+                        onCheckedChange={(e) => setKeplerChecked(!!e.checked)}
+                      >
+                        <Checkbox.HiddenInput />
+                        <Checkbox.Control />
+                        <Checkbox.Label>Kepler</Checkbox.Label>
+                      </Checkbox.Root>
 
-                        <Checkbox.Root
-                          checked={k2Checked}
-                          onCheckedChange={(e) => setK2Checked(!!e.checked)}
-                        >
-                          <Checkbox.HiddenInput />
-                          <Checkbox.Control />
-                          <Checkbox.Label>K2</Checkbox.Label>
-                        </Checkbox.Root>
-                      </HStack>
+                      <Checkbox.Root
+                        checked={k2Checked}
+                        onCheckedChange={(e) => setK2Checked(!!e.checked)}
+                      >
+                        <Checkbox.HiddenInput />
+                        <Checkbox.Control />
+                        <Checkbox.Label>K2</Checkbox.Label>
+                      </Checkbox.Root>
+                    </HStack>
                   </Box>
                 </Collapsible.Content>
               </Collapsible.Root>
-              {errorMessage && <ErrorMsg message={errorMessage}/>}
+              {errorMessage && <ErrorMsg message={errorMessage} />}
             </VStack>
           </Box>
         </form>
-        {loading && <LoadingMessage msg={`Searching the Universe for ${searchTerm}...`} icon='pulsar'/>}
+        {loading && <LoadingMessage msg={`Searching the Universe for ${searchTerm}...`} icon='pulsar' />}
         <br />
-        <PlotDialog 
-                      open={plotOpen}
-                      setOpen={setPlotOpen}
-                      title={title}
-                      loadingPlot={loadingPlot}
-                      image={image}
+        <PlotDialog
+          open={plotOpen}
+          setOpen={setPlotOpen}
+          title={title}
+          loadingPlot={loadingPlot}
+          image={image}
         />
         {!searched && (
           <Box animation="fade-in 300ms ease-out">
@@ -327,29 +363,29 @@ export default function Lightcurves() {
             <Stack gap="4" direction="row" wrap="wrap">
               {suggested.map((star) => (
                 <Card.Root
-                width="200px" 
-                key={star.name} 
-                variant='elevated' 
-                _hover={{transform: "scale(1.05)"}} 
-                transition="transform 0.2s ease"
-                cursor='pointer'
-                tabIndex={0}
-                role="button"
-                aria-label={`Sonify ${star.name}: ${star.description}`}
-                onClick={() => handleClickSuggested(star)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    handleClickSuggested(star);
-                  }
-                }}>
+                  width="200px"
+                  key={star.name}
+                  variant='elevated'
+                  _hover={{ transform: "scale(1.05)" }}
+                  transition="transform 0.2s ease"
+                  cursor='pointer'
+                  tabIndex={0}
+                  role="button"
+                  aria-label={`Sonify ${star.name}: ${star.description}`}
+                  onClick={() => handleClickSuggested(star)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      handleClickSuggested(star);
+                    }
+                  }}>
                   <Box position="relative">
-                      <img
-                        src={getImage(star.name)}
-                        alt={`${star.name} star`}
-                        style={{ width: "100%", borderRadius: "8px" }}
-                      />
-                  
+                    <img
+                      src={getImage(star.name)}
+                      alt={`${star.name} star`}
+                      style={{ width: "100%", borderRadius: "8px" }}
+                    />
+
                     <Box
                       position="absolute"
                       top="0.5rem"
@@ -372,7 +408,7 @@ export default function Lightcurves() {
                           size='xs'
                           aria-label={`View plot for ${star.name}`}
                         >
-                          <LuChartSpline/>
+                          <LuChartSpline />
                         </Button>
                       </Tooltip>
                     </Box>
@@ -389,38 +425,38 @@ export default function Lightcurves() {
         )}
         {lightcurves.length > 0 && !loading && (
           <>
-          <Heading>Search results for {searchTerm}:</Heading>
-          <br />
-          <Table.Root size="sm" interactive>
-            <Table.Header>
-              <Table.Row>
-                <Table.ColumnHeader>Mission</Table.ColumnHeader>
-                <Table.ColumnHeader>Exposure</Table.ColumnHeader>
-                <Table.ColumnHeader>Pipeline</Table.ColumnHeader>
-                <Table.ColumnHeader>Year</Table.ColumnHeader>
-                <Table.ColumnHeader>Period</Table.ColumnHeader>
-                <Table.ColumnHeader></Table.ColumnHeader>
-                <Table.ColumnHeader></Table.ColumnHeader>
-              </Table.Row>
-            </Table.Header>
-            <Table.Body>
-              {lightcurves.map((item: Lightcurve) => (
-                <Table.Row key={item.id}>
-                  <Table.Cell>{item.mission}</Table.Cell>
-                  <Table.Cell>{item.exposure}</Table.Cell>
-                  <Table.Cell>{item.pipeline}</Table.Cell>
-                  <Table.Cell>{item.year}</Table.Cell>
-                  <Table.Cell>{item.period}</Table.Cell>
-                  <Table.Cell>
-                    <PlotButton onClick={handleClickPlot} item={item}/>
-                  </Table.Cell>
-                  <Table.Cell>
-                    <SonifyButton onClick={handleClickSonify} dataURI={item.dataURI} loading={item.dataURI === loadingId}/>
-                  </Table.Cell>
+            <Heading>Search results for {searchTerm}:</Heading>
+            <br />
+            <Table.Root size="sm" interactive>
+              <Table.Header>
+                <Table.Row>
+                  <Table.ColumnHeader>Mission</Table.ColumnHeader>
+                  <Table.ColumnHeader>Exposure</Table.ColumnHeader>
+                  <Table.ColumnHeader>Pipeline</Table.ColumnHeader>
+                  <Table.ColumnHeader>Year</Table.ColumnHeader>
+                  <Table.ColumnHeader>Period</Table.ColumnHeader>
+                  <Table.ColumnHeader></Table.ColumnHeader>
+                  <Table.ColumnHeader></Table.ColumnHeader>
                 </Table.Row>
-              ))}
-            </Table.Body>
-          </Table.Root>
+              </Table.Header>
+              <Table.Body>
+                {lightcurves.map((item: Lightcurve) => (
+                  <Table.Row key={item.id}>
+                    <Table.Cell>{item.mission}</Table.Cell>
+                    <Table.Cell>{item.exposure}</Table.Cell>
+                    <Table.Cell>{item.pipeline}</Table.Cell>
+                    <Table.Cell>{item.year}</Table.Cell>
+                    <Table.Cell>{item.period}</Table.Cell>
+                    <Table.Cell>
+                      <PlotButton onClick={handleClickPlot} item={item} />
+                    </Table.Cell>
+                    <Table.Cell>
+                      <SonifyButton onClick={handleClickSonify} dataURI={item.dataURI} loading={item.dataURI === loadingId} />
+                    </Table.Cell>
+                  </Table.Row>
+                ))}
+              </Table.Body>
+            </Table.Root>
           </>
         )}
       </Box>
