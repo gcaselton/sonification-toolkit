@@ -6,27 +6,7 @@ from pychord import Chord
 from musical_scales import scale as parse_scale
 from sounds import all_sounds
 
-# defaults = {
-#         'light_curves': {
-#             'name': 'Light Curve Default',
-#             'description': 'Default style for sonifying light curves. It combines the default STRAUSS synth sound with a cutoff filter, and chooses a random chord to play.',
-#             'sound': 'default_synth',
-#             'parameters': {'cutoff': [0,1]},
-#             'chord_mode': 'on',
-#             'chord': 'random'
-#         },
-#         'constellation': {
-#             'name': 'Constellation Default',
-#             'description': 'Default style for sonifying constellations. It uses the mallets sound and maps star colour to pitch.',
-#             'sound': 'Mallets',
-#             'parameters': {'magnitude': {'map_to': 'time'}, 'colour': {'map_to': 'pitch'}, 'ra': {'map_to': 'azimuth'}, 'dec': {'map_to': 'altitude'}},
-#             'music': 'Cmaj7'
-#         },
-#         'orbit': {
-#             'name': 'Orbit Default',
-#             'description': 'Style for orbit sonification etc',
-#         }
-#     }
+
 
 metadata = {
     'input': {

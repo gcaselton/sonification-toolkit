@@ -14,8 +14,8 @@ import matplotlib.pyplot as plt
 from io import BytesIO
 from utils import resolve_file
 from core import SonificationRequest, DataRequest
-
-
+from skyfield.data import stellarium
+from skyfield.api import load
 router = APIRouter(prefix='/constellations')
 
 CATEGORY = 'constellations'
@@ -23,6 +23,11 @@ CATEGORY = 'constellations'
 STYLES_DIR = STYLE_FILES_DIR / CATEGORY
 SUGGESTED_DIR = SUGGESTED_DATA_DIR / CATEGORY
 HYG_DATA = SUGGESTED_DIR / 'hyg.csv'
+
+# Parse constellation line data into a dictionary
+line_data = SUGGESTED_DIR / 'constellationship.fab'
+with load.open(str(line_data)) as f:
+    CONST_SHAPES = dict(stellarium.parse_constellations(f))
 
 logging.basicConfig(level=logging.INFO)
 LOG = logging.getLogger(__name__)
@@ -131,8 +136,11 @@ def get_constellation(constellation_name: str) -> pd.DataFrame:
     # load CSV
     df = pd.read_csv(HYG_DATA)
 
+    lines = CONST_SHAPES[IAU_names[constellation_name]]
+    star_ids = list(set([n for ns in lines for n in ns]))
+
     # select a constellation
-    stars_in_constellation = df[df['con'] == IAU_names[constellation_name]].copy()
+    stars_in_constellation = df[df['hip'].isin(star_ids)].copy()
 
     # sort by brightness (smaller magnitude = brighter)
     stars_sorted = stars_in_constellation.sort_values('magnitude')
@@ -141,6 +149,7 @@ def get_constellation(constellation_name: str) -> pd.DataFrame:
     stars_sorted['ra'] = correct_ra(stars_sorted['ra'])
 
     return stars_sorted
+
 
 @router.post("/plot-csv/")
 async def plot_csv(data: DataRequest):
