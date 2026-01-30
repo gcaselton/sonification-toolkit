@@ -136,11 +136,13 @@ def get_constellation(constellation_name: str) -> pd.DataFrame:
     # load CSV
     df = pd.read_csv(HYG_DATA)
 
-    lines = CONST_SHAPES[IAU_names[constellation_name]]
-    star_ids = list(set([n for ns in lines for n in ns]))
+    # lines = CONST_SHAPES[IAU_names[constellation_name]]
+    # star_ids = list(set([n for ns in lines for n in ns]))
 
-    # select a constellation
-    stars_in_constellation = df[df['hip'].isin(star_ids)].copy()
+    # # select a constellation
+    # stars_in_constellation = df[df['hip'].isin(star_ids)].copy()
+
+    stars_in_constellation = df[df['con'] == IAU_names[constellation_name]].copy()
 
     # sort by brightness (smaller magnitude = brighter)
     stars_sorted = stars_in_constellation.sort_values('magnitude')
