@@ -9,6 +9,7 @@ from fastapi import FastAPI, BackgroundTasks, Request
 
 from light_curves import router as light_curve_router
 from constellations import router as constellations_router
+from night_sky import router as night_sky_router
 from performance import router as performance_router
 from core import router as core_router
 from settings import router as settings_router
@@ -99,7 +100,7 @@ async def session_middleware(request: Request, call_next):
 
 
 # Import API endpoints
-for router in [light_curve_router, constellations_router, core_router, performance_router, settings_router]:
+for router in [light_curve_router, constellations_router, night_sky_router, core_router, performance_router, settings_router]:
     app.include_router(router)
 
 @app.get("/")

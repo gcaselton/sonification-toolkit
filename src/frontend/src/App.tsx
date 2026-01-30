@@ -13,6 +13,7 @@ import Refine from './components/pages/Refine';
 import Constellations from './components/pages/Constellations';
 import { useEffect, useState, useRef } from 'react';
 import { coreAPI } from './apiConfig';
+import NightSky from './components/pages/NightSky';
 
 function App() {
 
@@ -50,6 +51,7 @@ function App() {
               <Route path="/" element={<Home />} />
               <Route path="/light-curves" element={<Lightcurves />} />
               <Route path="/constellations" element={<Constellations />} />
+              <Route path="/night-sky" element={<NightSky />} />
               <Route path="/refine" element={<Refine />} />
               <Route path="/style" element={<Style />} />
               <Route path="/sonify" element={<Sonify />} />

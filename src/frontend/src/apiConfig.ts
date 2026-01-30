@@ -6,5 +6,6 @@ export const apiUrl = local
 export const coreAPI = `${apiUrl}/core`
 export const lightCurvesAPI = `${apiUrl}/light-curves`
 export const constellationsAPI = `${apiUrl}/constellations`
+export const nightSkyAPI = `${apiUrl}/night-sky`
 export const settingsAPI = `${apiUrl}/settings`
 
