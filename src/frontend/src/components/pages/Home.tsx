@@ -48,13 +48,13 @@ const astroTypes: AstroType[] = [
         page: '/constellations'
     },
     {
-        name: 'Planets',
-        description: 'Hear a planetary system orbit around you.',
-        page: '/'
+        name: 'Night Sky',
+        description: 'Hear the stars at your location appear.',
+        page: '/night-sky'
     },
     {
-        name: 'Black Holes',
-        description: 'Experience the intangible.',
+        name: 'Planets',
+        description: 'Hear a planetary system orbit around you.',
         page: '/'
     },
     {
