@@ -58,7 +58,7 @@ export function NavDrawer() {
             <Drawer.Body>
               <VStack align="start">
                 {navItems.map((item) => (
-                  <Link to={item.to} style={{width: '100%'}}>
+                  <Link to={item.to} style={{width: '100%'}} key={item.label}>
                     <Button
                       key={item.label}
                       variant="ghost"

@@ -71,8 +71,10 @@ export default function NightSky() {
     const [searchingLoc, setSearchingLoc] = useState(false);
     const [submitting, setSubmitting] = useState(false);
     const [locationName, setLocationName] = useState('');
-    const [inputValue, setInputValue] = useState("")
-    const [error, setError] = useState<string | null>(null)
+    const [inputValue, setInputValue] = useState("");
+    const [selectedLoc, setSelectedLoc] = useState<string[]>([]);
+    const [error, setError] = useState<string | null>(null);
+    const [autoLocated, setAutoLocated] = useState(false)
 
 
     const orientations = [
@@ -89,6 +91,24 @@ export default function NightSky() {
         itemToValue: (item) => String(item.geonameId),
     })
 
+    const handleSelectLoc = (item: GeoPlace) => {
+
+        setSelectedLoc([String(item.geonameId)])
+
+        const label = [
+            item.name,
+            item.adminName1,
+            item.countryName,
+        ].filter(Boolean).join(", ")
+
+        setLongitude(item.lng)
+        setLatitude(item.lat)
+        setLocationName(item.name)
+    }
+      
+
+
+    // Get user's location automatically
     useEffect(() => {
         if (!navigator.geolocation) return
 
@@ -114,15 +134,18 @@ export default function NightSky() {
             const place = data.geonames?.[0]
             if (!place) return
 
-            console.log(place)
-
+            
             const label = [place.name, place.adminName1, place.countryName]
                 .filter(Boolean)
                 .join(", ")
 
+            console.log(label)
+
             // Auto-fill input and Combobox collection
             setInputValue(label)
             set([place])
+            handleSelectLoc(place)
+            setAutoLocated(true)
 
             } catch (err) {
             console.error("Geolocation lookup failed", err)
@@ -223,7 +246,7 @@ export default function NightSky() {
             console.error("Error: " + error);
 
         } finally {
-            setSearchingLoc(false);
+            setSubmitting(false);
         }
         
     };
@@ -241,66 +264,71 @@ export default function NightSky() {
                     <VStack gap={5} width="300px">
 
                         {/* Location */}
-                        <Combobox.Root
-                            collection={collection}
-                            onInputValueChange={(e) => setInputValue(e.inputValue)}
-                            onValueChange={(e) => {
-                                const item = e.items[0]
-                                if (!item) return
+                        <Field.Root>
+                            <Combobox.Root
+                                collection={collection}
+                                value={selectedLoc}
+                                onInputValueChange={(e) => setInputValue(e.inputValue)}
+                                onValueChange={(e) => {
 
-                                const label = [
-                                item.name,
-                                item.adminName1,
-                                item.countryName,
-                                ].filter(Boolean).join(", ")
+                                    const item = e.items[0]
 
-                                setLongitude(item.lng);
-                                setLatitude(item.lat);
-                                setLocationName(item.name);
-                            }}
+                                    console.log('item: ' + item)
+                                    if (!item) return
+
+                                    handleSelectLoc(item);
+                                }}
+                                openOnChange={(e) => e.inputValue.length > 2}
                             >
-                            <Combobox.Label>Location</Combobox.Label>
+                                <Combobox.Label>Location</Combobox.Label>
 
-                            <Combobox.Control>
-                                <Combobox.Input placeholder="Type a city..." />
-                                <Combobox.IndicatorGroup>
-                                <Combobox.ClearTrigger />
-                                <Combobox.Trigger />
-                                </Combobox.IndicatorGroup>
-                            </Combobox.Control>
+                                <Combobox.Control>
+                                    <Combobox.Input placeholder="Type a city..." />
+                                    <Combobox.IndicatorGroup>
+                                        <Combobox.ClearTrigger />
+                                        <Combobox.Trigger />
+                                    </Combobox.IndicatorGroup>
+                                </Combobox.Control>
+                                {autoLocated &&
+                                    <Field.HelperText>Auto-dectected Location</Field.HelperText> 
+                                }
+                                <Portal>
+                                    <Combobox.Positioner>
+                                        <Combobox.Content>
+                                            {searchingLoc ? (
+                                                <HStack>
+                                                    <Spinner />
+                                                    <Span>Searching…</Span>
+                                                </HStack>
+                                            ) : error ? (
+                                                <Span color="fg.error">
+                                                    {error}
+                                                </Span>
+                                            ) : (
+                                                collection.items.map((place) => {
+                                                    const label = [
+                                                        place.name,
+                                                        place.adminName1,
+                                                        place.countryName,
+                                                    ].filter(Boolean).join(", ")
 
-                            <Portal>
-                                <Combobox.Positioner>
-                                <Combobox.Content minW="sm">
-                                    {searchingLoc ? (
-                                    <HStack p="2">
-                                        <Spinner size="xs" />
-                                        <Span>Searching…</Span>
-                                    </HStack>
-                                    ) : error ? (
-                                    <Span p="2" color="fg.error">
-                                        {error}
-                                    </Span>
-                                    ) : (
-                                    collection.items.map((place) => {
-                                        const label = [
-                                        place.name,
-                                        place.adminName1,
-                                        place.countryName,
-                                        ].filter(Boolean).join(", ")
-
-                                        return (
-                                        <Combobox.Item key={place.geonameId} item={place}>
-                                            <Span truncate>{label}</Span>
-                                            <Combobox.ItemIndicator />
-                                        </Combobox.Item>
-                                        )
-                                    })
-                                    )}
-                                </Combobox.Content>
-                                </Combobox.Positioner>
-                            </Portal>
+                                                    return (
+                                                        <Combobox.Item key={place.geonameId} item={place}>
+                                                            <Stack gap={0}>
+                                                                <Span truncate fontWeight="medium">{place.name}</Span>
+                                                                <Span textStyle="xs" color="fg.muted">{place.adminName1 + ', ' + place.countryName}</Span>
+                                                            </Stack>
+                                                            <Combobox.ItemIndicator />
+                                                        </Combobox.Item>
+                                                    )
+                                                })
+                                            )}
+                                        </Combobox.Content>
+                                    </Combobox.Positioner>
+                                </Portal>
                             </Combobox.Root>
+                        </Field.Root>
+                        
 
                         {/* Orientation */}
                         <Field.Root>
@@ -350,7 +378,8 @@ export default function NightSky() {
                         colorPalette='teal' 
                         loading={submitting} 
                         loadingText='Orienting you...'>
-                            Apply
+                            <LuTelescope/>
+                            Find stars
                         </Button>
 
                     </VStack>
