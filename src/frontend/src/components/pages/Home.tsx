@@ -147,6 +147,7 @@ export default function Lightcurves() {
                 </Tooltip>
               ))}
         </Stack>
+        <footer>Testing</footer>
       </Box>
     </PageContainer>
   )
