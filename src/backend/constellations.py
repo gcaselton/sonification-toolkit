@@ -11,6 +11,7 @@ import pandas as pd
 import matplotlib
 matplotlib.use("Agg") 
 import matplotlib.pyplot as plt
+from matplotlib.colors import Normalize
 from io import BytesIO
 from utils import resolve_file
 from core import SonificationRequest, DataRequest
@@ -34,6 +35,7 @@ LOG = logging.getLogger(__name__)
 
 class ConstellationRequest(BaseModel):
     name: str
+    by_shape: bool = True
     n_stars: int
 
 class NStarsRequest(BaseModel):
@@ -131,18 +133,20 @@ IAU_names = {
     "Lacerta": "Lac"
 }
 
-def get_constellation(constellation_name: str) -> pd.DataFrame:
+def get_constellation(constellation_name: str, by_shape: bool = True) -> pd.DataFrame:
 
     # load CSV
     df = pd.read_csv(HYG_DATA)
 
-    # lines = CONST_SHAPES[IAU_names[constellation_name]]
-    # star_ids = list(set([n for ns in lines for n in ns]))
-
-    # # select a constellation
-    # stars_in_constellation = df[df['hip'].isin(star_ids)].copy()
-
-    stars_in_constellation = df[df['con'] == IAU_names[constellation_name]].copy()
+    lines = CONST_SHAPES[IAU_names[constellation_name]]
+    star_ids = list(set([n for ns in lines for n in ns]))
+    
+    if by_shape:
+        # Filter by membership in CONST_SHAPES dict
+        stars_in_constellation = df[df['hip'].isin(star_ids)].copy()
+    else:
+        #Filter by constellation boundaries
+        stars_in_constellation = df[df['con'] == IAU_names[constellation_name]].copy()
 
     # sort by brightness (smaller magnitude = brighter)
     stars_sorted = stars_in_constellation.sort_values('magnitude')
@@ -179,7 +183,7 @@ def correct_ra(ra):
     return ra
 
 
-def plot_and_format_constellation(df):
+def plot_and_format_constellation(df: pd.DataFrame, lines: bool):
 
     plt.figure(figsize=(6,6))
 
@@ -198,16 +202,36 @@ def plot_and_format_constellation(df):
     # smaller marker size inversely proportional to magnitude
     sizes = 180 * (10 ** (-0.4 * df['magnitude']))
 
-    # sizes = (10/top_stars['mag']) ** 2
+    # Normalise B-V to prevent the extremes of the colormap (dark colours on dark background)
+    bv_norm = Normalize(vmin=-0.3, vmax=2.0, clip=True)
 
-    # Color stars based on color index (B-V)
-    # Using a colormap that approximates star colors
-    # You can tweak 'plasma', 'inferno', or use custom mapping
-    colors = df['colour']  # assuming 'colour' is B-V
+    # Plot stars and colour based on colour index (B-V)
     scatter = plt.scatter(
-        x, y, s=sizes, c=colors, cmap='RdYlBu_r'
+        x, y, s=sizes, c=df["colour"], cmap='RdYlBu_r', norm=bv_norm, zorder=2
     )
-    plt.colorbar(scatter, label='B-V Colour Index')  # optional legend for color index
+
+    # legend for color index
+    plt.colorbar(scatter, label='B-V Colour Index')
+
+    # Add connecting lines if plotting shapes
+    if lines:
+
+        const = df['con'].iloc[0]
+
+        for hip_a, hip_b in CONST_SHAPES[const]:
+
+            if hip_a in df.index and hip_b in df.index:
+
+                star_a = df.loc[hip_a]
+                star_b = df.loc[hip_b]
+
+                plt.plot(
+                    [star_a.ra, star_b.ra],
+                    [star_a.dec, star_b.dec],
+                    color="white",
+                    linewidth=1,
+                    zorder=1
+                )
 
     # add padding around stars
     padding_ra = ra_range * 0.2
@@ -251,16 +275,19 @@ def plot_and_format_constellation(df):
 
 
 @router.post("/plot-constellation/")
-async def plot_constellation(constellation: ConstellationRequest):
+async def plot_constellation(request: ConstellationRequest):
 
     # select constellation
-    stars_sorted = get_constellation(constellation.name)
+    stars_sorted = get_constellation(request.name, by_shape=request.by_shape)
 
-    # choose top N stars
-    N = constellation.n_stars
-    top_stars = stars_sorted.head(N).copy()
+    # choose top N stars if not filtering by shape
+    N = request.n_stars
+    filtered_stars = stars_sorted.head(N).copy() if not request.by_shape else stars_sorted
 
-    image = plot_and_format_constellation(top_stars)
+    # Index by hipparcos ID
+    filtered_stars = filtered_stars.set_index('hip')
+
+    image = plot_and_format_constellation(filtered_stars, lines=request.by_shape)
 
     return {'image': image}
 
