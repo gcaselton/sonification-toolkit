@@ -166,7 +166,9 @@ async def plot_csv(data: DataRequest):
         raise HTTPException(status_code=400, detail=f'Data file type must be .csv')
     
     df = pd.read_csv(data_filepath)
-    image = plot_and_format_constellation(df)
+
+    by_shape = data.file_ref.endswith('shape')
+    image = plot_and_format_constellation(df, by_shape)
 
     return {'image': image}
 
@@ -241,10 +243,9 @@ def plot_and_format_constellation(df: pd.DataFrame, lines: bool):
 
     # Label stars with proper names if available (using unwrapped RA)
     for i, row in df.iterrows():
-        this_ra = df['ra'].loc[i]  # use the corrected RA value
         if pd.notna(row['proper']) and str(row['proper']).strip() != "":
             plt.text(
-                this_ra + offset_ra,
+                row['ra'] + offset_ra,
                 row['dec'] + offset_dec,
                 row['proper'],
                 color='white',
@@ -323,15 +324,16 @@ async def get_n_stars(request: NStarsRequest):
 async def save_refined(request: ConstellationRequest):
 
     # get and sort constellation stars
-    stars = get_constellation(request.name)
-    refined_stars = stars.head(request.n_stars).copy()
+    stars = get_constellation(request.name, request.by_shape)
+    refined_stars = stars.head(request.n_stars).copy() if not request.by_shape else stars
 
     # save to tmp directory (overwriting any existing dataset)
     session_id = session_id_var.get()
-    filename = f'{request.name}.csv'
+    filename = f'{request.name}{'_shape' if request.by_shape else ''}.csv'
     filepath = TMP_DIR / session_id / filename
     refined_stars.to_csv(filepath, index=False)
 
     file_ref = f'session:{filename}'
+    print(file_ref)
 
     return {'file_ref': file_ref}
