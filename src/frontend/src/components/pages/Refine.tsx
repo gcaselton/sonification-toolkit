@@ -54,7 +54,7 @@ export default function Refine() {
             <Box position='relative' as='main' role='main'>
                 <Heading size="4xl">Step 2: Refine</Heading>
                 <br />
-                <Text textStyle='lg'>Optionally, edit the {dataName} dataset.</Text>
+                <Text textStyle='lg'>Optionally, edit the {dataName} dataset</Text>
                 <br />
                 <br />
                 <Suspense>

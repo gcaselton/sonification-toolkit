@@ -2,7 +2,7 @@ name: 'Left to Right'
 
 description: 'The stars in the constellation appear left to right, brighter stars are higher pitched. Mallets base sound.'
 
-sound: 'Mallets'
+sound: 'Harp'
 
 parameters:
     

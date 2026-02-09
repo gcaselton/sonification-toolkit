@@ -10,6 +10,7 @@ import {
   Image,
   Input,
   Icon,
+  Link,
   Text,
   Flex,
   NumberInput,
@@ -164,14 +165,25 @@ export default function Constellations({
       value: "shape",
       title: "Stick Figure",
       description:
-        `Sonify the stars that make up the classic shape of ${dataName}.`,
+        `Sonify the stars that make up the classic shape of ${dataName}`,
       icon: <LuWaypoints />,
     },
     {
       value: "boundaries",
       title: "Boundaries",
       description:
-        "Sonify the brightest stars within the constellation boundaries.",
+        (
+          <>
+            Sonify the brightest stars within the{" "}
+            <Link
+              href="https://en.wikipedia.org/wiki/IAU_designated_constellations"
+              color="teal.500"
+              textDecoration="underline"
+            >
+              constellation boundaries
+            </Link>
+          </>
+      ),
       icon: <LuSquareDashed />,
     },
   ];

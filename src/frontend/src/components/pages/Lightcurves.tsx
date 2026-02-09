@@ -275,7 +275,7 @@ export default function Lightcurves() {
       <Box as='main' role="main">
         <Heading size="4xl" as='h1'>Light Curves</Heading>
         <br />
-        <Text textStyle="lg">Search for a specific star or choose from the suggestions below.</Text>
+        <Text textStyle="lg">Search for a specific star or choose from the suggestions below</Text>
         <br />
         <br />
         <form onSubmit={handleSubmit}>

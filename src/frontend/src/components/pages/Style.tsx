@@ -369,7 +369,7 @@ export default function Style() {
             <Box position='relative' as="main" role="main">
                 <Heading size="4xl" as='h1'>  Step 2: Style</Heading>
                 <br />
-                <Text textStyle="lg">Choose from the styles below, or configure your own.</Text>
+                <Text textStyle="lg">Choose from the styles below, or configure your own</Text>
                 <br />
                 <Dialog.Root lazyMount open={open} placement='center' onOpenChange={(details) => setOpen(details.open)}>
                     <Dialog.Backdrop />

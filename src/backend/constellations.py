@@ -166,8 +166,10 @@ async def plot_csv(data: DataRequest):
         raise HTTPException(status_code=400, detail=f'Data file type must be .csv')
     
     df = pd.read_csv(data_filepath)
+    df = df.set_index('hip')
 
-    by_shape = data.file_ref.endswith('shape')
+    by_shape = data.file_ref.split('.')[-2].endswith('shape')
+   
     image = plot_and_format_constellation(df, by_shape)
 
     return {'image': image}

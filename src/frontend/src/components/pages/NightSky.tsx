@@ -257,7 +257,7 @@ export default function NightSky() {
             <Box as='main' role="main">
                 <Heading size="4xl" as='h1'>Night Sky</Heading>
                 <br />
-                <Text textStyle="lg">Select a location and time to get local stars.</Text>
+                <Text textStyle="lg">Select a location and time to get local stars</Text>
                 <br />
                 <br />
                 <Box display="flex" justifyContent="center">

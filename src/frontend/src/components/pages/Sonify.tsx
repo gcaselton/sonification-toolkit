@@ -21,6 +21,7 @@ import {
   Text,
   Flex,
   NumberInput,
+  Separator,
   VStack,
   Select,
   HStack
@@ -94,8 +95,13 @@ export default function Sonify() {
     fetchPlot();
   }, [dataRef]);
 
-  // Fetch data range once on load
+  // Fetch data range once on load for lightcurves
   useEffect(() => {
+
+    if (soniType != 'light_curves'){
+      return
+    }
+
     const fetchDataRange = async () => {
       const url_range = `${lightCurvesAPI}/get-range/`;
       const data = {
@@ -212,13 +218,13 @@ export default function Sonify() {
       <Box position='relative' as="main" role="main">
         <Heading size="4xl" as='h1'>Step 3: Sonify</Heading>
         <br />
-        <Text textStyle='lg'>Set the length of the sonification and specify the audio system you intend to play it on.</Text>
+        <Text textStyle='lg'>Set the length of the sonification and specify the audio system you intend to play it on</Text>
         <br />
         <HStack gap='4' align='start' justify='center'>
         <Box width='50%'>
           <form onSubmit={handleSubmit}>
               <VStack align='start' justify='center' w='80%' gap={8}>
-                
+      
                 <HStack gap={10}>
                 <Field.Root invalid={invalidLength} width='auto'>
                   <Field.Label>Duration (seconds)</Field.Label>
@@ -256,7 +262,12 @@ export default function Sonify() {
                 </>
                 }
                 </HStack>
-                <Select.Root collection={audioSystemOptions} value={audioSystem} onValueChange={(e) => setAudioSystem(e.value)} variant='outline'>
+                <Select.Root 
+                collection={audioSystemOptions} 
+                value={audioSystem} 
+                onValueChange={(e) => setAudioSystem(e.value)}
+                w='50%' 
+                >
                     <Select.HiddenSelect />
                     <Select.Label>Audio System</Select.Label>
                     <Select.Control>
@@ -276,9 +287,17 @@ export default function Sonify() {
                             ))}
                         </Select.Content>
                 </Select.Root>
+
                 <Button type="submit" colorPalette="teal" width='50%' disabled={invalidLength || length === ''}>
                   <LuAudioLines/> Sonify
                 </Button>
+
+                <HStack w='100%'>
+                  <Separator w='100%' size='lg'/>
+                    <Text flexShrink='0'>Components</Text>
+                  <Separator w='100%' size='lg' />            
+                </HStack>
+                
                 <DataList.Root orientation="horizontal" divideY="1px" variant='bold' w='100%'>
                   {summaryItems.map((item) => (
                     
