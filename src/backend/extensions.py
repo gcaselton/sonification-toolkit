@@ -125,6 +125,11 @@ def get_filepath(directory):
       return os.path.join(directory, name)
 
 
+raga_kumud = [['C3', 'D3', 'E3', 'G3', 'A3', 'B3', 'C4', 'D4', 'E4', 'G4']]
+Amaj7_13 = [['A3', 'C#4', 'E4', 'F#4', 'G#4', 'A4', 'C#5', 'E5']]
+hirajoshi = [['A2', 'B2', 'C3', 'E3', 'F3', 'A3', 'B3', 'C4', 'E4', 'F4']]
+major = [['C3', 'D3', 'E3', 'F3', 'G3', 'A3', 'B3', 'C4', 'D4', 'E4']]
+
 def setup_strauss(data: Path | str | tuple, style: BaseStyle, sonify_type, length):
 
       # Read and find sound to create Generator
@@ -146,7 +151,7 @@ def setup_strauss(data: Path | str | tuple, style: BaseStyle, sonify_type, lengt
                   generator.modify_preset({'volume_envelope': {'use':'on', 'R':0.2}})
             else:
                   generator.load_preset('sustain')
-                  generator.modify_preset({'looping': 'forwardback', 'loop_start': 0.2, 'loop_end': 5.})
+                  generator.modify_preset({'looping': 'forwardback', 'loop_start': 0.4, 'loop_end': 3.})
 
       
       # generator = Synthesizer() if folder == 'synths' else Sampler()
@@ -174,6 +179,7 @@ def setup_strauss(data: Path | str | tuple, style: BaseStyle, sonify_type, lengt
       # Handle chord or scale
       if style.harmony:
             notes = parse_harmony(style.harmony, folder, path)
+            notes = raga_kumud
       else:
             notes = [['A3']] # Change this?
       
@@ -217,10 +223,6 @@ def constellation_sources(data: Path | str , style: BaseStyle, length):
       m_lims = {}
       p_lims = {}
       my_funcs = {}
-
-      special_funcs = {
-      'pitch':  lambda x: -x,
-      'volume': lambda x: (1 + np.argsort(x).astype(float))**-0.2}
       
       for mapping in style.parameters:
 
@@ -234,11 +236,9 @@ def constellation_sources(data: Path | str , style: BaseStyle, length):
                   # Add constant polar of 0.5
                   data_dict['polar'] = np.full(len(df), 0.5)
 
-            # Apply special mapping functions, default to ndarray conversion
-            my_funcs[output] = special_funcs.get(
-            output,
-            lambda x : x
-            )
+            # Invert data for magnitude (smaller magnitude is brighter)
+            if input == 'magnitude':
+                  my_funcs[output] = lambda x: -x
 
             # Map data
             data_dict[output] = df[input].to_numpy(dtype=float)
@@ -250,6 +250,8 @@ def constellation_sources(data: Path | str , style: BaseStyle, length):
                   p_lims[output] = mapping.output_range
 
       sources = Events(data_dict.keys())
+
+      print(data_dict)
      
       sources.fromdict(data_dict)
       sources.apply_mapping_functions(map_funcs=my_funcs, map_lims=m_lims, param_lims=p_lims)

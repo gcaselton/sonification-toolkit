@@ -321,7 +321,7 @@ async def get_n_stars(request: NStarsRequest):
     n_stars = len(selected_stars)
 
     return {'n_stars': n_stars}
-
+ 
 @router.post("/save-refined/")
 async def save_refined(request: ConstellationRequest):
 
