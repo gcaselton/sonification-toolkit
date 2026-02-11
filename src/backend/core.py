@@ -13,9 +13,6 @@ import logging, httpx, yaml, requests, os, base64, hashlib, uuid, aiofiles, zipf
 
 import lightkurve as lk
 import numpy as np
-import matplotlib
-matplotlib.use("Agg") 
-import matplotlib.pyplot as plt
 from io import BytesIO
 from astroquery.simbad import Simbad
 

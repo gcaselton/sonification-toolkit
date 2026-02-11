@@ -265,7 +265,7 @@ def plot_and_format_constellation(df: pd.DataFrame, lines: bool):
 
     # send bytes to buffer
     buf = BytesIO()
-    plt.savefig(buf, format="png", bbox_inches="tight")
+    plt.savefig(buf, format="svg", bbox_inches="tight")
     plt.close()
     buf.seek(0)
     img_base64 = base64.b64encode(buf.read()).decode("utf-8")

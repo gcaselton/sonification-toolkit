@@ -251,7 +251,7 @@ export default function Lightcurves() {
       const image = await plotLightcurve(fileRef);
 
       if (image) {
-        setImage("data:image/png;base64," + image);
+        setImage("data:image/svg+xml;base64," + image);
         setLoadingPlot(false);
       }
     } catch (err) {

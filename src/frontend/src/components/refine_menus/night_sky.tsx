@@ -73,7 +73,7 @@ export default function Constellations({ dataRef, dataName, onApply }: RefineMen
     const result = await apiRequest(plotURL, plotPayload)
     
     // update image state
-    setImageSrc(`data:image/png;base64,${result.image}`);
+    setImageSrc(`data:image/svg+xml;base64,${result.image}`);
 
     setImageLoading(false)
   }

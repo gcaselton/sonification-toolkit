@@ -85,7 +85,7 @@ export default function Sonify() {
           imageBase64 = result.image
         }
 
-        setImageSrc(`data:image/png;base64,${imageBase64}`);
+        setImageSrc(`data:image/svg+xml;base64,${imageBase64}`);
       } catch (error) {
         console.error("Error generating plot:", error);
       } finally {

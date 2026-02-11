@@ -54,7 +54,7 @@ export default function LightCurves({ dataName, dataRef, onApply }: RefineMenuPr
       try {
         const base64 = await plotLightcurve(dataRef);
         if (!mounted) return;
-        setImageSrc(`data:image/png;base64,${base64}`);
+        setImageSrc(`data:image/svg+xml;base64,${base64}`);
       } catch (err) {
         console.error("Error generating plot:", err);
       } finally {
@@ -122,7 +122,7 @@ export default function LightCurves({ dataName, dataRef, onApply }: RefineMenuPr
 
     try {
       const result = await apiRequest(endpoint, payload);
-      setImageSrc(`data:image/png;base64,${result.image}`);
+      setImageSrc(`data:image/svg+xml;base64,${result.image}`);
     } catch (err) {
       console.error("Error previewing plot:", err);
     } finally {
@@ -289,7 +289,7 @@ export default function LightCurves({ dataName, dataRef, onApply }: RefineMenuPr
       </VStack>
       </Box>
 
-      <Box width="50%" >
+      <Box width="100%" >
         {imageLoading ? (
           <LoadingMessage msg="" icon="pulsar" />
         ) : imageSrc ? (

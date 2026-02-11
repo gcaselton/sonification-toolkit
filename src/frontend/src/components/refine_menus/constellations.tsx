@@ -15,6 +15,7 @@ import {
   Flex,
   NumberInput,
   VStack,
+  Stack,
   Select,
   SegmentGroup,
   Slider,
@@ -32,7 +33,7 @@ import { apiUrl, constellationsAPI, coreAPI } from "../../apiConfig";
 import { apiRequest } from "../../utils/requests";
 import { InfoTip } from "../ui/ToggleTip";
 import { Tooltip } from "../ui/Tooltip";
-import { LuSquareDashed, LuWaypoints, LuArrowRightLeft } from "react-icons/lu";
+import { LuSquareDashed, LuWaypoints, LuArrowRightLeft, LuArrowRight } from "react-icons/lu";
 
 export default function Constellations({
   dataRef,
@@ -88,7 +89,7 @@ export default function Constellations({
     const result = await apiRequest(endpoint, payload);
 
     // update image state
-    setImageSrc(`data:image/png;base64,${result.image}`);
+    setImageSrc(`data:image/svg+xml;base64,${result.image}`);
 
     setImageLoading(false);
   };
@@ -189,15 +190,20 @@ export default function Constellations({
   ];
 
   return (
-    <HStack gap="4" align="start" justify="center">
-      <Box width="50%">
-        <VStack align="start" justify="center" gap="16" w="80%">
+    <Stack
+      gap="10"
+      align="start"
+      justify="center"
+      direction={{ base: "column", md: "row" }}
+    >
+      <Box minW="50%">
+        <VStack align="center" justify="center" gap={{md: "10"}} w="auto">
           <RadioCard.Root
             value={filterType}
             colorPalette="teal"
             onValueChange={(e) => setFilterType(e.value)}
           >
-            <HStack align="stretch">
+            <Stack align="stretch" direction={{ base: "column", md: "row" }}>
               {cards.map((card) => (
                 <RadioCard.Item key={card.value} value={card.value}>
                   <RadioCard.ItemHiddenInput />
@@ -217,9 +223,9 @@ export default function Constellations({
                   </RadioCard.ItemControl>
                 </RadioCard.Item>
               ))}
-            </HStack>
+            </Stack>
           </RadioCard.Root>
-          <Collapsible.Root open={filterType == 'boundaries'}>
+          <Collapsible.Root open={filterType == "boundaries"}>
             <Collapsible.Content>
               <HStack gap={10}>
                 <Field.Root width="auto">
@@ -238,8 +244,8 @@ export default function Constellations({
                     <NumberInput.Input />
                   </NumberInput.Root>
                 </Field.Root>
-                <Icon size='md'>
-                  <LuArrowRightLeft/>
+                <Icon size="md">
+                  <LuArrowRightLeft />
                 </Icon>
                 <Field.Root width="auto">
                   <Field.Label>Magnitude less than</Field.Label>
@@ -260,26 +266,21 @@ export default function Constellations({
               </HStack>
             </Collapsible.Content>
           </Collapsible.Root>
-          <HStack
-            gap="5"
-            justify="center"
-            w="100%"
-            animation="fade-in 300ms ease-out"
-          >
+          <Box display={{ base: "none", md: "flex" }}>
             <Button
-              w="40%"
+              w="auto"
               onClick={handleClickApply}
               colorPalette="teal"
               loading={applyLoading}
               loadingText="Saving..."
             >
-              Apply & Continue
+              Apply & Continue <LuArrowRight />
             </Button>
-          </HStack>
+          </Box>
         </VStack>
       </Box>
 
-      <Box width="50%">
+      <Box minW={{base: '100%', md: "50%"}}>
         {imageLoading ? (
           <LoadingMessage msg="" icon="pulsar" />
         ) : imageSrc ? (
@@ -292,6 +293,17 @@ export default function Constellations({
           <ErrorMsg message="Unable to plot data." />
         )}
       </Box>
-    </HStack>
+      <Box w="100%" display={{ base: "block", md: "none" }}>
+        <Button
+          w="100%"
+          onClick={handleClickApply}
+          colorPalette="teal"
+          loading={applyLoading}
+          loadingText="Saving..."
+        >
+          Apply & Continue <LuArrowRight />
+        </Button>
+      </Box>
+    </Stack>
   );
 }
