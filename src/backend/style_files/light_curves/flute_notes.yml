@@ -3,6 +3,8 @@ name: "Flute Notes"
 description: "Flute + Pitch + Chromatic Scale."
 
 sound: "Flute"
+preset: 'staccato'
+mods: {'volume_envelope': {'use':'on', 'R':0.2}}
 
 parameters:
   - input: "flux"

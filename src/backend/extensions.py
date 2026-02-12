@@ -145,18 +145,14 @@ def setup_strauss(data: Path | str | tuple, style: BaseStyle, sonify_type, lengt
             path = str(path)
             inner_file = get_filepath(path)
             generator = Sampler(inner_file, sf_preset=1) if inner_file.endswith('.sf2') else Sampler(path)
-            
-            if style.harmony and ' ' in style.harmony:
-                  generator.load_preset('staccato')
-                  generator.modify_preset({'volume_envelope': {'use':'on', 'R':0.2}})
-            else:
-                  generator.load_preset('sustain')
-                  generator.modify_preset({'looping': 'forwardback', 'loop_start': 0.4, 'loop_end': 3.})
 
-      
-      # generator = Synthesizer() if folder == 'synths' else Sampler()
-      # path_stem = str(path.with_suffix(""))
-      # generator.load_preset(path_stem)
+            if style.preset:
+                  generator.load_preset(style.preset)
+
+            if style.mods:
+                  generator.modify_preset(style.mods)
+
+      print(str(generator.preset))
 
       mappings = style.parameters
 
@@ -178,8 +174,11 @@ def setup_strauss(data: Path | str | tuple, style: BaseStyle, sonify_type, lengt
       
       # Handle chord or scale
       if style.harmony:
-            notes = parse_harmony(style.harmony, folder, path)
-            notes = raga_kumud
+
+            if isinstance(style.harmony, str):
+                  notes = parse_harmony(style.harmony, folder, path)
+            else:
+                  notes = [style.harmony]
       else:
             notes = [['A3']] # Change this?
       
@@ -450,6 +449,7 @@ def voice_chord(chord_name: str, sound_folder: str, sound_path: str):
             # Move lowest note up an octave and highest note down if not available in the sound folder
             notes[0] = f'{root}3' if f'{root}2' not in available_notes else f'{root}2'
             notes[3] = f'{fourth_note}4' if f'{fourth_note}5' not in available_notes else f'{fourth_note}5'
+
 
       return [notes]
 

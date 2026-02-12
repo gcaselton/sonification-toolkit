@@ -1,0 +1,36 @@
+name: 'Orchestra'
+
+description: >
+  'Uses a library of orchestral sounds to provide a mixed sonic texture.
+  Brightest stars appear first, and their colour is mapped to pitch (higher pitch = bluer star).'
+
+sound: 'Orchestra'
+preset: 'sustain'
+mods: {'note_length': 'sample', 'looping': 'forward', 'loop_start': 0.4, 'loop_end': 4.}
+
+parameters:
+    
+  - input: 'magnitude'
+    output: 'volume'
+    output_range: [0.2, 1]
+
+  - input: 'colour'
+    output: 'pitch'
+
+  - input: 'ra'
+    input_range: ['0%', '110%']
+    output: 'time'
+
+  - input: 'ra'
+    output: 'azimuth'
+    output_range: [0.25, 0.75]
+
+
+harmony: ['C3', 'D3', 'E3', 'G3', 'A3', 'B3', 'C4', 'D4', 'E4', 'G4']
+  
+
+
+  
+  
+  
+

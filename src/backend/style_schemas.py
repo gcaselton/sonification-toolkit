@@ -64,8 +64,10 @@ class BaseStyle(BaseModel):
     name: Optional[str] = Field(None)
     description: Optional[str] = Field(None)
     sound: str = Field(...)
+    preset: Optional[str] = Field(None)
+    mods: Optional[Dict] = Field(None)
     parameters: List[ParameterMapping] = Field(...)
-    harmony: Optional[str] = Field(None)
+    harmony: Union[str, List, None] = Field(None)
 
     @field_validator('sound')
     @classmethod
@@ -101,6 +103,9 @@ class BaseStyle(BaseModel):
     @classmethod
     def validate_harmony(cls, value: Optional[str]):
 
+        if isinstance(value, List):
+            return value
+
         if value is None:
             return value
         
@@ -129,7 +134,7 @@ class BaseStyle(BaseModel):
                 raise ValueError(f'Sound "{self.sound}" is not composable, so harmony cannot be applied.')
 
         # need to check that pitch is mapped if using a scale
-        is_scale = ' ' in self.harmony if self.harmony else False
+        is_scale = ' ' in self.harmony if isinstance(self.harmony, str) else False
 
         mapped_outputs = {param.output for param in self.parameters}
 
