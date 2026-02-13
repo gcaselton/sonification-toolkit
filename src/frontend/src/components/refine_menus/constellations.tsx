@@ -26,11 +26,11 @@ import {
 import { RefineMenuProps } from "./RefineMenu";
 import React, { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
-import { plotLightcurve } from "../pages/Lightcurves";
 import LoadingMessage from "../ui/LoadingMessage";
 import ErrorMsg from "../ui/ErrorMsg";
 import { apiUrl, constellationsAPI, coreAPI } from "../../apiConfig";
 import { apiRequest } from "../../utils/requests";
+import { plotData } from "../../utils/plot";
 import { InfoTip } from "../ui/ToggleTip";
 import { Tooltip } from "../ui/Tooltip";
 import { LuSquareDashed, LuWaypoints, LuArrowRightLeft, LuArrowRight } from "react-icons/lu";
@@ -79,7 +79,7 @@ export default function Constellations({
   const plotConstellation = async () => {
     setImageLoading(true);
 
-    const endpoint = `${constellationsAPI}/plot-constellation/`;
+    const endpoint = `${constellationsAPI}/get-and-plot/`;
     const payload = {
       name: dataName,
       by_shape: filterType === 'shape',
@@ -107,7 +107,7 @@ export default function Constellations({
     const result = await apiRequest(endpoint, payload);
 
     if (onApply) {
-      onApply(result.file_ref); // pass new file ref up to parent Refine.tsx
+      onApply(result.file_ref); // Pass the refined data file reference up to Refine.tsx
     }
 
     setApplyLoading(false);

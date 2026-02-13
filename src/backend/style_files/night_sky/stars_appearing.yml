@@ -2,25 +2,18 @@ name: 'Stars Appearing'
 
 description: 'Brightest stars appear first, pitch mapped to colour. Mallets base sound.'
 
-generator:
-  type: 'Sampler'
-  preset: 'sustain'
-  path: './sound_assets/orchestra.sf2'
-  sf_preset: 2
-  mods:
-    looping: 'forward'
-    loop_end: 0.5
+sound: 'Glockenspiel'
 
-sources: 'Events'
+Preset: 'staccato'
 
-map:
-    
-  - output: 'pitch'
+parameters:
+  
+  - input: 'colour'
+    output: 'pitch'
 
   - input: 'magnitude'
     output: 'volume'
     output_range: [0.2, 1]
-    function: 'log'
 
   - input: 'magnitude'
     input_range: ['0%', '110%']
@@ -30,4 +23,4 @@ map:
     output: 'azimuth'
     output_range: [0.25, 0.75]
 
-notes: ['G3', 'D3', 'B4']
+harmony: ['G3', 'D3', 'B4']

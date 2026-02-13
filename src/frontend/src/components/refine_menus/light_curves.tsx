@@ -20,12 +20,14 @@ import {
 import { RefineMenuProps } from "./RefineMenu";
 import React, { useState, useEffect } from "react";
 import { useLocation } from 'react-router-dom';
-import { plotLightcurve } from "../pages/Lightcurves";
 import LoadingMessage from "../ui/LoadingMessage";
 import ErrorMsg from "../ui/ErrorMsg";
 import { apiUrl, lightCurvesAPI, coreAPI } from "../../apiConfig";
 import { apiRequest } from "../../utils/requests";
 import { InfoTip } from "../ui/ToggleTip";
+import { LuArrowRight } from "react-icons/lu";
+import { plotData } from "../../utils/plot";
+import Sonify from "../pages/Sonify";
 
 export default function LightCurves({ dataName, dataRef, onApply }: RefineMenuProps) {
   const [imageSrc, setImageSrc] = useState<string | null>(null);
@@ -52,7 +54,7 @@ export default function LightCurves({ dataName, dataRef, onApply }: RefineMenuPr
     let mounted = true;
     async function fetchPlot() {
       try {
-        const base64 = await plotLightcurve(dataRef);
+        const base64 = await plotData(dataRef, 'light_curves');
         if (!mounted) return;
         setImageSrc(`data:image/svg+xml;base64,${base64}`);
       } catch (err) {
@@ -279,7 +281,7 @@ export default function LightCurves({ dataName, dataRef, onApply }: RefineMenuPr
       {!slidersLoading ? (
       <HStack gap='5' justify="center" w="100%" animation="fade-in 300ms ease-out">
         <Button w='40%' onClick={handleClickApply} colorPalette="teal" loading={applyLoading} loadingText="Saving..." variant={applyButtonOn ? 'solid' : 'surface'}>
-          {applyButtonOn ? 'Apply & Continue' : 'Skip'}
+          {applyButtonOn ? 'Apply & Continue' : 'Skip'} <LuArrowRight/>
         </Button>
       </HStack>) : (
       <Box width="100%">

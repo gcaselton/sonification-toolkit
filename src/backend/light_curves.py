@@ -234,8 +234,8 @@ def download_lightcurve(data_uri):
 
     return filepath
 
-@router.post('/plot-lightcurve/')
-async def plot_lightcurve(request: DownloadRequest):
+@router.post('/plot/')
+async def plot_lightcurve(request: DataRequest):
     """
     Download the target light curve (if not already downloaded) and convert it to a png image.
     This function saves the plot to the memory buffer, to increase speed and avoid saving multiple images to disk.
@@ -245,10 +245,10 @@ async def plot_lightcurve(request: DownloadRequest):
     """
 
     # Check if the requested light curve is from a search (with data URI) or a suggested (local) file.
-    if (request.data_uri.startswith('mast:')):
-        filepath = download_lightcurve(request.data_uri)
+    if (request.file_ref.startswith('mast:')):
+        filepath = download_lightcurve(request.file_ref)
     else:
-        filepath = resolve_file(request.data_uri)
+        filepath = resolve_file(request.file_ref)
 
     img_base64 = plot_and_format_lc(str(filepath))
 

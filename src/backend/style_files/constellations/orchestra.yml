@@ -6,7 +6,10 @@ description: >
 
 sound: 'Orchestra'
 preset: 'sustain'
-mods: {'note_length': 'sample', 'looping': 'forward', 'loop_start': 0.4, 'loop_end': 4.}
+mods: 
+  looping: 'forwardback'
+  loop_start: 0.4
+  loop_end: 3
 
 parameters:
     

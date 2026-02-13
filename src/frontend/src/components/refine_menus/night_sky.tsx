@@ -20,19 +20,21 @@ import {
 import { RefineMenuProps } from "./RefineMenu";
 import React, { useState, useEffect } from "react";
 import { useLocation } from 'react-router-dom';
-import { plotLightcurve } from "../pages/Lightcurves";
 import LoadingMessage from "../ui/LoadingMessage";
 import ErrorMsg from "../ui/ErrorMsg";
 import { apiUrl, nightSkyAPI, coreAPI } from "../../apiConfig";
 import { apiRequest } from "../../utils/requests";
+import { plotData } from "../../utils/plot";
 import { InfoTip } from "../ui/ToggleTip";
 import { Tooltip } from "../ui/Tooltip";
+import { LuArrowRight } from "react-icons/lu";
 
 
 export default function Constellations({ dataRef, dataName, onApply }: RefineMenuProps) {
 
   const [imageSrc, setImageSrc] = useState<string | null>(null);
   const [imageLoading, setImageLoading] = useState(true);
+  const [fileRef, setFileRef] = useState(dataRef);
 
   // magnitude state
   const [magnitude, setMagnitude] = useState('4.5')
@@ -52,64 +54,75 @@ export default function Constellations({ dataRef, dataName, onApply }: RefineMen
 
   // request plot from backend
   const plotNightSky = async () => {
-    
+
     setImageLoading(true)
 
     const refineURL = `${nightSkyAPI}/refine-stars/`
     const refinePayload = {
-        maglim: magnitude,
-        file_ref: dataRef
+      maglim: magnitude,
+      file_ref: dataRef
     }
-    
+
     const refineResult = await apiRequest(refineURL, refinePayload)
     const refinedRef = refineResult.file_ref
     
+    setFileRef(refinedRef);
 
-    const plotURL= `${nightSkyAPI}/plot/`
-    const plotPayload = {
-      file_ref: refinedRef
-    }
+    const image = await plotData(refinedRef, 'constellations')
 
-    const result = await apiRequest(plotURL, plotPayload)
-    
     // update image state
-    setImageSrc(`data:image/svg+xml;base64,${result.image}`);
+    setImageSrc(`data:image/svg+xml;base64,${image}`);
 
     setImageLoading(false)
+  }
+
+  const handleClickApply = async () => {
+
+    setApplyLoading(true);
+
+    if (onApply){
+      onApply(fileRef); // Pass the refined data file reference up to Refine.tsx
+    }
+
   }
 
 
   return (
     <VStack gap="4" align="start" justify="center">
       <Box width="50%">
-      <VStack align='start' justify='center' gap='16' w='80%'>
         <Field.Root width='auto'>
-        <Field.Label>Magnitude less than</Field.Label>
-        <NumberInput.Root
-          min={-1.5}
-          max={21} 
-          value={magnitude} 
-          onValueChange={(e) => {
-            setMagnitude(e.value);
-          }}
-          inputMode="decimal">
-          <NumberInput.Control />
+          <Field.Label>Magnitude less than</Field.Label>
+          <NumberInput.Root
+            min={-1.5}
+            max={21}
+            value={magnitude}
+            onValueChange={(e) => {
+              setMagnitude(e.value);
+            }}
+            inputMode="decimal">
+            <NumberInput.Control />
             <NumberInput.Input />
-        </NumberInput.Root>
+          </NumberInput.Root>
         </Field.Root>
-    
-      </VStack>
       </Box>
-
       <Box width="100%" >
         {imageLoading ? (
           <LoadingMessage msg="" icon="pulsar" />
         ) : imageSrc ? (
-          <Image src={imageSrc} alt={`A plot of the brightest stars in ${dataName}.`} animation="fade-in 300ms ease-out"/>
+          <Image src={imageSrc} alt={`A plot of the brightest stars in ${dataName}.`} animation="fade-in 300ms ease-out" />
         ) : (
           <ErrorMsg message="Unable to plot data." />
         )}
       </Box>
+      <Button
+        w="auto"
+        onClick={handleClickApply}
+        colorPalette="teal"
+        loading={applyLoading}
+        loadingText="Saving..."
+      >
+        Apply & Continue <LuArrowRight />
+      </Button>
     </VStack>
   );
 }

@@ -1,14 +1,9 @@
-import React, { useEffect, useState, createContext, ChangeEvent } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from 'react-router-dom';
-import LoadingMessage from '../ui/LoadingMessage';
-import { LuX, LuChartSpline, LuAudioLines, LuSearch, LuSlidersHorizontal, LuTelescope } from "react-icons/lu";
+import { LuTelescope } from "react-icons/lu";
 import PageContainer from "../ui/PageContainer";
-import { SonifyButton, PlotButton} from "../ui/Buttons";
-import { PlotDialog } from "../ui/PlotDialog";
-import { Tooltip } from "../ui/Tooltip";
-import ErrorMsg from "../ui/ErrorMsg";
 import { getImage } from "../../utils/assets";
-import { apiUrl, coreAPI, constellationsAPI } from "../../apiConfig";
+import { coreAPI } from "../../apiConfig";
 import { SuggestedData } from "./Lightcurves";
 
 import {

@@ -4,7 +4,7 @@ import LoadingMessage from "../ui/LoadingMessage";
 import {BackButton} from "../ui/Buttons";
 import PageContainer from "../ui/PageContainer";
 import ErrorMsg from "../ui/ErrorMsg";
-import { apiUrl, lightCurvesAPI, coreAPI, constellationsAPI} from "../../apiConfig";
+import { apiUrl, lightCurvesAPI, coreAPI, constellationsAPI, nightSkyAPI} from "../../apiConfig";
 import { apiRequest } from "../../utils/requests";
 import {
   Box,
@@ -27,7 +27,7 @@ import {
   HStack
 } from "@chakra-ui/react";
 import { LuAudioLines, LuDownload } from "react-icons/lu";
-import { plotLightcurve } from "./Lightcurves";
+import { plotData } from "../../utils/plot";
 
 
 export default function Sonify() {
@@ -44,16 +44,17 @@ export default function Sonify() {
 
 
   // Define length limits based on sonification type
-  const lengthDict = {
-    'light_curves': {'max': 60, 'default': 15},
-    'constellations': {'max': 120, 'default': 20}
+  const defaultsDict = {
+    'light_curves': {'max_length': 60, 'default_length': 15, 'audio_system': 'mono'},
+    'constellations': {'max_length': 120, 'default_length': 20, 'audio_system': 'stereo'},
+    'night_sky': { 'max_length': 120, 'default_length': 30, 'audio_system': 'stereo'}
   }
 
-  const lengths = lengthDict[soniType as keyof typeof lengthDict];
+  const defaults = defaultsDict[soniType as keyof typeof defaultsDict];
 
   // states
-  const [length, setLength] = useState(lengths.default.toString());
-  const [audioSystem, setAudioSystem] = useState<string[]>([(soniType == 'light_curves') ? "mono" : "stereo"])
+  const [length, setLength] = useState(defaults.default_length.toString());
+  const [audioSystem, setAudioSystem] = useState<string[]>([defaults.audio_system])
   const [audioFilename, setAudioFilename] = useState("");
   const [soniReady, setSoniReady] = useState(false)
   const [soniClicked, setSoniClicked] = useState(false)
@@ -71,19 +72,7 @@ export default function Sonify() {
     async function fetchPlot() {
       try {
 
-        var imageBase64
-
-        if (soniType === 'light_curves') {
-          imageBase64 = await plotLightcurve(dataRef)
-        }
-        else if (soniType === 'constellations') {
-
-          const endpoint = `${constellationsAPI}/plot-csv/`
-          const payload = {file_ref: dataRef}
-          
-          const result = await apiRequest(endpoint, payload)
-          imageBase64 = result.image
-        }
+        const imageBase64 = await plotData(dataRef, soniType)
 
         setImageSrc(`data:image/svg+xml;base64,${imageBase64}`);
       } catch (error) {
@@ -196,7 +185,7 @@ export default function Sonify() {
 
 
   const invalidLength = (
-    Number(length) > lengths.max ||
+    Number(length) > defaults.max_length ||
     length === '0' || 
     length.includes('-')
   );
@@ -236,11 +225,11 @@ export default function Sonify() {
                   inputMode="decimal"
                   step={1}
                   min={1}
-                  max={lengths.max}>
+                  max={defaults.max_length}>
                     <NumberInput.Control />
                     <NumberInput.Input />
                   </NumberInput.Root>
-                  <Field.ErrorText>Please enter a number up to {lengths.max} seconds.</Field.ErrorText>
+                  <Field.ErrorText>Please enter a number up to {defaults.max_length} seconds.</Field.ErrorText>
                 </Field.Root>
                 {soniType === 'light_curves' &&
                 <> 

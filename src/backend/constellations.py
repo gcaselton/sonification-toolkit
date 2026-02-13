@@ -157,7 +157,7 @@ def get_constellation(constellation_name: str, by_shape: bool = True) -> pd.Data
     return stars_sorted
 
 
-@router.post("/plot-csv/")
+@router.post("/plot/")
 async def plot_csv(data: DataRequest):
 
     data_filepath = str(resolve_file(data.file_ref))
@@ -277,7 +277,7 @@ def plot_and_format_constellation(df: pd.DataFrame, lines: bool):
     return img_base64
 
 
-@router.post("/plot-constellation/")
+@router.post("/get-and-plot/")
 async def plot_constellation(request: ConstellationRequest):
 
     # select constellation

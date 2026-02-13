@@ -10,6 +10,7 @@ import ErrorMsg from "../ui/ErrorMsg";
 import { getImage } from "../../utils/assets";
 import { apiUrl, lightCurvesAPI, coreAPI } from "../../apiConfig";
 import { apiRequest } from "../../utils/requests";
+import { plotData } from "../../utils/plot";
 
 import {
   Box,
@@ -59,16 +60,6 @@ const LightcurvesContext = createContext({
 
 function capitaliseWords(str: string) {
   return str.replace(/\b\w/g, char => char.toUpperCase());
-}
-
-export const plotLightcurve = async (fileRef: string) => {
-
-  const url = `${lightCurvesAPI}/plot-lightcurve/`
-  const payload = { 'data_uri': fileRef }
-  const plotData = await apiRequest(url, payload)
-  const image = plotData.image;
-
-  return image;
 }
 
 
@@ -248,7 +239,7 @@ export default function Lightcurves() {
 
     try {
       setImage("");
-      const image = await plotLightcurve(fileRef);
+      const image = await plotData(fileRef, soniType);
 
       if (image) {
         setImage("data:image/svg+xml;base64," + image);
