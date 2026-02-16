@@ -68,7 +68,7 @@ export default function Constellations({ dataRef, dataName, onApply }: RefineMen
     
     setFileRef(refinedRef);
 
-    const image = await plotData(refinedRef, 'constellations')
+    const image = await plotData(refinedRef, 'night-sky')
 
     // update image state
     setImageSrc(`data:image/svg+xml;base64,${image}`);

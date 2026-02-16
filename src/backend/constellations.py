@@ -10,7 +10,7 @@ import numpy as np
 import pandas as pd
 import matplotlib
 matplotlib.use("Agg") 
-import matplotlib.pyplot as plt
+from matplotlib.figure import Figure
 from matplotlib.colors import Normalize
 from io import BytesIO
 from utils import resolve_file
@@ -189,11 +189,16 @@ def correct_ra(ra):
 
 def plot_and_format_constellation(df: pd.DataFrame, lines: bool):
 
-    plt.figure(figsize=(6,6))
+    if df.empty:
+        raise ValueError("No stars available to plot.")
 
     # RA/Dec as x/y
-    x = df['ra']
-    y = df['dec']
+    x = df['ra'].values
+    y = df['dec'].values
+
+    fig = Figure(figsize=(6, 6))
+    ax = fig.add_subplot(111)
+    ax.set_facecolor('#0b0c15')
 
     # Calculate ranges for proportional offsets
     ra_range = x.max() - x.min()
@@ -210,12 +215,18 @@ def plot_and_format_constellation(df: pd.DataFrame, lines: bool):
     bv_norm = Normalize(vmin=-0.3, vmax=2.0, clip=True)
 
     # Plot stars and colour based on colour index (B-V)
-    scatter = plt.scatter(
-        x, y, s=sizes, c=df["colour"], cmap='RdYlBu_r', norm=bv_norm, zorder=2
+    scatter = ax.scatter(
+        x,
+        y,
+        s=sizes,
+        c=df["colour"].values,
+        cmap='RdYlBu_r',
+        norm=bv_norm,
+        zorder=2
     )
 
-    # legend for color index
-    plt.colorbar(scatter, label='B-V Colour Index')
+    # Legend for colour index
+    fig.colorbar(scatter, ax=ax, label='B-V Colour Index')
 
     # Add connecting lines if plotting shapes
     if lines:
@@ -229,7 +240,7 @@ def plot_and_format_constellation(df: pd.DataFrame, lines: bool):
                 star_a = df.loc[hip_a]
                 star_b = df.loc[hip_b]
 
-                plt.plot(
+                ax.plot(
                     [star_a.ra, star_b.ra],
                     [star_a.dec, star_b.dec],
                     color="white",
@@ -240,13 +251,13 @@ def plot_and_format_constellation(df: pd.DataFrame, lines: bool):
     # add padding around stars
     padding_ra = ra_range * 0.2
     padding_dec = dec_range * 0.2
-    plt.xlim(x.min() - padding_ra, x.max() + padding_ra)
-    plt.ylim(y.min() - padding_dec, y.max() + padding_dec)
+    ax.set_xlim(x.min() - padding_ra, x.max() + padding_ra)
+    ax.set_ylim(y.min() - padding_dec, y.max() + padding_dec)
 
     # Label stars with proper names if available (using unwrapped RA)
     for i, row in df.iterrows():
         if pd.notna(row['proper']) and str(row['proper']).strip() != "":
-            plt.text(
+            ax.text(
                 row['ra'] + offset_ra,
                 row['dec'] + offset_dec,
                 row['proper'],
@@ -256,17 +267,15 @@ def plot_and_format_constellation(df: pd.DataFrame, lines: bool):
                 va='bottom'
             )
 
-    plt.gca().set_facecolor('black')
-    plt.xlabel("RA")
-    plt.ylabel("Dec")
-    # plt.gca().invert_xaxis()
-    plt.xticks([])
-    plt.yticks([])
+    # Add labels
+    ax.set_xlabel("RA")
+    ax.set_ylabel("Dec")
+    ax.set_xticks([])
+    ax.set_yticks([])
 
     # send bytes to buffer
     buf = BytesIO()
-    plt.savefig(buf, format="svg", bbox_inches="tight")
-    plt.close()
+    fig.savefig(buf, format="svg", bbox_inches="tight")
     buf.seek(0)
     img_base64 = base64.b64encode(buf.read()).decode("utf-8")
 

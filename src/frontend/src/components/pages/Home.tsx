@@ -116,7 +116,7 @@ export default function Lightcurves() {
         <br />
         <Stack gap="4" direction="row" wrap="wrap" animation="fade-in 300ms ease-out">
               {astroTypes.map((astroType) => (
-                <Tooltip content='Coming soon!' openDelay={300} disabled={astroType.page !== '/'}>
+                <Tooltip key={astroType.name} content='Coming soon!' openDelay={300} disabled={astroType.page !== '/'}>
                 <Card.Root 
                   width="200px" 
                   key={astroType.name} 

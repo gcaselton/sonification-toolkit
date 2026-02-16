@@ -4,7 +4,7 @@ import { apiRequest } from "./requests";
 
 export async function plotData (dataRef: string, soniType: string ) {
 
-    const endpoint = `${apiUrl}/${soniType}/plot/`
+    const endpoint = `${apiUrl}/${soniType.replace('_','-')}/plot/`
     const payload = {
         file_ref: dataRef
     }

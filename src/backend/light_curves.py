@@ -11,7 +11,7 @@ import numpy as np
 import asyncio
 import matplotlib
 matplotlib.use("Agg") 
-import matplotlib.pyplot as plt
+from matplotlib.figure import Figure
 import pandas as pd
 from io import BytesIO
 from concurrent.futures import ThreadPoolExecutor
@@ -275,8 +275,16 @@ def plot_and_format_lc(filepath: str):
         flux = lc.flux.value
 
     # Plot and format
-    fig, ax = plt.subplots()
-    ax.plot(time, flux, color="#008080", linewidth=1.2, alpha=0.9)
+    fig = Figure(figsize=(6, 4))
+    ax = fig.add_subplot(111)
+
+    ax.plot(
+        time,
+        flux,
+        color="#008080",
+        linewidth=1.2,
+        alpha=0.9
+    )
     
     ax.set_xlabel('Time (days)')
     ax.set_ylabel('Flux (electrons per second)')
@@ -287,13 +295,11 @@ def plot_and_format_lc(filepath: str):
     # send bytes to buffer
     buf = BytesIO()
     fig.savefig(buf, format="svg", bbox_inches="tight")
-    plt.close(fig)
     buf.seek(0)
     img_base64 = base64.b64encode(buf.read()).decode("utf-8")
 
     # Clean up memory
     buf.close()
-    del fig, ax, time, flux
     gc.collect()
 
     return img_base64

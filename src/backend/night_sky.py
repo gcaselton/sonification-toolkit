@@ -8,9 +8,11 @@ import logging, base64, uuid, gc
 
 import numpy as np
 import pandas as pd
+
 import matplotlib
-matplotlib.use("Agg") 
-import matplotlib.pyplot as plt
+matplotlib.use("Agg")
+from matplotlib.figure import Figure
+
 from io import BytesIO
 from utils import resolve_file
 from core import SonificationRequest, DataRequest
@@ -51,8 +53,6 @@ def get_star_data(request: NightSkyRequest):
     # Get time zone from coordinates
     tf = TimezoneFinder()
     time_zone = tf.timezone_at(lng=request.longitude, lat=request.latitude)
-
-    print(time_zone)
 
     # Get time information
     ts = load.timescale()
@@ -119,13 +119,14 @@ def refine_stars(request: MagRequest):
     parent_file = resolve_file(request.file_ref)
 
     df = pd.read_csv(parent_file)
+
     filtered = df[df['magnitude'] < request.maglim].copy()
 
     session_id = session_id_var.get()
     filename = f'{CATEGORY}_refined.csv'
     filepath = TMP_DIR / session_id / filename
 
-    filtered.to_csv(filepath)
+    filtered.to_csv(filepath, index=False)
     file_ref = f'session:{filename}'
     
     return{'file_ref': file_ref}
@@ -133,51 +134,48 @@ def refine_stars(request: MagRequest):
 
 def plot_and_format_stars(df: pd.DataFrame):
 
-    # Unpack data from DataFrame
+    if df.empty:
+        raise ValueError("No stars to plot.")
+
     x = df["azimuth_rad"].values
     y = df["altitude_deg"].values
     mags = df["magnitude"].values + 1e-2*np.random.random(len(df))
     bv_indices = df["bv_index"].values
     direction = df["direction_offset"].iloc[0]
 
-    plt.figure(figsize=(10,5))
-    ax = plt.gca()
-    ax.patch.set_facecolor('#0b0c15')
+    fig = Figure(figsize=(10,5))
+    ax = fig.add_subplot(111)
 
-    # Only use the middle of the colour range to avoid dark colours on dark background
-    bvrange = np.diff(np.percentile(bv_indices, [0,100]))
+    ax.set_facecolor('#0b0c15')
+
+    bvrange = np.nanmax(bv_indices) - np.nanmin(bv_indices)
     delrange = 0.4 * bvrange
 
-    # Plot
-    plt.scatter(
+    sc = ax.scatter(
         (x - direction - np.pi) % (np.pi*2),
         y,
         s=20 * 10**((-mags * 0.4)),
         c=bv_indices,
         cmap='RdYlBu_r',
-        vmin=bv_indices.min() - delrange,
-        vmax=bv_indices.max() + delrange
+        vmin=np.nanmin(bv_indices) - delrange,
+        vmax=np.nanmax(bv_indices) + delrange
     )
 
-    plt.ylim(0, 90)
-    plt.xlim(0, 2*np.pi)
+    ax.set_ylim(0, 90)
+    ax.set_xlim(0, 2*np.pi)
 
-    # Add ticks and labels
     ax.set_xticks((COMPASS_RADS - direction - np.pi) % (np.pi*2))
     ax.set_xticklabels(COMPASS_KEYS)
 
-    plt.xlabel("Compass Direction")
-    plt.ylabel("Altitude [°]")
-    plt.title(f"Found {len(df)} stars above horizon")
+    ax.set_xlabel("Compass Direction")
+    ax.set_ylabel("Altitude [°]")
+    ax.set_title(f"Found {len(df)} stars above horizon")
 
-    # send bytes to buffer
     buf = BytesIO()
-    plt.savefig(buf, format="svg", bbox_inches="tight")
-    plt.close()
+    fig.savefig(buf, format="svg", bbox_inches="tight")
     buf.seek(0)
-    img_base64 = base64.b64encode(buf.read()).decode("utf-8")
 
-    # Clean up memory
+    img_base64 = base64.b64encode(buf.read()).decode("utf-8")
     buf.close()
     gc.collect()
 
