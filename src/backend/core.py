@@ -86,7 +86,7 @@ async def generate_sonification(request: SonificationRequest):
     length = request.duration
     system = request.system
     name = request.data_name
-    
+
     if int(length) > 300:
         raise HTTPException(status_code=400, detail="Sonification too long, maximum length = 5 minutes.")
 
@@ -110,7 +110,8 @@ async def generate_sonification(request: SonificationRequest):
         return {'file_ref': file_ref}
     
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        import traceback
+        raise HTTPException(status_code=500, detail=traceback.format_exc())
     
 
 @router.get('/audio/{file_ref}')
