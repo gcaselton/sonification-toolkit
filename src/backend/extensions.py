@@ -148,8 +148,6 @@ def setup_strauss(data: Path | str | tuple, style: BaseStyle, sonify_type, lengt
             if style.mods:
                   generator.modify_preset(style.mods)
 
-      print(generator.preset_details())
-
       mappings = style.parameters
 
       outputs = [mapping.output for mapping in mappings]
