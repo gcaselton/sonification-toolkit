@@ -340,7 +340,8 @@ async def save_refined(request: ConstellationRequest):
 
     # save to tmp directory (overwriting any existing dataset)
     session_id = session_id_var.get()
-    filename = f'{request.name}{'_shape' if request.by_shape else ''}.csv'
+    suffix = '_shape' if request.by_shape else ''
+    filename = f'{request.name}{suffix}.csv'
     filepath = TMP_DIR / session_id / filename
     refined_stars.to_csv(filepath, index=False)
 
