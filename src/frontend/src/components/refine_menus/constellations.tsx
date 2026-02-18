@@ -43,37 +43,34 @@ export default function Constellations({
   const [imageSrc, setImageSrc] = useState<string | null>(null);
   const [imageLoading, setImageLoading] = useState(true);
 
-  // loading states for nStars and magnitude inputs
-  const [nStarsLoading, setNStarsLoading] = useState(false);
-  const [magLoading, setMagLoading] = useState(true);
-
   // number of stars
-  const [nStars, setNStars] = useState("1000");
-
-  // magnitude state
-  const [magnitude, setMagnitude] = useState("");
+  const [nStars, setNStars] = useState("100");
 
   const [applyLoading, setApplyLoading] = useState(false);
   const [filterType, setFilterType] = useState<string | null>("shape");
+  const warning = ''
 
-  // re-plot when different RadioCard is clicked, or nStars or magnitude changes (also on initial magnitude fetch)
+  // re-plot when different RadioCard is clicked, or nStars changes
   useEffect(() => {
+
+    const num = Number(nStars);
+
+    if (
+      isNaN(num) ||
+      num < 1 ||
+      num > 1000 ||
+      !Number.isInteger(num)
+    ) {
+      return; // don't plot
+    }
+
     const handler = setTimeout(() => {
       plotConstellation();
     }, 300); // wait after the last change
 
-    // cancel the timeout if nStars or magnitude changes again
+    // cancel the timeout if nStars changes again
     return () => clearTimeout(handler);
-  }, [nStars, magnitude, filterType]);
-
-  // set initial magnitude based on nStars (10)
-  useEffect(() => {
-    const setMag = async () => {
-      await handleNStarsChange(nStars);
-    };
-
-    setMag();
-  }, []);
+  }, [nStars, filterType]);
 
   // request plot from backend
   const plotConstellation = async () => {
@@ -113,45 +110,6 @@ export default function Constellations({
     setApplyLoading(false);
   };
 
-  const handleNStarsChange = async (value: string) => {
-    setMagLoading(true);
-
-    const intValue = Math.floor(Number(value));
-
-    if (!isNaN(intValue)) {
-      setNStars(intValue.toString());
-    }
-
-    const endpoint = `${constellationsAPI}/get-max-magnitude/`;
-    const payload = {
-      name: dataName,
-      n_stars: intValue,
-    };
-
-    const result = await apiRequest(endpoint, payload);
-
-    setMagnitude(result.max_magnitude);
-    setMagLoading(false);
-  };
-
-  const handleMagnitudeChange = async (value: string) => {
-    setNStarsLoading(true);
-
-    setMagnitude(value);
-
-    const endpoint = `${constellationsAPI}/get-n-stars/`;
-    const payload = {
-      name: dataName,
-      max_magnitude: value,
-    };
-
-    const result = await apiRequest(endpoint, payload);
-
-    setNStars(result.n_stars);
-    setNStarsLoading(false);
-  };
-
-  // const invalidNStars = isNaN(Number(nStars)) || !Number.isInteger(Number(nStars)) || Number(nStars) <= 0 || Number(nStars) > 60;
 
   // const applyButtonOn = cropValues && cropRange ?
   //                           cropValues![0] == cropRange![0] &&
@@ -196,7 +154,7 @@ export default function Constellations({
       justify="center"
       direction={{ base: "column", md: "row" }}
     >
-      <Box minW="50%">
+      <Box flex='1'>
         <VStack align="center" justify="center" gap={{md: "10"}} w="auto">
           <RadioCard.Root
             value={filterType}
@@ -231,37 +189,19 @@ export default function Constellations({
                 <Field.Root width="auto">
                   <Field.Label>Number of Stars</Field.Label>
                   <NumberInput.Root
-                    disabled={nStarsLoading}
                     min={1}
                     max={1000}
                     value={nStars}
                     onValueChange={(e) => {
-                      handleNStarsChange(e.value);
+                      setNStars(e.value);
                     }}
                     inputMode="numeric"
                   >
                     <NumberInput.Control />
                     <NumberInput.Input />
                   </NumberInput.Root>
-                </Field.Root>
-                <Icon size="md">
-                  <LuArrowRightLeft />
-                </Icon>
-                <Field.Root width="auto">
-                  <Field.Label>Magnitude less than</Field.Label>
-                  <NumberInput.Root
-                    disabled={magLoading}
-                    min={-1.5}
-                    max={21}
-                    value={magnitude}
-                    onValueChange={(e) => {
-                      handleMagnitudeChange(e.value);
-                    }}
-                    inputMode="decimal"
-                  >
-                    <NumberInput.Control />
-                    <NumberInput.Input />
-                  </NumberInput.Root>
+                  { (Number(nStars) >= 500) &&
+                    <Field.HelperText>Warning: Sonification may take significantly longer to generate for large numbers of stars</Field.HelperText>}
                 </Field.Root>
               </HStack>
             </Collapsible.Content>
@@ -280,7 +220,7 @@ export default function Constellations({
         </VStack>
       </Box>
 
-      <Box minW={{base: '100%', md: "50%"}}>
+      <Box flex='1'>
         {imageLoading ? (
           <LoadingMessage msg="" icon="pulsar" />
         ) : imageSrc ? (

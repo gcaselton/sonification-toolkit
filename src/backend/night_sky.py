@@ -98,10 +98,13 @@ def get_star_data(request: NightSkyRequest):
     star_data = pd.DataFrame({
         "azimuth_rad": az.radians[above_horizon],
         "altitude_deg": alt.degrees[above_horizon],
-        "magnitude": df['magnitude'][above_horizon].values,
-        "bv_index": df['BVcol'][above_horizon].astype(float).values,
+        "magnitude": df['magnitude'][above_horizon].values + 1e-2*np.random.random(above_horizon.sum()),
+        "colour": df['BVcol'][above_horizon].astype(float).values,
         "direction_offset": direction
     })
+
+    # Calculate azimuth relative to observer
+    star_data['relative_az'] = (star_data["azimuth_rad"] - direction + np.pi) % (2*np.pi) - np.pi
 
     # save to tmp directory (overwriting any existing dataset)
     session_id = session_id_var.get()
@@ -120,6 +123,7 @@ def refine_stars(request: MagRequest):
 
     df = pd.read_csv(parent_file)
 
+    # Refine by mag limit
     filtered = df[df['magnitude'] < request.maglim].copy()
 
     session_id = session_id_var.get()
@@ -139,8 +143,8 @@ def plot_and_format_stars(df: pd.DataFrame):
 
     x = df["azimuth_rad"].values
     y = df["altitude_deg"].values
-    mags = df["magnitude"].values + 1e-2*np.random.random(len(df))
-    bv_indices = df["bv_index"].values
+    mags = df["magnitude"].values
+    bv_indices = df["colour"].values
     direction = df["direction_offset"].iloc[0]
 
     fig = Figure(figsize=(10,5))

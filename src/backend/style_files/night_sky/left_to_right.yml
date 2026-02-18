@@ -1,6 +1,6 @@
-name: 'Stars Appearing'
+name: 'Left to Right'
 
-description: 'Brightest stars appear first, pitch mapped to colour. Glockenspiel base sound.'
+description: 'Stars appear from left to right, brighter stars are louder. Pitch mapped to colour.'
 
 sound: 'Glockenspiel'
 
@@ -15,7 +15,7 @@ parameters:
     output_range: [0.1, 1]
     function: 'invert'
 
-  - input: 'magnitude'
+  - input: 'relative_az'
     input_range: ['0%', '110%']
     output: 'time'
 

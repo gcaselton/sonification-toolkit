@@ -4,6 +4,11 @@ description: "Deep Crackle + Filter Cutoff."
 
 sound: "Deep Crackle"
 
+mods:
+  looping: 'forwardback'
+  loop_start: 0
+  loop_end: 5.
+
 parameters:
   - input: "flux"
     output: "cutoff"

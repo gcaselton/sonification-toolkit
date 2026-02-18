@@ -36,10 +36,8 @@ export default function Sonify() {
   const location = useLocation();
   const dataName = location.state.dataName;
   const dataRef = location.state.dataRef;
-  console.log(dataRef)
   const styleName = location.state.styleName;
   const styleRef = location.state.styleRef;
-  console.log('Style: ' + styleRef)
   const soniType = location.state.soniType;
 
 
@@ -66,6 +64,9 @@ export default function Sonify() {
 
   const [imageSrc, setImageSrc] = useState<string | null>(null);
   const [imageLoading, setImageLoading] = useState(true);
+
+  const [audioVersion, setAudioVersion] = useState(0);
+
 
   // Generate the plot once when component mounts
   useEffect(() => {
@@ -124,14 +125,18 @@ export default function Sonify() {
     setErrorMessage("")
     
     const url = `${coreAPI}/generate-sonification/`;
+
   
     const data = {
       "category": soniType,
       "data_ref": dataRef,
       "style_ref": styleRef,
       "duration": length,
-      "system": audioSystem[0]
+      "system": audioSystem[0],
+      "data_name": dataName
     };
+
+    console.log(data)
     
     try {
       const response = await apiRequest(url, data);
@@ -149,15 +154,13 @@ export default function Sonify() {
     setSoniReady(false)
     setLoading(true)
 
-    console.log("Sonification Length:", length);
-    console.log("Audio System:", audioSystem);
-
     requestSonification().then((fileRef) => {
       setLoading(false)
       if (fileRef) {
         console.log("Sonification file created:", fileRef);
         setAudioFilename(`${fileRef}`);
         setSoniReady(true)
+        setAudioVersion(prev => prev + 1);
       } else {
         console.error("No sonification file returned.");
       }
@@ -333,7 +336,8 @@ export default function Sonify() {
               {errorMessage && <ErrorMsg message={errorMessage}/>}
               {soniReady && 
               <audio
-                  src={`${coreAPI}/audio/${audioFilename}`}
+              key={audioVersion}
+                src={`${coreAPI}/audio/${audioFilename}?v=${audioVersion}`}
                   controls
                   style={{ width: "100%" }}
                 />}

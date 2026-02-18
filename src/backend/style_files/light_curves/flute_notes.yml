@@ -4,10 +4,13 @@ description: "Flute + Pitch + Chromatic Scale."
 
 sound: "Flute"
 preset: 'staccato'
-mods: {'volume_envelope': {'use':'on', 'R':0.2}}
+mods: 
+  volume_envelope: 
+    use: 'on'
+    R: 0.2
 
 parameters:
   - input: "flux"
     output: "pitch"
 
-harmony: "C chromatic"
+harmony: 'C chromatic'

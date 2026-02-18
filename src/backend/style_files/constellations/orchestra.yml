@@ -8,21 +8,24 @@ sound: 'Orchestra'
 preset: 'sustain'
 mods: 
   looping: 'forwardback'
-  loop_start: 0.4
-  loop_end: 3
+  note_length: 120
+  loop_start: 0.8
+  loop_end: 3.
 
 parameters:
     
   - input: 'magnitude'
+    input_range: ['0%', '150%']
+    output: 'time'
+
+  - input: 'magnitude'
     output: 'volume'
     output_range: [0.2, 1]
+    function: 'invert'
 
   - input: 'colour'
     output: 'pitch'
-
-  - input: 'ra'
-    input_range: ['0%', '110%']
-    output: 'time'
+    function: 'invert'
 
   - input: 'ra'
     output: 'azimuth'

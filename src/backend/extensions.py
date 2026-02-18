@@ -83,7 +83,7 @@ def validate_input_params(style: dict, data: Path | str | tuple):
                   in_min, in_max = mapping.get('input_range', ('0%','100%'))
 
                   if input_param not in col_headers_lower:
-                        raise ValidationError(f'Input parameter "{input_param}" not found in data columns: {col_headers}')
+                        raise ValueError(f'Input parameter "{input_param}" not found in data columns: {col_headers}')
                   
                   if isinstance(in_min, str) and in_min.endswith('%'):
                         # might need to catch if one is % and the other isn't
@@ -125,10 +125,6 @@ def get_filepath(directory):
       return os.path.join(directory, name)
 
 
-raga_kumud = [['C3', 'D3', 'E3', 'G3', 'A3', 'B3', 'C4', 'D4', 'E4', 'G4']]
-Amaj7_13 = [['A3', 'C#4', 'E4', 'F#4', 'G#4', 'A4', 'C#5', 'E5']]
-hirajoshi = [['A2', 'B2', 'C3', 'E3', 'F3', 'A3', 'B3', 'C4', 'E4', 'F4']]
-major = [['C3', 'D3', 'E3', 'F3', 'G3', 'A3', 'B3', 'C4', 'D4', 'E4']]
 
 def setup_strauss(data: Path | str | tuple, style: BaseStyle, sonify_type, length):
 
@@ -152,7 +148,7 @@ def setup_strauss(data: Path | str | tuple, style: BaseStyle, sonify_type, lengt
             if style.mods:
                   generator.modify_preset(style.mods)
 
-      print(str(generator.preset))
+      print(generator.preset_details())
 
       mappings = style.parameters
 
@@ -161,12 +157,11 @@ def setup_strauss(data: Path | str | tuple, style: BaseStyle, sonify_type, lengt
       # Check if filter needs switching on
       if 'cutoff' in outputs:
             generator.modify_preset({'filter': 'on'})
-
       
       # Set up the data and Sources
       if sonify_type == 'light_curves':
             sources = light_curve_sources(data, style, length)
-      elif sonify_type == 'constellations':
+      elif sonify_type == 'constellations' or sonify_type == 'night_sky':
             sources = constellation_sources(data, style, length)
       else:
             raise ValueError(f'Sonification type "{sonify_type}" not recognised.')
@@ -234,8 +229,8 @@ def constellation_sources(data: Path | str , style: BaseStyle, length):
                   # Add constant polar of 0.5
                   data_dict['polar'] = np.full(len(df), 0.5)
 
-            # Invert data for magnitude (smaller magnitude is brighter)
-            if input == 'magnitude':
+            # Invert data for e.g. magnitude (smaller magnitude is brighter)
+            if mapping.function == 'invert':
                   my_funcs[output] = lambda x: -x
 
             # Map data
@@ -248,8 +243,6 @@ def constellation_sources(data: Path | str , style: BaseStyle, length):
                   p_lims[output] = mapping.output_range
 
       sources = Events(data_dict.keys())
-
-      print(data_dict)
      
       sources.fromdict(data_dict)
       sources.apply_mapping_functions(map_funcs=my_funcs, map_lims=m_lims, param_lims=p_lims)
@@ -354,7 +347,7 @@ def light_curve_sources(data, style: BaseStyle, length):
       x = ensure_array(x)
       y = ensure_array(y)
 
-      is_scale = style.harmony and ' ' in style.harmony
+      is_scale = style.harmony and ' ' in style.harmony or style.preset == 'staccato'
 
       pitches = [0] if is_scale else [0,1,2,3]
 

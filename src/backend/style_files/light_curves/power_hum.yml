@@ -4,6 +4,11 @@ description: "Dark Drone + Pitch."
 
 sound: "Dark Drone"
 
+mods:
+  looping: 'forwardback'
+  loop_start: 0
+  loop_end: 5.
+
 parameters:
   - input: "flux"
     output: "pitch"

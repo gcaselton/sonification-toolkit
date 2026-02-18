@@ -175,3 +175,8 @@ cython_debug/
 # PyPI configuration file
 .pypirc
 node_modules
+
+
+# Astro data
+hip_main.dat
+de421.bsp

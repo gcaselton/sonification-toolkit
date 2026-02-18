@@ -6,13 +6,17 @@ description: >
 
 sound: 'Harp'
 preset: 'sustain'
-mods: {'looping': 'forwardback', 'loop_start': 0.4, 'loop_end': 3.}
+mods:
+  looping: 'forwardback'
+  loop_start: 0.4
+  loop_end: 3.
 
 parameters:
     
   - input: 'magnitude'
     output: 'volume'
     output_range: [0.2, 1]
+    function: 'invert'
 
   - input: 'dec'
     output: 'pitch'
@@ -25,7 +29,6 @@ parameters:
     output: 'azimuth'
     output_range: [0.25, 0.75]
 
-# Raga Kumud scale
 harmony: ['C3', 'D3', 'E3', 'G3', 'A3', 'B3', 'C4', 'D4', 'E4', 'G4']
   
 

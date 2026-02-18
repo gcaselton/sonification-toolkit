@@ -12,6 +12,7 @@ import {
   Flex,
   NumberInput,
   VStack,
+  Stack,
   Select,
   Slider,
   Skeleton,
@@ -166,9 +167,14 @@ export default function LightCurves({ dataName, dataRef, onApply }: RefineMenuPr
   
 
   return (
-    <HStack gap="4" align="start" justify="center">
-      <Box width="50%">
-        <VStack align='start' justify='center' gap='16' w='80%'>
+    <Stack
+          gap="10"
+          align="start"
+          justify="center"
+          direction={{ base: "column", md: "row" }}
+        >
+      <Box flex='1' maxWidth='50%'>
+        <VStack justify='center' gap='16'>
         {/* render slider only when we have cropRange & cropValues */}
         {!slidersLoading && cropRange && cropValues ? (
           <VStack>
@@ -291,7 +297,7 @@ export default function LightCurves({ dataName, dataRef, onApply }: RefineMenuPr
       </VStack>
       </Box>
 
-      <Box width="100%" >
+      <Box flex='1'>
         {imageLoading ? (
           <LoadingMessage msg="" icon="pulsar" />
         ) : imageSrc ? (
@@ -300,6 +306,6 @@ export default function LightCurves({ dataName, dataRef, onApply }: RefineMenuPr
           <ErrorMsg message="Unable to plot data." />
         )}
       </Box>
-    </HStack>
+    </Stack>
   );
 }

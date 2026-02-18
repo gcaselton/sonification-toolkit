@@ -76,7 +76,6 @@ export default function NightSky() {
     const [error, setError] = useState<string | null>(null);
     const [autoLocated, setAutoLocated] = useState(false)
 
-
     const orientations = [
         "N", "NNE", "NE", "ENE", "E", "ESE", "SE",
         "SSE", "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"
@@ -251,6 +250,11 @@ export default function NightSky() {
         
     };
 
+    const formComplete =
+        latitude.trim() !== "" &&
+        longitude.trim() !== "" &&
+        orientation.trim() !== "" &&
+        dateTime.trim() !== "";
 
     return (
         <PageContainer>
@@ -373,7 +377,8 @@ export default function NightSky() {
                             />
                         </Field.Root>
 
-                        <Button 
+                        <Button
+                        disabled={!formComplete} 
                         onClick={handleClickApply}
                         colorPalette='teal' 
                         loading={submitting} 

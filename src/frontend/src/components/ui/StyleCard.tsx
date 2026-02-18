@@ -64,10 +64,12 @@ export default function StyleCard({ title, description, gradientClass, isCustom 
     };
   }, []);
 
+  const noPreview = ['Stars Appearing', 'Left to Right', 'Harp Trails', 'Orchestra']
+
 
   return (
     <div className={`style-card ${gradientClass}`}>
-      {!isCustom && (title !== 'Stars Appearing' && title !== 'Left to Right') &&
+      {!isCustom && (!noPreview.includes(title)) &&
         <Box position="absolute" top="0.5rem" left="0.5rem" zIndex={10}>
           <IconButton
             tabIndex={0}

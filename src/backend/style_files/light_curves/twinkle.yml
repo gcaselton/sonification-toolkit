@@ -3,9 +3,9 @@ name: 'Twinkle'
 description: 'Bright Mallets + Filter Cutoff.'
 
 sound: 'Bright Mallets'
-preset: 'sustain'
+
 mods:
-  looping: 'forwardback'
+  looping: 'forward'
   loop_start: 0.3
   loop_end: 5
 

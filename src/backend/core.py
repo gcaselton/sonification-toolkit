@@ -45,6 +45,7 @@ class SonificationRequest(BaseModel):
     style_ref: str
     duration: float
     system: str
+    data_name: str
 
 
 @router.get('/session/')
@@ -84,7 +85,8 @@ async def generate_sonification(request: SonificationRequest):
     style = style_filepath
     length = request.duration
     system = request.system
-
+    name = request.data_name
+    
     if int(length) > 300:
         raise HTTPException(status_code=400, detail="Sonification too long, maximum length = 5 minutes.")
 
@@ -96,9 +98,10 @@ async def generate_sonification(request: SonificationRequest):
         if not session_id:
             raise HTTPException(status_code=400, detail="No session cookie found")
 
-        id = str(uuid.uuid4().hex)
+        # id = str(uuid.uuid4().hex)
+        category = category.replace('_', ' ').capitalize()
         ext = '.wav'
-        filename = f'{category}_{id}{ext}'
+        filename = f'{name} {category}{ext}'
         filepath = TMP_DIR / session_id / filename
         soni.save(filepath)
 

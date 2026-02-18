@@ -32,6 +32,7 @@ class ParameterMapping(BaseModel):
     input_range: Tuple[Union[str, float, int], Union[str, float, int]] = Field(default=('0%','100%'), title=metadata['input_range']['title'], description=metadata['input_range']['description'])
     output: str = Field(..., title=metadata['output']['title'], description=metadata['output']['description'])
     output_range: Optional[Tuple[Union[float, int], Union[float, int]]] = Field(default=None, title=metadata['output_range']['title'], description=metadata['output_range']['description'])
+    function: Optional[str] = Field(None)
 
     @field_validator('output')
     @classmethod
