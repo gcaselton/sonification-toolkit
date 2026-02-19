@@ -88,6 +88,15 @@ export default function Lightcurves() {
 
   const abortControllerRef = useRef<AbortController | null>(null);
 
+  const cancelSearch = () => {
+    if (abortControllerRef.current) {
+      console.log("Cancelling search…")
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+      setLoading(false);
+    }
+  };
+
   // Fetch suggested data sets on first load
   useEffect(() => {
     fetch(`${coreAPI}/suggested-data/${soniType}/`)
@@ -109,11 +118,11 @@ export default function Lightcurves() {
   // Ensure search is aborted if user navigates away
   useEffect(() => {
     return () => {
-      abortControllerRef.current?.abort();
+      cancelSearch();
     };
   }, []);
-
-
+  
+  
   const searchLightcurves = async () => {
 
     if (!selectedStar.trim()) {
@@ -122,7 +131,7 @@ export default function Lightcurves() {
     }
 
     // Cancel any existing search
-    abortControllerRef.current?.abort();
+    cancelSearch();
 
     const controller = new AbortController();
     abortControllerRef.current = controller;
@@ -158,10 +167,11 @@ export default function Lightcurves() {
 
     } catch (error: any) {
 
-      console.error("Error: " + error);
+      console.log(error.name);
 
       if (error.name === 'AbortError') {
         console.log("Search cancelled by user")
+        setSearched(false);
         return;
       }
 
@@ -173,13 +183,12 @@ export default function Lightcurves() {
       setSearched(false)
 
     } finally {
-
       if (abortControllerRef.current === controller) {
+        abortControllerRef.current = null;
         setLoading(false);
       }
     }
   }
-
 
 
   const selectLightcurve = async (dataURI: string) => {
@@ -338,7 +347,11 @@ export default function Lightcurves() {
             </VStack>
           </Box>
         </form>
-        {loading && <LoadingMessage msg={`Searching the Universe for ${searchTerm}...`} icon='pulsar' />}
+        {loading && <LoadingMessage
+          msg={`Searching the Universe for ${searchTerm}...`}
+          icon='pulsar'
+          onCancel={cancelSearch}
+          />}
         <br />
         <PlotDialog
           open={plotOpen}

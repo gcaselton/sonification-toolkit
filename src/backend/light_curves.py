@@ -3,7 +3,7 @@ from pydantic import BaseModel
 from pathlib import Path
 from paths import TMP_DIR, STYLE_FILES_DIR, SUGGESTED_DATA_DIR, SAMPLES_DIR
 from context import session_id_var
-import logging, requests, os, base64, hashlib, json, gc
+import logging, requests, os, base64, hashlib, json, gc, threading
 
 import lightkurve as lk
 from lightkurve import LightCurve
@@ -16,6 +16,7 @@ import pandas as pd
 from io import BytesIO
 from concurrent.futures import ThreadPoolExecutor
 from astroquery.simbad import Simbad
+from astroquery.mast import Observations
 from scipy.ndimage import gaussian_filter1d
 from core import SonificationRequest, DataRequest
 from utils import resolve_file
@@ -52,18 +53,36 @@ class RefineRequest(BaseModel):
     sigma: int
 
 
-def run_lightkurve_search(idents, authors):
+def run_lightkurve_search(idents, authors, cancel_event: threading.Event):
+    
+    # Set a timeout on MAST requests
+    Observations.TIMEOUT = 10 
+
     results_metadata = []
 
     for ident in idents:
+
+        # Check for user cancelling search
+        if cancel_event.is_set():
+            LOG.warning('Search cancelled inside thread')
+            return None
+
         id_type = ident.split(" ")[0]
 
         # Search lightkurve using all idents
-        search_result = lk.search_lightcurve(
+        try:
+            search_result = lk.search_lightcurve(
             ident,
             author=authors[id_type],
-            limit=20    # Max number of results to return
-        )
+            limit=20    # Max number of results to return (per ident)
+            )
+        except Exception as e:
+            LOG.warning(f"Search failed for {ident}: {e}")
+            continue
+
+        if cancel_event.is_set():
+            LOG.warning(f'Search cancelled after {idents.index(ident)+1} lightkurve query')
+            return None
 
         for row in search_result.table:
             results_metadata.append({
@@ -113,58 +132,33 @@ async def search_lightcurves(query: StarQuery, request: Request):
             'KIC': 'Kepler',
             'EPIC': 'K2SFF'
         }
+    
+    LOG.info(f"Search started for {query.star_name}")
 
+    cancel_event = threading.Event()
     loop = asyncio.get_running_loop()
 
     task = loop.run_in_executor(
         executor,
         run_lightkurve_search,
         idents,
-        authors
+        authors,
+        cancel_event
     )
 
-    # Add timeout 
-    MAX_SECONDS = 20
-    start_time = loop.time()
-
-
     try:
-        while True:
-            # cancel search if frontend navigates away/aborts
-            if await request.is_disconnected():
-                task.cancel()
-                print('Search cancelled by user!')
-                raise HTTPException(
-                    status_code=499,
-                    detail="Client disconnected"
-                )
-            
-            # Cancel task if search has passed timeout
-            elapsed = loop.time() - start_time
-            if elapsed > MAX_SECONDS:
-                task.cancel()
-                raise HTTPException(
-                    status_code=408,
-                    detail="Search timed out"
-                )
+        results_metadata = await asyncio.wait_for(task, timeout=20)
 
+        if results_metadata is None:
+            raise HTTPException(status_code=499, detail='Search cancelled')
+        if len(results_metadata) == 0:
+            raise HTTPException(status_code=400, detail=f'No {formatted} light curves found for {query.star_name}.')
+        
+        return {"results": results_metadata}
 
-            done, _ = await asyncio.wait(
-                [task],
-                timeout=0.2,
-                return_when=asyncio.FIRST_COMPLETED
-            )
-
-            if done:
-                results_metadata = task.result()
-                return {"results": results_metadata}
-
-    except asyncio.CancelledError:
-        raise HTTPException(
-            status_code=499,
-            detail="Search cancelled"
-        )
-
+    except asyncio.TimeoutError:
+        cancel_event.set()
+        raise HTTPException(status_code=408, detail=f"Search for {query.star_name} timed out")
 
 
 
