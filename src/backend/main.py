@@ -23,7 +23,11 @@ from config import GITHUB_USER, GITHUB_REPO
 from StorageManager import StorageManager
 from context import session_id_var
 from datetime import datetime
-import asyncio, os, httpx, psutil, tracemalloc, time, threading, shutil
+import asyncio, os, httpx, psutil, tracemalloc, time, threading, shutil, sys
+
+# fcntl package is only available on unix systems
+if sys.platform != "win32":
+    import fcntl
 
 
 async def safe_cache_assets():
@@ -48,21 +52,40 @@ storage_manager = StorageManager(
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Lifespan context manager to handle startup tasks"""
+    
+    # Only run the cleanup in one worker using a file lock
+    lock_file = None
+    cleanup_task = None
+    got_lock = False
 
-    # Run caching in background
-    asyncio.create_task(safe_cache_assets())
-    
-    # Start background cleanup task
-    cleanup_task = asyncio.create_task(storage_manager.start_background_cleanup())
-    
+    if sys.platform != "win32":
+        lock_file = open("/tmp/cleanup.lock", "w")
+        try:
+            fcntl.flock(lock_file, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            got_lock = True
+        except BlockingIOError:
+            pass
+    else:
+        # On Windows (local dev), always start the cleanup task
+        got_lock = True
+
+    # First worker to get the lock 
+    if got_lock:
+        cleanup_task = asyncio.create_task(storage_manager.start_background_cleanup())
+
     yield
-    
-    # Shutdown: cancel background task
-    cleanup_task.cancel()
-    try:
-        await cleanup_task
-    except asyncio.CancelledError:
-        pass
+
+    if cleanup_task:
+        cleanup_task.cancel()
+        try:
+            await cleanup_task
+        except asyncio.CancelledError:
+            pass
+
+    if lock_file and got_lock:
+        fcntl.flock(lock_file, fcntl.LOCK_UN)
+    if lock_file:
+        lock_file.close()
 
 
 

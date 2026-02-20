@@ -1,7 +1,7 @@
 import React, { useEffect, useState, createContext, useRef } from "react";
 import { useNavigate } from 'react-router-dom';
 import LoadingMessage from '../ui/LoadingMessage';
-import { LuX, LuChartSpline, LuAudioLines, LuSearch, LuSlidersHorizontal, LuTelescope } from "react-icons/lu";
+import { LuX, LuChartSpline, LuAudioLines, LuSearch, LuSlidersHorizontal, LuTelescope, LuUpload } from "react-icons/lu";
 import PageContainer from "../ui/PageContainer";
 import { SonifyButton, PlotButton } from "../ui/Buttons";
 import { PlotDialog } from "../ui/PlotDialog";
@@ -23,6 +23,8 @@ import {
   Link,
   Image,
   Field,
+  Icon,
+  FileUpload,
   Input,
   InputGroup,
   Dialog,
@@ -204,6 +206,44 @@ export default function Lightcurves() {
     }
   }
 
+  const handleFileAccept = async (files: FileList | File[]) => {
+
+    const file = files[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const res = await fetch(`${coreAPI}/upload-data/`, {
+      method: "POST",
+      body: formData,
+      credentials: "include",
+    });
+
+    if (!res.ok) {
+      let message = `HTTP ${res.status}`;
+
+      try {
+        const errorData = await res.json();
+        if (errorData?.detail) {
+          message = errorData.detail;
+        }
+      } catch {
+        // response was not JSON (ignore)
+      }
+
+      throw new Error(message);
+    }
+
+    const result = await res.json()
+
+    const dataRef = result.file_ref
+    const dataName = file.name
+    
+    // Navigate to style page with data file path.
+    navigate("/refine", { state: { dataRef, dataName, soniType } });
+  };
+
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setSearchTerm(capitaliseWords(selectedStar))
@@ -272,22 +312,29 @@ export default function Lightcurves() {
 
   return (
     <PageContainer>
-      <Box as='main' role="main">
-        <Heading size="4xl" as='h1'>Light Curves</Heading>
+      <Box as="main" role="main">
+        <Heading size="4xl" as="h1">
+          Light Curves
+        </Heading>
         <br />
-        <Text textStyle="lg">Search for a specific star or choose from the suggestions below</Text>
+        <Text textStyle="lg">
+          Search for a specific star or choose from the suggestions below
+        </Text>
         <br />
         <br />
         <form onSubmit={handleSubmit}>
           <Box display="flex" justifyContent="center">
             <VStack gap={4} width="50%">
-              <HStack width='100%'>
-                <InputGroup startElement={<LuTelescope size="1.1rem" />} width='100%'>
+              <HStack width="100%">
+                <InputGroup
+                  startElement={<LuTelescope size="1.1rem" />}
+                  width="100%"
+                >
                   <Input
                     placeholder="Search for a star by name, KIC or EPIC identifier"
                     type="text"
                     name="star_name"
-                    variant='outline'
+                    variant="outline"
                     value={selectedStar}
                     onChange={(e) => {
                       const value = e.target.value;
@@ -300,7 +347,7 @@ export default function Lightcurves() {
                   />
                 </InputGroup>
                 <Button
-                  variant='outline'
+                  variant="outline"
                   onClick={() => setShowFilters(!showFilters)}
                   aria-label="Show filters"
                 >
@@ -310,7 +357,7 @@ export default function Lightcurves() {
               {/* Collapsible filters */}
               <Collapsible.Root open={showFilters}>
                 <Collapsible.Content>
-                  <Box borderWidth='1px' padding={3} borderRadius="md">
+                  <Box borderWidth="1px" padding={3} borderRadius="md">
                     <Text mb={3}>Missions</Text>
                     <HStack align="start" gap={3}>
                       <Checkbox.Root
@@ -347,11 +394,13 @@ export default function Lightcurves() {
             </VStack>
           </Box>
         </form>
-        {loading && <LoadingMessage
-          msg={`Searching the Universe for ${searchTerm}...`}
-          icon='pulsar'
-          onCancel={cancelSearch}
-          />}
+        {loading && (
+          <LoadingMessage
+            msg={`Searching the Universe for ${searchTerm}...`}
+            icon="pulsar"
+            onCancel={cancelSearch}
+          />
+        )}
         <br />
         <PlotDialog
           open={plotOpen}
@@ -362,27 +411,30 @@ export default function Lightcurves() {
         />
         {!searched && (
           <Box animation="fade-in 300ms ease-out">
-            <Heading size="2xl" as='h2'>Suggested</Heading>
+            <Heading size="2xl" as="h2">
+              Suggested
+            </Heading>
             <br />
             <Stack gap="4" direction="row" wrap="wrap">
               {suggested.map((star) => (
                 <Card.Root
                   width="200px"
                   key={star.name}
-                  variant='elevated'
+                  variant="elevated"
                   _hover={{ transform: "scale(1.05)" }}
                   transition="transform 0.2s ease"
-                  cursor='pointer'
+                  cursor="pointer"
                   tabIndex={0}
                   role="button"
                   aria-label={`Sonify ${star.name}: ${star.description}`}
                   onClick={() => handleClickSuggested(star)}
                   onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
+                    if (e.key === "Enter" || e.key === " ") {
                       e.preventDefault();
                       handleClickSuggested(star);
                     }
-                  }}>
+                  }}
+                >
                   <Box position="relative">
                     <img
                       src={getImage(star.name)}
@@ -396,20 +448,20 @@ export default function Lightcurves() {
                       left="0.5rem"
                       zIndex={10}
                       onClick={(e) => {
-                        e.stopPropagation() // prevent the card click
-                        handleClickPlot(star)
+                        e.stopPropagation(); // prevent the card click
+                        handleClickPlot(star);
                       }}
                       onKeyDown={(e) => {
-                        if (e.key === 'Enter' || e.key === ' ') {
+                        if (e.key === "Enter" || e.key === " ") {
                           e.preventDefault();
                           e.stopPropagation(); // prevent the card's keyboard handler
                           handleClickPlot(star);
                         }
                       }}
                     >
-                      <Tooltip content='View plot'>
+                      <Tooltip content="View plot">
                         <Button
-                          size='xs'
+                          size="xs"
                           aria-label={`View plot for ${star.name}`}
                         >
                           <LuChartSpline />
@@ -423,6 +475,38 @@ export default function Lightcurves() {
                   </Card.Body>
                 </Card.Root>
               ))}
+              <FileUpload.Root
+                accept=".csv, .fits"
+                maxFiles={1}
+                w="auto"
+                onFileAccept={({ files }) => handleFileAccept(files)}
+              >
+                <FileUpload.HiddenInput />
+                <FileUpload.Trigger asChild>
+                  <Card.Root
+                    width="200px"
+                    key={"upload"}
+                    variant="elevated"
+                    _hover={{ transform: "scale(1.05)" }}
+                    transition="transform 0.2s ease"
+                    cursor="pointer"
+                    tabIndex={0}
+                    role="button"
+                    aria-label="Upload your data"
+                  >
+                    <Icon size='xl'>
+                      <LuUpload/>
+                    </Icon>
+                    <Card.Body>
+                      <Card.Title mb="2">Upload</Card.Title>
+                      <Card.Description>
+                        Use your own light curve or time series data
+                      </Card.Description>
+                    </Card.Body>
+                  </Card.Root>
+                </FileUpload.Trigger>
+                <FileUpload.List />
+              </FileUpload.Root>
             </Stack>
             <br />
           </Box>
@@ -455,7 +539,11 @@ export default function Lightcurves() {
                       <PlotButton onClick={handleClickPlot} item={item} />
                     </Table.Cell>
                     <Table.Cell>
-                      <SonifyButton onClick={handleClickSonify} dataURI={item.dataURI} loading={item.dataURI === loadingId} />
+                      <SonifyButton
+                        onClick={handleClickSonify}
+                        dataURI={item.dataURI}
+                        loading={item.dataURI === loadingId}
+                      />
                     </Table.Cell>
                   </Table.Row>
                 ))}
@@ -465,5 +553,5 @@ export default function Lightcurves() {
         )}
       </Box>
     </PageContainer>
-  )
+  );
 }

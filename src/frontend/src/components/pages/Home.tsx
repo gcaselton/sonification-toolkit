@@ -65,30 +65,10 @@ const astroTypes: AstroType[] = [
 ]
 
 
-export default function Lightcurves() {
+export default function Home() {
   const navigate = useNavigate();
 
-  const handleFileAccept = async (files: FileList | File[]) => {
-    
-    const file = files[0]
-    if (!file) return;
-
-    console.log("Uploading:", file.name);
-
-    const formData = new FormData();
-    formData.append("file", file);
-
-    const res = await fetch(`${apiUrl}/upload-data/`, {
-      method: "POST",
-      body: formData,
-    });
-
-    const result = await res.json();
-    console.log(result);
-
-    // Naviagate to style page with data file path.
-    navigate('/style', { state: result.filepath });
-  }
+  
 
   return (
     <PageContainer hideBackButton>
@@ -97,20 +77,7 @@ export default function Lightcurves() {
         <br />
         <HStack flexWrap="nowrap">
             <Text textStyle="lg" flexShrink={1}>Select a data source to sonify, or </Text>
-            
-            <FileUpload.Root disabled accept=".csv, .fits" w="auto" onFileAccept={({ files }) => handleFileAccept(files)}>
-              <FileUpload.HiddenInput />
-              <Tooltip content='Coming soon!' openDelay={300}>
-              <FileUpload.Trigger asChild>
-                <Tooltip content="Coming soon!" openDelay={300}>
-                  <Button colorPalette='teal' disabled>
-                      <Upload />Upload your own
-                  </Button>
-                </Tooltip>
-              </FileUpload.Trigger>
-              </Tooltip>
-              <FileUpload.List />
-            </FileUpload.Root>
+          
         </HStack>
         <br />
         <br />
