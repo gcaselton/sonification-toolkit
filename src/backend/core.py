@@ -13,7 +13,10 @@ import logging, httpx, yaml, requests, os, base64, hashlib, uuid, aiofiles, zipf
 
 import lightkurve as lk
 import numpy as np
+import pandas as pd
 from io import BytesIO
+from astropy.io import fits
+from astropy.table import Table
 from astroquery.simbad import Simbad
 
 
@@ -46,6 +49,9 @@ class SonificationRequest(BaseModel):
     duration: float
     system: str
     data_name: str
+    
+    
+ACCEPTED_UPLOAD_FORMATS = ['.csv', '.fits']
 
 
 @router.get('/session/')
@@ -69,8 +75,6 @@ async def get_or_create_session(
     user_dir.mkdir(exist_ok=True)
 
     return {'session_id': session_id}
-
-
 
 
 @router.post('/generate-sonification/')
@@ -142,31 +146,70 @@ def download_file(file_ref: str):
 
     return response
 
+async def ensure_two_columns(file: UploadFile, ext: str, contents: bytes):
+    
+    if ext == ".csv":
+        df = pd.read_csv(BytesIO(contents))
+
+    elif ext == ".fits":
+        with fits.open(BytesIO(contents)) as hdul:
+            # find first table HDU
+            table_hdu = next(
+                (hdu for hdu in hdul if isinstance(hdu, (fits.BinTableHDU, fits.TableHDU))),
+                None
+            )
+
+            if table_hdu is None:
+                raise HTTPException(400, "FITS file contains no table")
+
+            table = Table(table_hdu.data)
+            df = table.to_pandas()
+
+    else:
+        raise HTTPException(415, "Unsupported format")
+    
+    # Flag to send to the frontend to inform user that data was sliced
+    reduced = False
+
+    if df.shape[1] < 2:
+        raise HTTPException(400, "Dataset must contain at least two columns")
+    elif df.shape[1] > 2:
+        # reduce to first two columns if needed
+        df = df.iloc[:, :2]
+        reduced = True
+
+    return df, reduced
+
 
 @router.post('/upload-data/')
 async def uploadData(file: UploadFile):
     """
     Function for the user to upload their own data to the system, which is then written
-    to the tmp directory.
+    to the tmp directory. The maximum file size is 10mb, as this is a limit set in nginx.
 
     - **file**: The user-uploaded data file.
     - Returns: The filepath of the saved data file.
     """
     
     ext = os.path.splitext(file.filename)[-1]
-    filename = f'{uuid.uuid4()}{ext}'
-
-    session_id = session_id_var.get()
-    filepath = os.path.join(TMP_DIR, session_id, filename)
-
+    
+    print(ext)
+    
+    if ext not in ACCEPTED_UPLOAD_FORMATS:
+        raise HTTPException(status_code=415, detail='Uploaded data must be in .csv or .fits format')
+    
+    # check that the uploaded data is only two columns (x,y) and reduce if necessary
     contents = await file.read()
+    df, reduced = await ensure_two_columns(file, ext, contents)
+    
+    session_id = session_id_var.get()
+    filepath = os.path.join(TMP_DIR, session_id, file.filename)
+    
+    df.to_csv(filepath, index=False)
 
-    with open(filepath, 'wb') as f:
-        f.write(contents)
+    file_ref = f'session:{file.filename}'
 
-    file_ref = f'session:{filename}'
-
-    return {'file_ref': file_ref}
+    return {'file_ref': file_ref, 'reduced': reduced}
 
 @router.get('/suggested-data/{category}/')
 async def get_suggested(category: str):

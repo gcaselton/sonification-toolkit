@@ -28,7 +28,7 @@ const LoadingMessage = ({
     aria-live="polite"
   >
     {onCancel && (
-      <Tooltip content="Cancel search">
+      <Tooltip content="Cancel search" openDelay={100}>
         <IconButton
           aria-label="Cancel search"
           size="sm"

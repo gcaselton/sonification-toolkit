@@ -258,6 +258,9 @@ def plot_and_format_lc(filepath: str):
         
         # Get column names for labels
         columns = df.columns.tolist()
+        x_label = columns[0] if not str(columns[0]).isdigit() else 'X'
+        y_label = columns[1] if not str(columns[1]).isdigit() else 'Y'
+        
         time = df[columns[0]].values
         flux = df[columns[1]].values
         
@@ -267,6 +270,9 @@ def plot_and_format_lc(filepath: str):
         lc = lk.read(filepath)
         time = lc.time.value
         flux = lc.flux.value
+        
+        x_label = 'Time (days)'
+        y_label = 'Flux (electrons per second)'
 
     # Plot and format
     fig = Figure(figsize=(6, 4))
@@ -280,8 +286,8 @@ def plot_and_format_lc(filepath: str):
         alpha=0.9
     )
     
-    ax.set_xlabel('Time (days)')
-    ax.set_ylabel('Flux (electrons per second)')
+    ax.set_xlabel(x_label)
+    ax.set_ylabel(y_label)
 
     ax.spines['top'].set_visible(False)
     ax.spines['right'].set_visible(False)
@@ -326,7 +332,7 @@ async def get_range(request: DataRequest):
     elif filepath.endswith('.csv'):
         df = pd.read_csv(filepath)
 
-        time_col = next((col for col in df.columns if 'time' in col.lower()), df.columns[0])
+        time_col = df.columns[0]
 
         x = df[time_col].values
         range = [min(x), max(x)]
@@ -339,54 +345,63 @@ async def get_range(request: DataRequest):
 @router.post('/preview-refined/')
 async def preview_refined(request: RefineRequest):
 
-    lc_csv = await save_refined(request)
+    refined = await save_refined(request)
 
-    filepath = str(resolve_file(lc_csv['file_ref']))
+    filepath = str(resolve_file(refined['file_ref']))
        
     # Plot, format, and convert image to Base64
     img_base64 = plot_and_format_lc(filepath)
 
     return{'image': img_base64}
 
-def refine_lightcurve(request: RefineRequest):
-
-    # Truncate x-axis to new range
-    new_start, new_end = request.new_range
-
-    filepath = str(resolve_file(request.file_ref))
-    lc = lk.read(filepath)
-    lc = lc.truncate(new_start, new_end)
-
-    if request.sigma > 0:
-
-        # Smooth with Gaussian filter if sigma > 0
-        flux_unit = lc.flux.unit
-        smoothed_flux = gaussian_filter1d(lc.flux.value, request.sigma)
-        lc = lc.copy()
-        lc.flux = smoothed_flux * flux_unit
-
-    return lc
 
 @router.post('/save-refined/')
 async def save_refined(request: RefineRequest):
-
-    lc = refine_lightcurve(request)
-
-    filename = f'{request.data_name}.csv'
-    session_id = session_id_var.get()
-    filepath = TMP_DIR / session_id / filename
-
-    df = pd.DataFrame({
-            'time': lc.time.value,
-            'flux': lc.flux.value
-        })
     
-    # Save to CSV
-    df.to_csv(filepath, index=False)
+    # Truncate x-axis to new range
+    new_start, new_end = request.new_range
 
-    file_ref = f'session:{filename}'
+    original_filepath = str(resolve_file(request.file_ref))
+    
+    ext = original_filepath.split('.')[-1]
+    session_id = session_id_var.get()
+    filename = request.data_name + '_refined.' + ext
+    
+    refined_filepath = TMP_DIR / session_id / filename
+    refined_ref = f'session:{filename}'
+    
+    if ext == 'fits':
+        lc = lk.read(original_filepath)
+        lc = lc.truncate(new_start, new_end)
+        
+        if request.sigma > 0:
+            # Smooth y axis with Gaussian filter if sigma > 0
+            flux_unit = lc.flux.unit
+            smoothed_flux = gaussian_filter1d(lc.flux.value, request.sigma)
+            lc = lc.copy()
+            lc.flux = smoothed_flux * flux_unit
+        
+        lc.to_fits(refined_filepath, overwrite=True)
+            
+    elif ext == 'csv':
+        df = pd.read_csv(original_filepath)
+        
+        time_col = df.columns[0]
+        df_truncated = df[(df[time_col] >= new_start) & (df[time_col] <= new_end)].copy()
+        
+        if request.sigma > 0:
+            
+            y_values = df_truncated.iloc[:, 1].values
+            smoothed_flux = gaussian_filter1d(y_values, request.sigma)
 
-    return {'file_ref': file_ref}
+            df_truncated.iloc[:, 1] = smoothed_flux
+            
+        df_truncated.to_csv(refined_filepath, index=False)
+        
+    else:
+        raise HTTPException(status_code=400, detail='Unsupported file type')
+
+    return {'file_ref': refined_ref}
 
 
 

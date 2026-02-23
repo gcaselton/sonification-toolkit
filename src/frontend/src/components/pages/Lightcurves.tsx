@@ -18,7 +18,9 @@ import {
   Button,
   Card,
   Checkbox,
+  CloseButton,
   Collapsible,
+  Flex,
   LinkOverlay,
   Link,
   Image,
@@ -31,6 +33,7 @@ import {
   Stack,
   Heading,
   VStack,
+  Spinner,
   Table,
   Text,
   IconButton,
@@ -83,10 +86,20 @@ export default function Lightcurves() {
   const [loadingPlot, setLoadingPlot] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
   const [loadingId, setLoadingId] = useState("fake ID")
+
   const [showFilters, setShowFilters] = useState(false);
   const [tessChecked, setTessChecked] = useState(true);
   const [keplerChecked, setKeplerChecked] = useState(true);
   const [k2Checked, setK2Checked] = useState(true);
+
+  const [uploading, setUploading] = useState(false);
+  const [dataReduced, setDataReduced] = useState(false);
+  const [pendingNav, setPendingNav] = useState<null | {
+    dataRef: string;
+    dataName: string;
+  }>(null);
+  const [uploadKey, setUploadKey] = useState(0);
+  
 
   const abortControllerRef = useRef<AbortController | null>(null);
 
@@ -208,8 +221,14 @@ export default function Lightcurves() {
 
   const handleFileAccept = async (files: FileList | File[]) => {
 
+    setUploading(true);
+
     const file = files[0];
-    if (!file) return;
+
+    if (!file) {
+      setUploading(false);
+      return;
+    }
 
     const formData = new FormData();
     formData.append("file", file);
@@ -231,18 +250,38 @@ export default function Lightcurves() {
       } catch {
         // response was not JSON (ignore)
       }
-
+      setUploading(false);
       throw new Error(message);
     }
 
     const result = await res.json()
 
-    const dataRef = result.file_ref
-    const dataName = file.name
+    const navInfo = {
+      dataRef: result.file_ref,
+      dataName: file.name.split('.')[0],
+    };
+
+    setUploading(false);
+
+    if (result.reduced) {
+      setDataReduced(true);
+      setPendingNav(navInfo);
+      return
+    }
     
     // Navigate to style page with data file path.
-    navigate("/refine", { state: { dataRef, dataName, soniType } });
+    navigate("/refine", { state: { ...navInfo, soniType } });
   };
+
+  const handleConfirmReduced = () => {
+    setDataReduced(false);
+
+    if (pendingNav) {
+      navigate("/refine", { state: { ...pendingNav, soniType } });
+      setPendingNav(null);
+    }
+  };
+  
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -310,9 +349,61 @@ export default function Lightcurves() {
     navigate('/refine', { state: { dataRef, dataName, soniType } });
   };
 
+  const handleCancelReduced = () => {
+    setDataReduced(false);
+    setPendingNav(null);
+
+    // clear file upload
+    setUploadKey((k) => k + 1);
+  };
+
   return (
     <PageContainer>
       <Box as="main" role="main">
+        <Dialog.Root
+          open={dataReduced}
+          onOpenChange={(e) => setDataReduced(e.open)}
+          placement="center"
+          motionPreset="slide-in-bottom"
+          role="alertdialog"
+        >
+          <Dialog.Backdrop />
+          <Dialog.Positioner>
+            <Dialog.Content>
+              <Dialog.Header>
+                <Dialog.Title>Multiple Columns Detected</Dialog.Title>
+              </Dialog.Header>
+              <Dialog.Body>
+                <VStack align="start" gap={3}>
+                  <Text>Your dataset contains more than two columns.</Text>
+                  <Text>
+                    This feature currently uses two columns (x and y) for
+                    sonification.
+                  </Text>
+                  <Text>
+                    Would you like to continue using the first two detected
+                    columns?
+                  </Text>
+                </VStack>
+              </Dialog.Body>
+              <Dialog.Footer>
+                <Flex justify="center" w="full" gap={3}>
+                  <Dialog.ActionTrigger asChild>
+                    <Button variant="outline" colorPalette="teal" onClick={handleCancelReduced}>
+                      Cancel
+                    </Button>
+                  </Dialog.ActionTrigger>
+                  <Button onClick={handleConfirmReduced} colorPalette="teal">
+                    Continue
+                  </Button>
+                </Flex>
+              </Dialog.Footer>
+              <Dialog.CloseTrigger asChild>
+                <CloseButton size="sm" onClick={handleCancelReduced}/>
+              </Dialog.CloseTrigger>
+            </Dialog.Content>
+          </Dialog.Positioner>
+        </Dialog.Root>
         <Heading size="4xl" as="h1">
           Light Curves
         </Heading>
@@ -476,36 +567,34 @@ export default function Lightcurves() {
                 </Card.Root>
               ))}
               <FileUpload.Root
-                accept=".csv, .fits"
+                accept={{
+                  "text/csv": [".csv"],
+                  "application/fits": [".fits"],
+                  "image/fits": [".fits"],
+                }}
+                key={uploadKey}
                 maxFiles={1}
-                w="auto"
+                w="200px"
                 onFileAccept={({ files }) => handleFileAccept(files)}
+                _hover={{ transform: "scale(1.05)" }}
+                transition="transform 0.2s ease"
+                cursor="pointer"
+                role="button"
+                aria-label="Upload your data"
               >
                 <FileUpload.HiddenInput />
-                <FileUpload.Trigger asChild>
-                  <Card.Root
-                    width="200px"
-                    key={"upload"}
-                    variant="elevated"
-                    _hover={{ transform: "scale(1.05)" }}
-                    transition="transform 0.2s ease"
-                    cursor="pointer"
-                    tabIndex={0}
-                    role="button"
-                    aria-label="Upload your data"
-                  >
-                    <Icon size='xl'>
-                      <LuUpload/>
-                    </Icon>
-                    <Card.Body>
-                      <Card.Title mb="2">Upload</Card.Title>
-                      <Card.Description>
-                        Use your own light curve or time series data
-                      </Card.Description>
-                    </Card.Body>
-                  </Card.Root>
-                </FileUpload.Trigger>
-                <FileUpload.List />
+                <FileUpload.Dropzone>
+                  <Icon size="lg" color="fg.muted">
+                    {uploading ?
+                    <Spinner/> :
+                    <LuUpload />
+                    }
+                  </Icon>
+                  <FileUpload.DropzoneContent>
+                    <Box textStyle="md">Upload your own</Box>
+                    <Box color="fg.muted">.csv, .fits up to 10MB</Box>
+                  </FileUpload.DropzoneContent>
+                </FileUpload.Dropzone>
               </FileUpload.Root>
             </Stack>
             <br />
