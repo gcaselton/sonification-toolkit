@@ -22,7 +22,7 @@ from astroquery.simbad import Simbad
 
 router = APIRouter(prefix='/core')
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.DEBUG)
 LOG = logging.getLogger(__name__)
 
 class DataRequest(BaseModel):
@@ -79,7 +79,7 @@ async def get_or_create_session(
 
 @router.post('/generate-sonification/')
 async def generate_sonification(request: SonificationRequest):
-    
+        
     # Resolve data and style file names to actual paths in backend
     data_filepath = resolve_file(request.data_ref)
     style_filepath = resolve_file(request.style_ref)
@@ -101,8 +101,7 @@ async def generate_sonification(request: SonificationRequest):
 
         if not session_id:
             raise HTTPException(status_code=400, detail="No session cookie found")
-
-        # id = str(uuid.uuid4().hex)
+        
         category = category.replace('_', ' ').capitalize()
         ext = '.wav'
         filename = f'{name} {category}{ext}'
@@ -113,6 +112,8 @@ async def generate_sonification(request: SonificationRequest):
 
         return {'file_ref': file_ref}
     
+    except HTTPException:
+        raise
     except Exception as e:
         import traceback
         raise HTTPException(status_code=500, detail=traceback.format_exc())

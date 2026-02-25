@@ -31,7 +31,7 @@ CATEGORY = 'light_curves'
 STYLES_DIR = STYLE_FILES_DIR / CATEGORY
 STARS_DIR = SUGGESTED_DATA_DIR / CATEGORY
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.DEBUG)
 LOG = logging.getLogger(__name__)
 
 # Define BaseModels for expected request types
@@ -234,11 +234,11 @@ async def plot_lightcurve(request: DataRequest):
     Download the target light curve (if not already downloaded) and convert it to a png image.
     This function saves the plot to the memory buffer, to increase speed and avoid saving multiple images to disk.
 
-    - **request**: The URI (or local filepath) of the light curve.
+    - **request**: The URI (or file ref) of the light curve.
     - Returns: The image as a base64 string.
     """
 
-    # Check if the requested light curve is from a search (with data URI) or a suggested (local) file.
+    # Check if the requested light curve is from a search (with data URI) or a local file.
     if (request.file_ref.startswith('mast:')):
         filepath = download_lightcurve(request.file_ref)
     else:

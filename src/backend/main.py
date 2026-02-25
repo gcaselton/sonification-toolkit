@@ -109,7 +109,9 @@ app.add_middleware(
 # Middleware to set the session_id from cookie
 @app.middleware("http")
 async def session_middleware(request: Request, call_next):
+
     session_id = request.cookies.get("session_id")
+
     
     # Set the context variable
     token = session_id_var.set(session_id)

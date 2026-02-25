@@ -292,12 +292,15 @@ def scale_events(x, y, params: list[ParameterMapping], length):
       resolution = user_settings['data_resolution']
 
       new_x, new_y = downsample_data(x, y, length, resolution)
+      
+      print(new_y)
 
       data = {'pitch': new_y,
               'time': new_x}
 
       m_lims = {'time': ('0%','101%'),
-              'pitch': ('0%','100%')}
+                'pitch': ('0%', '100%')
+                }
       
       p_lims = {}
 
@@ -384,7 +387,7 @@ def downsample_data(x, y, length_in_sec, resolution):
         return x, y
 
     bins = np.array_split(y, new_n)
-    downsampled_y = [np.mean(b) for b in bins]
+    downsampled_y = np.array([float(np.mean(b)) for b in bins])
     downsampled_x = np.linspace(x[0], x[-1], len(downsampled_y))
 
     return downsampled_x, downsampled_y

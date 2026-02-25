@@ -30,7 +30,7 @@ line_data = SUGGESTED_DIR / 'constellationship.fab'
 with load.open(str(line_data)) as f:
     CONST_SHAPES = dict(stellarium.parse_constellations(f))
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.DEBUG)
 LOG = logging.getLogger(__name__)
 
 class ConstellationRequest(BaseModel):
