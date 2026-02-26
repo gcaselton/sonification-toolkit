@@ -44,7 +44,7 @@ const astroTypes: AstroType[] = [
     },
     {
         name: 'Constellations',
-        description: 'Hear the brightest stars in the night sky appearing.',
+        description: 'Hear the unique qualities of the 88 constellations.',
         page: '/constellations'
     },
     {
@@ -73,10 +73,10 @@ export default function Home() {
   return (
     <PageContainer hideBackButton>
       <Box as='main' role="main">
-        <Heading size="4xl" as='h1'>Step 1: Data</Heading>
+        <Heading as='h1'>Step 1: Data</Heading>
         <br />
         <HStack flexWrap="nowrap">
-            <Text textStyle="lg" flexShrink={1}>Select a data source to sonify, or </Text>
+            <Text textStyle="lg" flexShrink={1}>Select a data source to sonify</Text>
           
         </HStack>
         <br />

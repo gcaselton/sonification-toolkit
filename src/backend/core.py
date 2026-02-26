@@ -228,6 +228,8 @@ async def get_suggested(category: str):
                 data = yaml.safe_load(f)
             name = data.get('name', str(file.stem))  # fallback to filename if 'name' missing
             desc = data.get('description')
+            ra = data.get('ra', None)
+            dec = data.get('dec', None)
         except Exception as e:
             print(f'Failed to read or parse {file}: {e}')
             continue
@@ -242,6 +244,10 @@ async def get_suggested(category: str):
         data = {'name': name,
                 'description': desc,
                 'file_ref': file_ref}
+        
+        if ra is not None and dec is not None:
+            data['ra'] = ra
+            data['dec'] = dec
 
         data_list.append(data)
         

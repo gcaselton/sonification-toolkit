@@ -106,8 +106,11 @@ async def search_lightcurves(query: StarQuery, request: Request):
     - **query**: The query, containing the star name as a string
     - Returns: JSON object containing a list of results
     """
-
-    idents = get_identifiers(query)
+    
+    idents, ra, dec = get_identifiers(query)
+    
+    print('ra: ' + str(ra))
+    print('dec: ' + str(dec))
 
     mission_filters = query.filters['mission']
     missions = [k for k in mission_filters.keys() if mission_filters[k] == True]
@@ -154,7 +157,7 @@ async def search_lightcurves(query: StarQuery, request: Request):
         if len(results_metadata) == 0:
             raise HTTPException(status_code=400, detail=f'No {formatted} light curves found for {query.star_name}.')
         
-        return {"results": results_metadata}
+        return {"results": results_metadata, "ra": ra, "dec": dec}
 
     except asyncio.TimeoutError:
         cancel_event.set()
@@ -169,6 +172,15 @@ def get_identifiers(query: StarQuery):
     Filter this according to user-provided filters.
     """
     try:
+        # Get RA/Dec in case we need it later to position the object on Dome
+        result = Simbad.query_object(query.star_name)
+        if result is None:
+            return [], None, None
+        
+        ra = float(result['ra'][0])
+        dec = float(result['dec'][0])
+        
+        # Get identifiers for lightkurve search
         ids_table = Simbad.query_objectids(query.star_name)
         if ids_table is None:
             return []
@@ -188,11 +200,11 @@ def get_identifiers(query: StarQuery):
         filtered = [prefixes[m] for m in missions if missions[m] == True]
         result = [i for i in all_ids if any(i.startswith(p) for p in filtered)]
 
-        return result
+        return result, ra, dec
     
     except Exception as e:
         print("SIMBAD query failed:", e)
-        return []
+        return [], None, None
 
 
 def download_lightcurve(data_uri):
@@ -380,6 +392,12 @@ async def save_refined(request: RefineRequest):
             smoothed_flux = gaussian_filter1d(lc.flux.value, request.sigma)
             lc = lc.copy()
             lc.flux = smoothed_flux * flux_unit
+            
+        # This is to prevent crashing from missing lightkurve metadata
+        if not hasattr(lc, "centroid_col"):
+            lc.centroid_col = None
+        if not hasattr(lc, "centroid_row"):
+            lc.centroid_row = None
         
         lc.to_fits(refined_filepath, overwrite=True)
             

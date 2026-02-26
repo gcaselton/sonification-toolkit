@@ -301,7 +301,7 @@ export default function LightCurves({ dataName, dataRef, onApply }: RefineMenuPr
         {imageLoading ? (
           <LoadingMessage msg="" icon="pulsar" />
         ) : imageSrc ? (
-            <Image src={imageSrc} alt={`Plot of the ${dataName} light curve.`} animation="fade-in 300ms ease-out"/>
+            <Image src={imageSrc} alt={`Plot of the ${dataName} light curve.`} animation="fade-in 300ms ease-out" rounded='md'/>
         ) : (
           <ErrorMsg message="Unable to plot data." />
         )}

@@ -24,28 +24,43 @@ export function PlotDialog({open,
                             }: plotDialogProps ) {
 
   return (
-    <Dialog.Root lazyMount open={open} onOpenChange={(details) => setOpen(details.open)}>
-        <Dialog.Backdrop />
-        <Dialog.Positioner>
+    <Dialog.Root
+      lazyMount
+      open={open}
+      onOpenChange={(details) => setOpen(details.open)}
+    >
+      <Dialog.Backdrop />
+      <Dialog.Positioner>
         <Dialog.Content>
-            <Dialog.CloseTrigger asChild>
-            <IconButton size="sm"
-                variant="ghost"
-                position="absolute"
-                top="0.5rem"
-                right="0.5rem"
-                aria-label="Close">
-                <X />
+          <Dialog.CloseTrigger asChild>
+            <IconButton
+              size="sm"
+              variant="ghost"
+              position="absolute"
+              top="0.5rem"
+              right="0.5rem"
+              aria-label="Close"
+            >
+              <X />
             </IconButton>
-            </Dialog.CloseTrigger>
-            <Dialog.Header>
+          </Dialog.CloseTrigger>
+          <Dialog.Header>
             <Dialog.Title>{title}</Dialog.Title>
-            </Dialog.Header>
-            <Dialog.Body>
-            {loadingPlot ? (<LoadingMessage msg="" icon="pulsar"/>) : (<Image src={image} />)}
-            </Dialog.Body>                    
+          </Dialog.Header>
+          <Dialog.Body>
+            {loadingPlot ? (
+              <LoadingMessage msg="" icon="pulsar" />
+            ) : (
+              <Image
+                src={image}
+                alt={title}
+                rounded="md"
+                animation="fade-in 300ms ease-out"
+              />
+            )}
+          </Dialog.Body>
         </Dialog.Content>
-        </Dialog.Positioner>
+      </Dialog.Positioner>
     </Dialog.Root>
-  )
+  );
 }

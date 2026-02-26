@@ -88,7 +88,7 @@ export default function Settings() {
   return (
     <PageContainer hideBackButton showHome>
       <Box as="main" role="main">
-        <Heading size="4xl">Settings</Heading>
+        <Heading as='h1'>Settings</Heading>
         <br />
         
         <VStack gap="6" align="stretch" maxWidth="500px">

@@ -36,6 +36,8 @@ export default function Style() {
     const dataName = location.state.dataName;
     const dataRef = location.state.dataRef;
     const soniType = location.state.soniType;
+    const ra = location.state.ra ?? null;
+    const dec = location.state.dec ?? null;
 
     interface BaseSound { 
         name: string
@@ -209,7 +211,7 @@ export default function Style() {
             const styleRef = style.file_ref;
             console.log("File reference of selected style:", styleRef);
             // Navigate to the Sonify page with the selected style
-            navigate('/sonify', { state: { dataName, dataRef, styleName, styleRef, soniType } });
+            navigate('/sonify', { state: { dataName, dataRef, styleName, styleRef, soniType, ra, dec } });
         }
     }
 
@@ -248,7 +250,7 @@ export default function Style() {
             console.log("Saved custom style as:", styleRef);
             // navigate
             const styleName = 'Custom'
-            navigate('/sonify', { state: { dataName, dataRef, styleName, styleRef, soniType } });
+            navigate('/sonify', { state: { dataName, dataRef, styleName, styleRef, soniType, ra, dec } });
         });
     } catch (err) {
         console.error("Error saving custom style:", err);
@@ -349,9 +351,8 @@ export default function Style() {
             const res = await apiRequest(`${coreAPI}/upload-yaml/`, formData);
             console.log("File uploaded successfully:", res.file_ref);
             const styleRef = res.file_ref;
-            const styleName = 
             // Navigate to the Sonify page with the uploaded file
-            navigate('/sonify', { state: {dataName, dataRef, styleRef, soniType } });
+            navigate('/sonify', { state: {dataName, dataRef, styleRef, soniType, ra, dec } });
         
         } catch (err: any) {
             //setResponse({ error: err.message });
@@ -367,7 +368,7 @@ export default function Style() {
     return (
         <PageContainer>
             <Box position='relative' as="main" role="main">
-                <Heading size="4xl" as='h1'>  Step 2: Style</Heading>
+                <Heading as='h1'>  Step 2: Style</Heading>
                 <br />
                 <Text textStyle="lg">Choose from the styles below, or configure your own</Text>
                 <br />

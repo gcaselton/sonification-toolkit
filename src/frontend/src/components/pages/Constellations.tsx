@@ -172,7 +172,7 @@ export default function Constellations() {
   return (
     <PageContainer>
       <Box as='main' role="main">
-        <Heading size="4xl" as='h1'>Constellations</Heading>
+        <Heading as='h1'>Constellations</Heading>
         <br />
         <Text textStyle="lg">Search for a specific constellation or choose from the suggestions below</Text>
         <br />

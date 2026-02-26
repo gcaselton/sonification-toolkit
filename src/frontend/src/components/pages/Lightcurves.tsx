@@ -56,6 +56,8 @@ export interface Lightcurve {
 export interface SuggestedData {
   name: string;
   description: string;
+  ra: number;
+  dec: number;
   fileRef: string;
 }
 
@@ -99,7 +101,9 @@ export default function Lightcurves() {
     dataName: string;
   }>(null);
   const [uploadKey, setUploadKey] = useState(0);
-  
+
+  const [ra, setRa] = useState(null);
+  const [dec, setDec] = useState(null);
 
   const abortControllerRef = useRef<AbortController | null>(null);
 
@@ -120,6 +124,8 @@ export default function Lightcurves() {
         const mapped: SuggestedData[] = data.map((item: any) => ({
           name: item.name,
           description: item.description,
+          ra: item.ra,
+          dec: item.dec,
           fileRef: item.file_ref,
         }));
 
@@ -176,7 +182,12 @@ export default function Lightcurves() {
         'POST',
         { signal: controller.signal }
       );
+
       setLightcurves(response.results);
+      setRa(response.ra);
+      setDec(response.dec);
+      console.log("ra: " + response.ra)
+      console.log("dec: " + response.dec)
 
       console.log("Search results:", response.results);
 
@@ -301,7 +312,7 @@ export default function Lightcurves() {
         console.log("Lightcurve selected, file ref:", dataRef);
         // Navigate to the style page with the filepath and star name
         const dataName = searchTerm
-        navigate('/refine', { state: { dataRef, dataName, soniType } });
+        navigate('/refine', { state: { dataRef, dataName, soniType, ra, dec } });
       }
     });
   };
@@ -346,7 +357,10 @@ export default function Lightcurves() {
     const dataRef = star.fileRef;
     console.log('dataRef:' + dataRef)
     const dataName = star.name;
-    navigate('/refine', { state: { dataRef, dataName, soniType } });
+    const ra = star.ra;
+    const dec = star.dec;
+
+    navigate('/refine', { state: { dataRef, dataName, soniType, ra, dec } });
   };
 
   const handleCancelReduced = () => {
@@ -404,7 +418,7 @@ export default function Lightcurves() {
             </Dialog.Content>
           </Dialog.Positioner>
         </Dialog.Root>
-        <Heading size="4xl" as="h1">
+        <Heading as="h1">
           Light Curves
         </Heading>
         <br />

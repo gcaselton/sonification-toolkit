@@ -38,7 +38,7 @@ export default function Help() {
   return (
     <PageContainer hideBackButton showHome>
       <Box as="main" role="main">
-        <Heading size="4xl" as='h1'>Help</Heading>
+        <Heading  as='h1'>Help</Heading>
         <br />
         <Text textStyle='lg'>
             Welcome to the Sonification Toolkit! Here you’ll find help and guidance for using the app.

@@ -109,7 +109,7 @@ export default function Constellations({ dataRef, dataName, onApply }: RefineMen
         {imageLoading ? (
           <LoadingMessage msg="" icon="pulsar" />
         ) : imageSrc ? (
-          <Image src={imageSrc} alt={`A plot of the brightest stars in ${dataName}.`} animation="fade-in 300ms ease-out" />
+          <Image src={imageSrc} alt={`A plot of the brightest stars in ${dataName}.`} animation="fade-in 300ms ease-out" rounded='md'/>
         ) : (
           <ErrorMsg message="Unable to plot data." />
         )}

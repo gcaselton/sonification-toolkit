@@ -228,6 +228,7 @@ export default function Constellations({
             src={imageSrc}
             alt={`A plot of the ${nStars} brightest stars in ${dataName}.`}
             animation="fade-in 300ms ease-out"
+            rounded='md'
           />
         ) : (
           <ErrorMsg message="Unable to plot data." />
