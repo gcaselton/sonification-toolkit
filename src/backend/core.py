@@ -1,6 +1,5 @@
 from fastapi import APIRouter, HTTPException, UploadFile, File, Cookie, Response
 from fastapi.responses import FileResponse
-from pydantic import BaseModel
 from extensions import sonify
 from pathlib import Path
 from paths import TMP_DIR, STYLE_FILES_DIR, SUGGESTED_DATA_DIR, SAMPLES_DIR, HYG_DATA
@@ -9,7 +8,10 @@ from sounds import all_sounds, online_sounds, local_sounds, asset_cache, format_
 from config import GITHUB_USER, GITHUB_REPO
 from context import session_id_var
 from utils import resolve_file
-import logging, httpx, yaml, requests, os, base64, hashlib, uuid, aiofiles, zipfile, json, gc
+from request_models import DataRequest, SoundRequest, SoundSettings, SonificationRequest
+import logging, httpx, yaml, os, uuid, aiofiles, zipfile, traceback
+import soundfile as sf
+import matplotlib.pyplot as plt
 
 import lightkurve as lk
 import numpy as np
@@ -17,7 +19,7 @@ import pandas as pd
 from io import BytesIO
 from astropy.io import fits
 from astropy.table import Table
-from astroquery.simbad import Simbad
+
 
 
 router = APIRouter(prefix='/core')
@@ -25,33 +27,14 @@ router = APIRouter(prefix='/core')
 logging.basicConfig(level=logging.DEBUG)
 LOG = logging.getLogger(__name__)
 
-class DataRequest(BaseModel):
-    file_ref: str
-
-class SoundSettings(BaseModel):
-    sound: str
-    filterCutOff: bool
-    pitch: bool
-    volume: bool
-    leftRightPan: bool
-    chordMode: bool
-    rootNote: str
-    scale: str
-    quality: str
-
-class SoundRequest(BaseModel):
-    sound_name: str
-
-class SonificationRequest(BaseModel):
-    category: str
-    data_ref: str
-    style_ref: str
-    duration: float
-    system: str
-    data_name: str
-    
     
 ACCEPTED_UPLOAD_FORMATS = ['.csv', '.fits']
+
+FORMATTED_FILENAMES = {
+    'light_curves': 'Light Curve',
+    'constellations': 'Constellation',
+    'night_sky': 'Night Sky'
+}
 
 
 @router.get('/session/')
@@ -84,27 +67,21 @@ async def generate_sonification(request: SonificationRequest):
     data_filepath = resolve_file(request.data_ref)
     style_filepath = resolve_file(request.style_ref)
 
-    category = request.category
-    data = data_filepath
-    style = style_filepath
-    length = request.duration
-    system = request.system
-    name = request.data_name
-
-    if int(length) > 300:
+    if int(request.duration) > 300:
         raise HTTPException(status_code=400, detail="Sonification too long, maximum length = 5 minutes.")
 
     try:
-        soni = sonify(data, style, category, length, system)
+        
+        soni = sonify(data_filepath, style_filepath, request.category, request.duration, request.system, request.observer)
 
         session_id = session_id_var.get()
 
         if not session_id:
             raise HTTPException(status_code=400, detail="No session cookie found")
         
-        category = category.replace('_', ' ').capitalize()
+        category = FORMATTED_FILENAMES[request.category]
         ext = '.wav'
-        filename = f'{name} {category}{ext}'
+        filename = f'{request.data_name} {category}{ext}'
         filepath = TMP_DIR / session_id / filename
         soni.save(filepath)
 
@@ -115,8 +92,8 @@ async def generate_sonification(request: SonificationRequest):
     except HTTPException:
         raise
     except Exception as e:
-        import traceback
-        raise HTTPException(status_code=500, detail=traceback.format_exc())
+        LOG.error("Error generating sonification:\n" + traceback.format_exc())
+        raise
     
 
 @router.get('/audio/{file_ref}')

@@ -15,13 +15,16 @@ from matplotlib.figure import Figure
 
 from io import BytesIO
 from utils import resolve_file
-from core import SonificationRequest, DataRequest
+from request_models import DataRequest, NightSkyRequest, MagRequest
 from skyfield.data import hipparcos
 from skyfield.api import load, Star, wgs84
 from timezonefinder import TimezoneFinder
 from datetime import datetime, timezone
 from zoneinfo import ZoneInfo
 from typing import Literal
+
+LOG = logging.getLogger(__name__)
+logging.basicConfig(level=logging.DEBUG)
 
 router = APIRouter(prefix='/night-sky')
 
@@ -34,72 +37,126 @@ COMPASS_RADS = np.linspace(0, 2*np.pi, len(COMPASS_KEYS)+1)[:-1]
 
 COMPASS_MAP = dict(zip(COMPASS_KEYS, COMPASS_RADS))
 
-class NightSkyRequest(BaseModel):
-    latitude: float
-    longitude: float
-    facing: Literal['N','NNE','NE','ENE','E','ESE','SE',
-                'SSE','S','SSW','SW','WSW','W','WNW',
-                'NW','NNW']
-    date_time: str
+LOG.info("Loading night sky reference data…")
 
-class MagRequest(BaseModel):
-    maglim: float
-    file_ref: str
+with load.open(hipparcos.URL) as f:
+    HIP_DF = pd.read_csv(
+        f,
+        sep='|',
+        names=hipparcos._COLUMN_NAMES,
+        compression=None,
+        usecols=['HIP','Vmag','RAdeg','DEdeg','Plx','pmRA','pmDE','B-V'],
+        na_values=['     ','       ','        ','            ','      '],
+    )
 
+HIP_DF.columns = (
+    'hip','magnitude','ra_degrees','dec_degrees',
+    'parallax_mas','ra_mas_per_year','dec_mas_per_year','BVcol'
+)
+
+HIP_DF = HIP_DF.assign(
+    ra_hours=HIP_DF['ra_degrees']/15.0,
+    epoch_year=1991.25,
+).set_index('hip')
+
+LOG.info("Hipparcos loaded")
+
+EPH = load('de421.bsp')
+EARTH = EPH['earth']
+
+LOG.info("Ephemeris loaded")
+
+TF = TimezoneFinder()
+
+
+def handle_observer(observer: dict, style: dict):
+        
+    lat = float(observer['latitude'])
+    lon = float(observer['longitude'])
+    ra, dec = observer['ra'], observer['dec']
+    
+    position = position_observer(lat, lon, observer['date_time'])
+    
+    ra_hours = ra / 15
+    
+    star = Star(ra_hours=ra_hours, dec_degrees=dec)
+    observed_star = position.observe(star)
+    alt, az, dist = observed_star.apparent().altaz()
+    
+    # Convert observing direction to radians
+    direction = COMPASS_MAP[observer['orientation']]
+    
+    az_rads = (az.radians - direction + np.pi) % (2*np.pi) - np.pi
+    polar_degs = 90 - alt.degrees
+    
+    # Normalise
+    azimuth = (az_rads + np.pi) / (2*np.pi)
+    polar = polar_degs / 180
+    
+    params = style['parameters']
+    
+    params = [p for p in params if p['output'] not in ('azimuth', 'polar')]
+    
+    params.append({
+        'input': azimuth,
+        'input_range': ('0%', '100%'),
+        'output': 'azimuth'
+    })
+    
+    params.append({
+        'input': polar,
+        'input_range': ('0%', '100%'),
+        'output': 'polar'
+    })
+    
+    style['parameters'] = params
+    
+    print(params)
+    
+    return style
+    
+    
+def position_observer(lat, lon, date_time):
+    
+    # Get time zone from coordinates
+    time_zone = TF.timezone_at(lng=lon, lat=lat)
+
+    # Get time information
+    ts = load.timescale()
+    dt = datetime.strptime(date_time, "%Y-%m-%d %H:%M:%S").replace(tzinfo=ZoneInfo(time_zone))
+
+    t = ts.from_datetime(dt)
+
+    # Orient observer
+    location = EARTH + wgs84.latlon(lat, lon)
+    position = location.at(t)
+    
+    return position
+      
 
 @router.post('/get-stars/')
 def get_star_data(request: NightSkyRequest):
 
-    # Get time zone from coordinates
-    tf = TimezoneFinder()
-    time_zone = tf.timezone_at(lng=request.longitude, lat=request.latitude)
+    # Position observer
+    position = position_observer(request.latitude, request.longitude, request.date_time)
 
-    # Get time information
-    ts = load.timescale()
-    dt = datetime.strptime(request.date_time, "%Y-%m-%d %H:%M:%S").replace(tzinfo=ZoneInfo(time_zone))
-
-    t = ts.from_datetime(dt)
-
+    # Load in star data
+    bright_stars = Star.from_dataframe(HIP_DF)
+    stars = position.observe(bright_stars)
+    alt, az, dist = stars.apparent().altaz()
+    
     # Convert observing direction to radians
     direction = COMPASS_MAP[request.facing]
 
-    # Load in star data
-    with load.open(hipparcos.URL) as f:
-  
-        df = pd.read_csv(
-                f, sep='|', names=hipparcos._COLUMN_NAMES, compression=None,
-                usecols=['HIP', 'Vmag', 'RAdeg', 'DEdeg', 'Plx', 'pmRA', 'pmDE', 'B-V'],
-                na_values=['     ', '       ', '        ', '            ', '      '],
-            )
-        df.columns = (
-                'hip', 'magnitude', 'ra_degrees', 'dec_degrees',
-                'parallax_mas', 'ra_mas_per_year', 'dec_mas_per_year', 'BVcol',
-            )
-        df = df.assign(
-                ra_hours = df['ra_degrees'] / 15.0,
-                epoch_year = 1991.25,
-            ).set_index('hip')
-
-    eph = load('de421.bsp')
-    earth = eph['earth']
-
-    # Orient observer
-    location = earth + wgs84.latlon(request.latitude, request.longitude)
-    observer = location.at(t)
-
-    bright_stars = Star.from_dataframe(df)
-    stars = observer.observe(bright_stars)
-    alt, az, dist = stars.apparent().altaz()
-
     # Narrow down to stars above horizon
-    above_horizon = np.logical_and(alt.degrees > 0, np.isfinite(df['BVcol']))
+    above_horizon = np.logical_and(alt.degrees > 0, np.isfinite(HIP_DF['BVcol']))
 
     # Build dataframe to save
     star_data = pd.DataFrame({
         "azimuth_rad": az.radians[above_horizon],
         "altitude_deg": alt.degrees[above_horizon],
-        "magnitude": df['magnitude'][above_horizon].values + 1e-2*np.random.random(above_horizon.sum()),
-        "colour": df['BVcol'][above_horizon].astype(float).values,
+        "magnitude": HIP_DF['magnitude'][above_horizon].values + 1e-2*np.random.random(above_horizon.sum()),
+        "colour": HIP_DF['BVcol'][above_horizon].astype(float).values,
         "direction_offset": direction
     })
 

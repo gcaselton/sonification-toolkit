@@ -14,7 +14,7 @@ from matplotlib.figure import Figure
 from matplotlib.colors import Normalize
 from io import BytesIO
 from utils import resolve_file
-from core import SonificationRequest, DataRequest
+from request_models import DataRequest, NStarsRequest, ConstellationRequest
 from skyfield.data import stellarium
 from skyfield.api import load
 router = APIRouter(prefix='/constellations')
@@ -33,14 +33,7 @@ with load.open(str(line_data)) as f:
 logging.basicConfig(level=logging.DEBUG)
 LOG = logging.getLogger(__name__)
 
-class ConstellationRequest(BaseModel):
-    name: str
-    by_shape: bool = True
-    n_stars: int
 
-class NStarsRequest(BaseModel):
-    name: str
-    max_magnitude: float
 
 IAU_names = {
     "Pisces": "Psc",

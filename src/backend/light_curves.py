@@ -18,7 +18,7 @@ from concurrent.futures import ThreadPoolExecutor
 from astroquery.simbad import Simbad
 from astroquery.mast import Observations
 from scipy.ndimage import gaussian_filter1d
-from core import SonificationRequest, DataRequest
+from request_models import StarQuery, DataRequest, DownloadRequest, PlotRequest, RefineRequest
 from utils import resolve_file
 
 
@@ -34,23 +34,8 @@ STARS_DIR = SUGGESTED_DATA_DIR / CATEGORY
 logging.basicConfig(level=logging.DEBUG)
 LOG = logging.getLogger(__name__)
 
-# Define BaseModels for expected request types
-class StarQuery(BaseModel):
-    star_name: str
-    filters: dict
 
-class DownloadRequest(BaseModel):
-    data_uri: str
 
-class PlotRequest(BaseModel):
-    file_ref: str
-    new_range: list[int]
-
-class RefineRequest(BaseModel):
-    data_name: str
-    file_ref: str
-    new_range: list[float]
-    sigma: int
 
 
 def run_lightkurve_search(idents, authors, cancel_event: threading.Event):
@@ -241,7 +226,7 @@ def download_lightcurve(data_uri):
     return filepath
 
 @router.post('/plot/')
-async def plot_lightcurve(request: DataRequest):
+def plot_lightcurve(request: DataRequest):
     """
     Download the target light curve (if not already downloaded) and convert it to a png image.
     This function saves the plot to the memory buffer, to increase speed and avoid saving multiple images to disk.
@@ -317,7 +302,7 @@ def plot_and_format_lc(filepath: str):
     return img_base64
 
 @router.post('/select-lightcurve/')
-async def select_lightcurve(request: DownloadRequest):
+def select_lightcurve(request: DownloadRequest):
     """
     Download a chosen light curve to the tmp directory, if it hasn't already been.
     This can then be used later to sonify the light curve.
@@ -332,7 +317,7 @@ async def select_lightcurve(request: DownloadRequest):
 
 
 @router.post('/get-range/')
-async def get_range(request: DataRequest):
+def get_range(request: DataRequest):
 
     filepath = str(resolve_file(request.file_ref))
 
@@ -355,9 +340,9 @@ async def get_range(request: DataRequest):
 
 
 @router.post('/preview-refined/')
-async def preview_refined(request: RefineRequest):
+def preview_refined(request: RefineRequest):
 
-    refined = await save_refined(request)
+    refined = save_refined(request)
 
     filepath = str(resolve_file(refined['file_ref']))
        
@@ -368,7 +353,7 @@ async def preview_refined(request: RefineRequest):
 
 
 @router.post('/save-refined/')
-async def save_refined(request: RefineRequest):
+def save_refined(request: RefineRequest):
     
     # Truncate x-axis to new range
     new_start, new_end = request.new_range

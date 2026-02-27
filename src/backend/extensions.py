@@ -10,6 +10,7 @@ from pychord import Chord
 from pychord.utils import transpose_note
 from paths import *
 from pydantic import ValidationError
+from night_sky import handle_observer
 
 import lightkurve as lk
 import numpy as np
@@ -33,14 +34,17 @@ def read_YAML_file(filepath):
     
     return YAML_dict
 
-def sonify(data: Path | str | tuple, style_file: Path | str | dict, sonify_type: str, length=15, system='mono'):
+def sonify(data: Path | str | tuple, style_file: Path | str | dict, sonify_type: str, length=15, system='mono', observer=None):
 
       # Load and validate user style
       style_dict = read_YAML_file(style_file) if isinstance(style_file, (Path, str)) else style_file
 
       # validate input parameters against data headers
       validate_input_params(style_dict, data)
-
+      
+      if observer:
+            handle_observer(observer, style_dict)
+            
       # Validate entire style file
       validated_style = BaseStyle.model_validate(style_dict)
         
@@ -49,6 +53,8 @@ def sonify(data: Path | str | tuple, style_file: Path | str | dict, sonify_type:
 
       # Render sonification
       sonification = Sonification(score, sources, generator, system)
+      
+      print('system: ' + system)
 
       sonification.render()
 
@@ -78,6 +84,9 @@ def validate_input_params(style: dict, data: Path | str | tuple):
             mappings = style['parameters']
 
             for mapping in mappings:
+                  
+                  if isinstance(mapping['input'], float):
+                        continue
                 
                   input_param = mapping['input'].lower()
                   in_min, in_max = mapping.get('input_range', ('0%','100%'))
@@ -220,7 +229,7 @@ def constellation_sources(data: Path | str , style: BaseStyle, length):
             input = mapping.input
             output = mapping.output
 
-            if output == 'azimuth':
+            if output == 'azimuth' and isinstance(input, str):
                   # Rescale input values if using azimuth to restrict to the frontal stereo field
                   df[input] = rescale_col(df, input, (0.25, 0.75))
 
@@ -232,8 +241,12 @@ def constellation_sources(data: Path | str , style: BaseStyle, length):
                   my_funcs[output] = lambda x: -x
 
             # Map data
-            data_dict[output] = df[input].to_numpy(dtype=float)
-
+            if isinstance(input, float):
+                  data_dict[output] = [input]
+            else:
+                  
+                  data_dict[output] = df[input].to_numpy(dtype=float)
+            
             # Set mapping and parameter limits
             m_lims[output] = mapping.input_range
 
@@ -247,7 +260,8 @@ def constellation_sources(data: Path | str , style: BaseStyle, length):
 
 
       return sources
-
+      
+            
 
 def rescale_col(df, col, target_range=(0.0, 1.0)):
     t_min, t_max = target_range
@@ -306,7 +320,12 @@ def scale_events(x, y, params: list[ParameterMapping], length):
 
       for mapping in params:
             if mapping.output not in data.keys():
-                  data[mapping.output] = new_y
+                  
+                  if isinstance(mapping.input, float):
+                        data[mapping.output] = [mapping.input]
+                  else:
+                        data[mapping.output] = new_y
+                  
                   m_lims[mapping.output] = mapping.input_range
 
                   if mapping.output_range:
@@ -348,7 +367,7 @@ def light_curve_sources(data, style: BaseStyle, length):
       x = ensure_array(x)
       y = ensure_array(y)
 
-      is_scale = style.harmony and ' ' in style.harmony or style.preset == 'staccato'
+      is_scale = ((style.harmony and ' ' in style.harmony) or (style.preset == 'staccato'))
 
       pitches = [0] if is_scale else [0,1,2,3]
 
@@ -367,10 +386,20 @@ def light_curve_sources(data, style: BaseStyle, length):
       p_lims = {}
 
       for mapping in style.parameters:
-            data_dict[mapping.output] = [y]*len(pitches)
+            
+            if isinstance(mapping.input, float):
+                  arr = np.full(len(x), mapping.input)
+                  arr[-1] += 0.0001  # prevent zero range
+                  data_dict[mapping.output] = [arr] * len(pitches)
+            else:
+                  data_dict[mapping.output] = [y]*len(pitches)
+                  
             m_lims[mapping.output] = mapping.input_range
             if mapping.output_range:
                   p_lims[mapping.output] = mapping.output_range
+                  
+      print(data_dict)
+      
 
       sources = Objects(data_dict.keys())
       sources.fromdict(data_dict)

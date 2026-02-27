@@ -6,6 +6,9 @@ for lib in ["uvicorn", "matplotlib", "httpcore", "asyncio", "httpx", "urllib3", 
 logger = logging.getLogger("uvicorn.error")
 
 from fastapi import FastAPI, BackgroundTasks, Request
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import HTMLResponse, JSONResponse
 
 from light_curves import router as light_curve_router
 from constellations import router as constellations_router
@@ -13,9 +16,6 @@ from night_sky import router as night_sky_router
 from performance import router as performance_router
 from core import router as core_router
 from settings import router as settings_router
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
-from fastapi.responses import HTMLResponse
 from paths import SYNTHS_DIR, SAMPLES_DIR, TMP_DIR, ROOT_DIR
 from sounds import cache_online_assets
 from contextlib import asynccontextmanager
@@ -23,7 +23,7 @@ from config import GITHUB_USER, GITHUB_REPO
 from StorageManager import StorageManager
 from context import session_id_var
 from datetime import datetime
-import asyncio, os, httpx, psutil, tracemalloc, time, threading, shutil, sys
+import asyncio, os, httpx, psutil, tracemalloc, time, threading, shutil, sys, traceback
 
 # fcntl package is only available on unix systems
 if sys.platform != "win32":
@@ -91,6 +91,11 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    logger.error("Unhandled exception:\n" + traceback.format_exc())
+    return JSONResponse(status_code=500, content={"detail": "Internal server error"})
+
 origins = [
     "http://localhost:5173",
     "http://localhost:4173",
@@ -111,7 +116,6 @@ app.add_middleware(
 async def session_middleware(request: Request, call_next):
 
     session_id = request.cookies.get("session_id")
-
     
     # Set the context variable
     token = session_id_var.set(session_id)
@@ -119,6 +123,9 @@ async def session_middleware(request: Request, call_next):
     try:
         response = await call_next(request)
         return response
+    except Exception as e:
+        logger.error("Exception in request:\n" + traceback.format_exc())
+        raise
     finally:
         # Reset the context variable for the next request
         session_id_var.reset(token)

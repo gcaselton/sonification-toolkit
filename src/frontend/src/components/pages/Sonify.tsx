@@ -86,7 +86,7 @@ export default function Sonify() {
   const [imageLoading, setImageLoading] = useState(true);
 
   // Tracks audio files to prevent caching
-  const [audioVersion, setAudioVersion] = useState(0);
+  const [audioKey, setAudioKey] = useState('');
 
   const [observerOpen, setObserverOpen] = useState(false);
   const [observerValues, setObserverValues] = useState<ObserverValues | null>(null);
@@ -189,9 +189,9 @@ export default function Sonify() {
       setLoading(false);
       if (fileRef) {
         console.log("Sonification file created:", fileRef);
+        setAudioKey(Date.now().toString());
         setAudioFilename(`${fileRef}`);
         setSoniReady(true);
-        setAudioVersion((prev) => prev + 1);
       } else {
         console.error("No sonification file returned.");
       }
@@ -466,8 +466,8 @@ export default function Sonify() {
               {errorMessage && <ErrorMsg message={errorMessage} />}
               {soniReady && (
                 <audio
-                  key={audioVersion}
-                  src={`${coreAPI}/audio/${audioFilename}?v=${audioVersion}`}
+                  key={audioKey}
+                  src={`${coreAPI}/audio/${audioFilename}?v=${audioKey}`}
                   controls
                   style={{ width: "100%" }}
                 />
