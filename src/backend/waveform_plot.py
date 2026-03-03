@@ -3,7 +3,8 @@ import matplotlib.pyplot as plt
 from paths import TMP_DIR
 from pathlib import Path
 
-session = 'e9a11e07-ef94-4b97-a01e-93264bf7f9a1'
+session = '3530392b-9473-4b0f-8980-e0bd9c0ce877'
+
 
 star = 'Sirius'
 

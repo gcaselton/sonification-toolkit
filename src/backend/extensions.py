@@ -381,20 +381,21 @@ def light_curve_sources(data, style: BaseStyle, length):
                         mapping.output = 'pitch_shift'
                         
       data_dict = {'pitch': pitches, 
-              'time_evo': [x]*len(pitches)}
+                  'time_evo': [x]*len(pitches)}
       m_lims = {'time_evo': ('0%', '100%')}
       p_lims = {}
 
       for mapping in style.parameters:
             
             if isinstance(mapping.input, float):
-                  arr = np.full(len(x), mapping.input)
-                  arr[-1] += 0.0001  # prevent zero range
-                  data_dict[mapping.output] = [arr] * len(pitches)
+                  # Is a constant spatial param, e.g. azimuth or polar
+                  data_dict[mapping.output] = [mapping.input]
             else:
+                  # Every other type of param
                   data_dict[mapping.output] = [y]*len(pitches)
+                  m_lims[mapping.output] = mapping.input_range
                   
-            m_lims[mapping.output] = mapping.input_range
+            
             if mapping.output_range:
                   p_lims[mapping.output] = mapping.output_range
                   
