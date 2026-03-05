@@ -65,10 +65,8 @@ const astroTypes: AstroType[] = [
 ]
 
 
-export default function Home() {
+export default function Planetaria() {
   const navigate = useNavigate();
-
-  
 
   return (
     <PageContainer hideBackButton>

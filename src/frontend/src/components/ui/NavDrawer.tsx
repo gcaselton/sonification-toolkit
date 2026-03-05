@@ -22,7 +22,7 @@ import { Link } from 'react-router-dom';
 
 export function NavDrawer() {
   const navItems = [
-    { icon: Home, label: "Home", to: "/" },
+    { icon: Home, label: "Home", to: "/planetaria" },
     { icon: Settings, label: "Settings", to: "/settings" },
     { icon: HelpCircle, label: "Help", to: "/help" },
   ]
