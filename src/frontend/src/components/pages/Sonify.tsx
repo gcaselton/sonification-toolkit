@@ -60,7 +60,7 @@ export default function Sonify() {
     light_curves: { max_length: 60, default_length: 15, audio_system: "mono" },
     constellations: {
       max_length: 120,
-      default_length: 20,
+      default_length: 15,
       audio_system: "stereo",
     },
     night_sky: { max_length: 120, default_length: 30, audio_system: "stereo" },
@@ -334,7 +334,7 @@ export default function Sonify() {
                       colorPalette="teal"
                       variant={observerValues ? 'solid' : "subtle"}
                       disabled={
-                        !(audioSystem[0] == "5.1" || audioSystem[0] == "7.1")
+                        (audioSystem[0] == 'mono')
                       }
                       onClick={() => setObserverOpen(true)}
                     >

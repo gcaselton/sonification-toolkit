@@ -27,7 +27,7 @@ parameters:
     output: 'pitch'
     function: 'invert'
 
-  - input: 'ra'
+  - input: 'ra_corrected'
     output: 'azimuth'
     output_range: [0.25, 0.75]
 

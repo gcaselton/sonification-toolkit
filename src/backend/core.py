@@ -10,10 +10,7 @@ from context import session_id_var
 from utils import resolve_file
 from request_models import DataRequest, SoundRequest, SoundSettings, SonificationRequest
 import logging, httpx, yaml, os, uuid, aiofiles, zipfile, traceback
-import soundfile as sf
-import matplotlib.pyplot as plt
 
-import lightkurve as lk
 import numpy as np
 import pandas as pd
 from io import BytesIO
@@ -38,7 +35,7 @@ FORMATTED_FILENAMES = {
 
 
 @router.get('/session/')
-async def get_or_create_session(
+def get_or_create_session(
     response: Response,
     session_id: str | None = Cookie(None)
 ):
@@ -61,7 +58,7 @@ async def get_or_create_session(
 
 
 @router.post('/generate-sonification/')
-async def generate_sonification(request: SonificationRequest):
+def generate_sonification(request: SonificationRequest):
         
     # Resolve data and style file names to actual paths in backend
     data_filepath = resolve_file(request.data_ref)
@@ -97,7 +94,7 @@ async def generate_sonification(request: SonificationRequest):
     
 
 @router.get('/audio/{file_ref}')
-async def get_audio(file_ref: str):
+def get_audio(file_ref: str):
 
     filepath = resolve_file(file_ref)
     file_name = file_ref.split(':')[-1]
@@ -124,7 +121,7 @@ def download_file(file_ref: str):
 
     return response
 
-async def ensure_two_columns(file: UploadFile, ext: str, contents: bytes):
+def ensure_two_columns(ext: str, contents: bytes):
     
     if ext == ".csv":
         df = pd.read_csv(BytesIO(contents))
@@ -171,14 +168,12 @@ async def uploadData(file: UploadFile):
     
     ext = os.path.splitext(file.filename)[-1]
     
-    print(ext)
-    
     if ext not in ACCEPTED_UPLOAD_FORMATS:
         raise HTTPException(status_code=415, detail='Uploaded data must be in .csv or .fits format')
     
     # check that the uploaded data is only two columns (x,y) and reduce if necessary
     contents = await file.read()
-    df, reduced = await ensure_two_columns(file, ext, contents)
+    df, reduced = ensure_two_columns(ext, contents)
     
     session_id = session_id_var.get()
     filepath = os.path.join(TMP_DIR, session_id, file.filename)
@@ -190,7 +185,7 @@ async def uploadData(file: UploadFile):
     return {'file_ref': file_ref, 'reduced': reduced}
 
 @router.get('/suggested-data/{category}/')
-async def get_suggested(category: str):
+def get_suggested(category: str):
 
     data_dir = SUGGESTED_DATA_DIR / category
     
@@ -231,7 +226,7 @@ async def get_suggested(category: str):
     return data_list
 
 @router.get('/styles/{category}')
-async def get_styles(category: str):
+def get_styles(category: str):
 
     styles_dir = STYLE_FILES_DIR / category
     if not styles_dir.exists():
@@ -258,11 +253,11 @@ async def get_styles(category: str):
     return styles
 
 @router.get('/sound_info/')
-async def get_sound_info():
+def get_sound_info():
     return all_sounds()
 
 @router.post('/preview-style-settings/{category}')
-async def preview_style_settings(request: DataRequest, category: str):
+def preview_style_settings(request: DataRequest, category: str):
 
     style = resolve_file(request.file_ref)
 
@@ -290,7 +285,7 @@ async def preview_style_settings(request: DataRequest, category: str):
         raise HTTPException(status_code=404, detail=str(e))
     
 @router.post('/save-sound-settings/')
-async def save_sound_settings(settings: SoundSettings):
+def save_sound_settings(settings: SoundSettings):
     """
     Save sound settings for the sonification.
 

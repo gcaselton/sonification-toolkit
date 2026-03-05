@@ -12,7 +12,7 @@ export default function Refine() {
     const navigate = useNavigate();
     const location = useLocation();
     const dataName = location.state.dataName
-    var dataRef = location.state.dataRef
+    const dataRef = location.state.dataRef
     const soniType = location.state.soniType
     const ra = location.state.ra ?? null;
     const dec = location.state.dec ?? null;
@@ -33,10 +33,16 @@ export default function Refine() {
                     <Menu 
                         dataRef={dataRef}
                         dataName={dataName} 
-                        onApply={(newRef: string) => {
+                        onApply={(newRef: string, newRa?: number, newDec?: number) => {
                             // Navigate with refined data
-                            dataRef = newRef;
-                            navigate('/style', { state: { dataRef, dataName, soniType, ra, dec } });
+                            
+                            navigate('/style', { state: { 
+                                dataRef: newRef, 
+                                dataName, 
+                                soniType, 
+                                ra: newRa ?? ra, 
+                                dec: newDec ?? dec 
+                            } });
                             }}/>
                 </Suspense>
             </Box>

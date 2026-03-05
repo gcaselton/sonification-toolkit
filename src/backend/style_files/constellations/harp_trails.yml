@@ -21,11 +21,11 @@ parameters:
   - input: 'dec'
     output: 'pitch'
 
-  - input: 'ra'
+  - input: 'ra_corrected'
     input_range: ['0%', '210%']
     output: 'time'
 
-  - input: 'ra'
+  - input: 'ra_corrected'
     output: 'azimuth'
     output_range: [0.25, 0.75]
 

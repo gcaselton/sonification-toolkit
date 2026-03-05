@@ -34,7 +34,6 @@ logging.basicConfig(level=logging.DEBUG)
 LOG = logging.getLogger(__name__)
 
 
-
 IAU_names = {
     "Pisces": "Psc",
     "Cetus": "Cet",
@@ -145,7 +144,7 @@ def get_constellation(constellation_name: str, by_shape: bool = True) -> pd.Data
     stars_sorted = stars_in_constellation.sort_values('magnitude')
 
     # correct RA for wraparound if needed
-    stars_sorted['ra'] = correct_ra(stars_sorted['ra'])
+    stars_sorted['ra_corrected'] = correct_ra(stars_sorted['ra'].copy())
 
     return stars_sorted
 
@@ -167,10 +166,13 @@ async def plot_csv(data: DataRequest):
 
     return {'image': image}
 
+
 def correct_ra(ra):
 
-    # Detect if the constellation crosses the 0h line (RA wraparound)
+   
+    ra = ra.copy()
     
+    # Detect if the constellation crosses the 0h line (RA wraparound)
     if ra.max() - ra.min() > 12:  # difference > 12h → likely wraparound
         ra[ra < 12] += 24 # add 24h to RA values < 12h to unwrap
 
@@ -186,7 +188,7 @@ def plot_and_format_constellation(df: pd.DataFrame, lines: bool):
         raise ValueError("No stars available to plot.")
 
     # RA/Dec as x/y
-    x = df['ra'].values
+    x = df['ra_corrected'].values
     y = df['dec'].values
 
     fig = Figure(figsize=(6, 6))
@@ -234,7 +236,7 @@ def plot_and_format_constellation(df: pd.DataFrame, lines: bool):
                 star_b = df.loc[hip_b]
 
                 ax.plot(
-                    [star_a.ra, star_b.ra],
+                    [star_a.ra_corrected, star_b.ra_corrected],
                     [star_a.dec, star_b.dec],
                     color="white",
                     linewidth=1,
@@ -251,7 +253,7 @@ def plot_and_format_constellation(df: pd.DataFrame, lines: bool):
     for i, row in df.iterrows():
         if pd.notna(row['proper']) and str(row['proper']).strip() != "":
             ax.text(
-                row['ra'] + offset_ra,
+                row['ra_corrected'] + offset_ra,
                 row['dec'] + offset_dec,
                 row['proper'],
                 color='white',
@@ -323,6 +325,26 @@ async def get_n_stars(request: NStarsRequest):
     n_stars = len(selected_stars)
 
     return {'n_stars': n_stars}
+
+def constellation_center(df):
+
+    ra = df["ra"].copy()
+    dec = df["dec"]
+
+    # unwrap RA if needed
+    if ra.max() - ra.min() > 12:
+        ra[ra < 12] += 24
+
+    ra_center = (ra.min() + ra.max()) / 2
+    dec_center = (dec.min() + dec.max()) / 2
+
+    ra_center = ra_center % 24
+    
+    # Convert RA from hours to degrees to match expected unit
+    ra_degs = ra_center*15
+
+    return ra_degs, dec_center
+
  
 @router.post("/save-refined/")
 async def save_refined(request: ConstellationRequest):
@@ -330,6 +352,9 @@ async def save_refined(request: ConstellationRequest):
     # get and sort constellation stars
     stars = get_constellation(request.name, request.by_shape)
     refined_stars = stars.head(request.n_stars).copy() if not request.by_shape else stars
+    
+    # compute 'center' of constellation for spatial audio
+    ra, dec = constellation_center(refined_stars)
 
     # save to tmp directory (overwriting any existing dataset)
     session_id = session_id_var.get()
@@ -341,4 +366,4 @@ async def save_refined(request: ConstellationRequest):
     file_ref = f'session:{filename}'
     print(file_ref)
 
-    return {'file_ref': file_ref}
+    return {'file_ref': file_ref, 'ra': ra, 'dec': dec}

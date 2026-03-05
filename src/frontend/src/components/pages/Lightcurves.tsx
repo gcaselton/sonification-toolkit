@@ -371,6 +371,8 @@ export default function Lightcurves() {
     setUploadKey((k) => k + 1);
   };
 
+  const uploadDisabled = true
+
   return (
     <PageContainer>
       <Box as="main" role="main">
@@ -581,6 +583,7 @@ export default function Lightcurves() {
                 </Card.Root>
               ))}
               <FileUpload.Root
+                disabled={uploadDisabled}
                 accept={{
                   "text/csv": [".csv"],
                   "application/fits": [".fits"],
@@ -592,7 +595,7 @@ export default function Lightcurves() {
                 onFileAccept={({ files }) => handleFileAccept(files)}
                 _hover={{ transform: "scale(1.05)" }}
                 transition="transform 0.2s ease"
-                cursor="pointer"
+                cursor={uploadDisabled ? 'disabled' : 'pointer'}
                 role="button"
                 aria-label="Upload your data"
               >

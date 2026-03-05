@@ -39,6 +39,9 @@ export default function Style() {
     const ra = location.state.ra ?? null;
     const dec = location.state.dec ?? null;
 
+    console.log('ra: ' + ra)
+    console.log('dec: ' + dec)
+
     interface BaseSound { 
         name: string
         composable: boolean

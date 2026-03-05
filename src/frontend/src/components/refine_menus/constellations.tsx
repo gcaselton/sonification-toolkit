@@ -40,6 +40,7 @@ export default function Constellations({
   dataName,
   onApply,
 }: RefineMenuProps) {
+
   const [imageSrc, setImageSrc] = useState<string | null>(null);
   const [imageLoading, setImageLoading] = useState(true);
 
@@ -104,7 +105,7 @@ export default function Constellations({
     const result = await apiRequest(endpoint, payload);
 
     if (onApply) {
-      onApply(result.file_ref); // Pass the refined data file reference up to Refine.tsx
+      onApply(result.file_ref, result.ra, result.dec); // Pass the refined data file reference up to Refine.tsx
     }
 
     setApplyLoading(false);

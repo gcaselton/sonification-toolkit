@@ -53,8 +53,6 @@ def sonify(data: Path | str | tuple, style_file: Path | str | dict, sonify_type:
 
       # Render sonification
       sonification = Sonification(score, sources, generator, system)
-      
-      print('system: ' + system)
 
       sonification.render()
 
@@ -216,7 +214,7 @@ def constellation_sources(data: Path | str , style: BaseStyle, length):
             raise ValueError('Data file must be a .csv file.')
       
       # Remove rows with NaN values in any of the columns used
-      input_params = [mapping.input for mapping in style.parameters]
+      input_params = [mapping.input for mapping in style.parameters if isinstance(mapping.input, str)]
       df = df.dropna(subset=input_params)
 
       data_dict = {}
@@ -242,16 +240,16 @@ def constellation_sources(data: Path | str , style: BaseStyle, length):
 
             # Map data
             if isinstance(input, float):
-                  data_dict[output] = [input]
+                  # Is a constant spatial param, e.g. azimuth or polar
+                  data_dict[output] = np.full(len(df), input)
             else:
-                  
+                  # Every other type of param
                   data_dict[output] = df[input].to_numpy(dtype=float)
-            
-            # Set mapping and parameter limits
-            m_lims[output] = mapping.input_range
+                  m_lims[output] = mapping.input_range
 
             if mapping.output_range:
                   p_lims[output] = mapping.output_range
+                  
 
       sources = Events(data_dict.keys())
      
@@ -306,8 +304,6 @@ def scale_events(x, y, params: list[ParameterMapping], length):
       resolution = user_settings['data_resolution']
 
       new_x, new_y = downsample_data(x, y, length, resolution)
-      
-      print(new_y)
 
       data = {'pitch': new_y,
               'time': new_x}
@@ -322,12 +318,13 @@ def scale_events(x, y, params: list[ParameterMapping], length):
             if mapping.output not in data.keys():
                   
                   if isinstance(mapping.input, float):
+                        # Is a fixed spatial param e.g. azimuth
                         data[mapping.output] = [mapping.input]
                   else:
+                        # all other mappings 
                         data[mapping.output] = new_y
+                        m_lims[mapping.output] = mapping.input_range
                   
-                  m_lims[mapping.output] = mapping.input_range
-
                   if mapping.output_range:
                         p_lims[mapping.output] = mapping.output_range
       
@@ -398,8 +395,6 @@ def light_curve_sources(data, style: BaseStyle, length):
             
             if mapping.output_range:
                   p_lims[mapping.output] = mapping.output_range
-                  
-      print(data_dict)
       
 
       sources = Objects(data_dict.keys())

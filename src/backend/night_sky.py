@@ -73,6 +73,7 @@ def handle_observer(observer: dict, style: dict):
         
     lat = float(observer['latitude'])
     lon = float(observer['longitude'])
+    
     ra, dec = observer['ra'], observer['dec']
     
     position = position_observer(lat, lon, observer['date_time'])
@@ -110,8 +111,6 @@ def handle_observer(observer: dict, style: dict):
     })
     
     style['parameters'] = params
-    
-    print(params)
     
     return style
     
