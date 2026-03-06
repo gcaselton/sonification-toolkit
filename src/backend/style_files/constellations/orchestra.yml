@@ -1,8 +1,8 @@
 name: 'Orchestra'
 
 description: >
-  'Uses a library of orchestral sounds to provide a mixed sonic texture.
-  Brightest stars appear first, and their colour is mapped to pitch (higher pitch = bluer star).'
+  Uses a library of orchestral sounds to provide a mixed sonic texture.
+  Brightest stars appear first, and their colour is mapped to pitch (higher pitch = bluer star).
 
 sound: 'Orchestra'
 preset: 'sustain'

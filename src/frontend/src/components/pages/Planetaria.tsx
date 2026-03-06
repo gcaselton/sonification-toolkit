@@ -52,16 +52,7 @@ const astroTypes: AstroType[] = [
         description: 'Hear the stars at your location appear.',
         page: '/night-sky'
     },
-    {
-        name: 'Planets',
-        description: 'Hear a planetary system orbit around you.',
-        page: '/'
-    },
-    {
-        name: 'Gravity',
-        description: 'Listen to gravitational wave events.',
-        page: '/'
-    }
+   
 ]
 
 
@@ -69,7 +60,7 @@ export default function Planetaria() {
   const navigate = useNavigate();
 
   return (
-    <PageContainer hideBackButton>
+    <PageContainer>
       <Box as='main' role="main">
         <Heading as='h1'>Step 1: Data</Heading>
         <br />

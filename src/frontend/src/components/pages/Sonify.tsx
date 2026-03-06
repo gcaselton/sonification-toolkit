@@ -47,6 +47,7 @@ export default function Sonify() {
   const dataName = location.state.dataName;
   const dataRef = location.state.dataRef;
   const styleName = location.state.styleName;
+  const styleDescription = location.state.styleDescription;
   const styleRef = location.state.styleRef;
   const soniType = location.state.soniType;
   const ra = location.state.ra ?? null;
@@ -234,8 +235,9 @@ export default function Sonify() {
   }
 
   const summaryItems = [
-    { label: "Data", value: dataName, fileRef: dataRef },
-    { label: "Style", value: styleName, fileRef: styleRef },
+    { label: "Description", value: styleDescription, downloadable: false},
+    { label: "Data", value: dataName, downloadable: true, fileRef: dataRef },
+    { label: "Style", value: styleName, downloadable: true, fileRef: styleRef }
   ];
 
   const COMPASS = Object.fromEntries(
@@ -332,10 +334,8 @@ export default function Sonify() {
                   {soniType !== "night_sky" && ra && dec && (
                     <Button
                       colorPalette="teal"
-                      variant={observerValues ? 'solid' : "subtle"}
-                      disabled={
-                        (audioSystem[0] == 'mono')
-                      }
+                      variant={observerValues ? "solid" : "subtle"}
+                      disabled={audioSystem[0] == "mono"}
                       onClick={() => setObserverOpen(true)}
                     >
                       <LuLocateFixed />
@@ -403,7 +403,7 @@ export default function Sonify() {
 
                 <HStack w="100%">
                   <Separator w="100%" size="lg" />
-                  <Text flexShrink="0">Components</Text>
+                  <Text flexShrink="0">Summary</Text>
                   <Separator w="100%" size="lg" />
                 </HStack>
 
@@ -419,21 +419,23 @@ export default function Sonify() {
                         {item.label}
                       </DataList.ItemLabel>
                       <DataList.ItemValue>{item.value}</DataList.ItemValue>
-                      <DataList.ItemValue>
-                        <IconButton
-                          asChild
-                          colorPalette="teal"
-                          size="sm"
-                          variant="ghost"
-                        >
-                          <a
-                            href={`${coreAPI}/download?file_ref=${encodeURIComponent(item.fileRef)}`}
-                            style={{ color: "inherit" }}
+                      {item.downloadable && item.fileRef && (
+                        <DataList.ItemValue>
+                          <IconButton
+                            asChild
+                            colorPalette="teal"
+                            size="sm"
+                            variant="ghost"
                           >
-                            <LuDownload />
-                          </a>
-                        </IconButton>
-                      </DataList.ItemValue>
+                            <a
+                              href={`${coreAPI}/download?file_ref=${encodeURIComponent(item.fileRef)}`}
+                              style={{ color: "inherit" }}
+                            >
+                              <LuDownload />
+                            </a>
+                          </IconButton>
+                        </DataList.ItemValue>
+                      )}
                     </DataList.Item>
                   ))}
                 </DataList.Root>

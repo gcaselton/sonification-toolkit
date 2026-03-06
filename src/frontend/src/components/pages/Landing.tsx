@@ -5,6 +5,7 @@ import {
   Grid,
   Heading,
   HStack,
+  Link,
   Text,
   VStack,
   Badge,
@@ -12,40 +13,35 @@ import {
 import { useNavigate } from "react-router-dom";
 import { LuTelescope } from "react-icons/lu";
 import { IconType } from "react-icons/lib";
+import PageContainer from "../ui/PageContainer";
 
-// ─── Types ───────────────────────────────────────────────────────────────────
 
 interface Domain {
   id: string;
   label: string;
   description: string;
-  status: "live" | "coming-soon";
   href?: string;
   Icon: IconType;
 }
-
-// ─── Data ────────────────────────────────────────────────────────────────────
 
 const DOMAINS: Domain[] = [
   {
     id: "planetaria",
     label: "for Planetaria",
     description:
-      "Translate constellations, stellar light curves, and cosmic-scale datasets into structured audio. Navigate the universe by ear.",
-    status: "live",
+      "Sonify constellations, stellar light curves, and entire night skies for your planetarium shows.",
     href: "/planetaria",
-    Icon: LuTelescope, // swap for a more fitting icon if available
+    Icon: LuTelescope,
   }
 ];
 
 // ─── Waveform SVG ─────────────────────────────────────────────────────────────
-// Decorative only — mirrors the sonification concept visually.
 
 function WaveformDecoration() {
   const points = Array.from({ length: 300 }, (_, i) => {
     const t = i / 299; // 0 → 1
-    const phase = (1 - t) * (1 - t) * 10 * Math.PI * 2; // integrated chirp: fast → slow
-    const amplitude = 50 * (1 - t * 0.85); // high → low amplitude
+    const phase = (1 - t) * (1 - t) * 10 * Math.PI * 2;
+    const amplitude = 50 * (1 - t * 0.85);
     const y = 50 + Math.sin(phase) * amplitude;
     const x = t * 100;
     return `${x},${y}`;
@@ -63,7 +59,7 @@ function WaveformDecoration() {
           points={points}
           fill="none"
           stroke="teal"
-          strokeWidth="1.5"
+          strokeWidth="2"
           vectorEffect="non-scaling-stroke"
         />
       </svg>
@@ -71,27 +67,21 @@ function WaveformDecoration() {
   );
 }
 
-// ─── Domain Card ──────────────────────────────────────────────────────────────
-
 function DomainCard({ domain }: { domain: Domain }) {
   const navigate = useNavigate();
-  const isLive = domain.status === "live";
 
   return (
     <Card.Root
       variant="elevated"
-      cursor={isLive ? "pointer" : "default"}
-      opacity={isLive ? 1 : 0.5}
-      _hover={isLive ? { transform: "scale(1.03)" } : undefined}
+      cursor="pointer"
+      _hover={{ transform: "scale(1.05)" }}
       transition="transform 0.2s ease"
-      onClick={() => isLive && domain.href && navigate(domain.href)}
-      tabIndex={isLive ? 0 : undefined}
-      role={isLive ? "button" : undefined}
-      aria-label={
-        isLive ? `Open ${domain.label}` : `${domain.label} — coming soon`
-      }
+      onClick={() => domain.href && navigate(domain.href)}
+      tabIndex={0}
+      role="button"
+      aria-label={`Open ${domain.label}`}
       onKeyDown={(e) => {
-        if (isLive && domain.href && (e.key === "Enter" || e.key === " ")) {
+        if (domain.href && (e.key === "Enter" || e.key === " ")) {
           e.preventDefault();
           navigate(domain.href);
         }
@@ -101,11 +91,6 @@ function DomainCard({ domain }: { domain: Domain }) {
         <VStack align="flex-start" gap={3}>
           <HStack justify="space-between" w="100%">
             <domain.Icon size="1.4rem" />
-            {!isLive && (
-              <Badge variant="outline" size="sm">
-                Coming soon
-              </Badge>
-            )}
           </HStack>
           <Card.Title>{domain.label}</Card.Title>
           <Card.Description>{domain.description}</Card.Description>
@@ -119,24 +104,25 @@ function DomainCard({ domain }: { domain: Domain }) {
 
 export default function Landing() {
   return (
-    <Box maxW="1200px" mx="auto" px={6} py={4} width="100%">
+    <PageContainer nav={false}>
       {/* Hero */}
       <Flex
         as="header"
         direction="column"
         align="flex-start"
-        pt={16}
+        pt={12}
         pb={12}
         gap={2}
       >
-        <Text
+        <Link
           fontSize="sm"
           color="teal.600"
-          letterSpacing="0.15em"
+          letterSpacing="0.2em"
           textTransform="uppercase"
+          href="https://www.audiouniverse.org/"
         >
           Audio Universe
-        </Text>
+        </Link>
 
         <Heading as="h1" size="5xl" fontWeight="300" lineHeight="1.1">
           Sonification{" "}
@@ -148,8 +134,8 @@ export default function Landing() {
         <WaveformDecoration />
 
         <Text fontSize="lg" maxW="540px" opacity={0.7}>
-          A unified platform for transforming scientific datasets into
-          tangible audio representations. Choose a domain below to begin.
+          An accessible platform for transforming scientific datasets into tangible
+          audio representations. Choose a domain below to begin.
         </Text>
       </Flex>
 
@@ -169,22 +155,6 @@ export default function Landing() {
         </Grid>
       </Box>
 
-      {/* Footer */}
-      <Flex
-        as="footer"
-        mt={20}
-        pt={6}
-        borderTop="1px solid"
-        borderColor="border"
-        justify="space-between"
-        align="center"
-        flexWrap="wrap"
-        gap={4}
-        opacity={0.4}
-      >
-        <Text fontSize="xs">Sonification Suite</Text>
-        <Text fontSize="xs">v0.1 Alpha</Text>
-      </Flex>
-    </Box>
+    </PageContainer>
   );
 }

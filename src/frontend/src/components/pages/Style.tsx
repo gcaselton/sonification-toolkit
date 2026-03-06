@@ -210,11 +210,13 @@ export default function Style() {
             setOpen(true);
         } else {
             const styleName = style.name
+            const styleDescription = style.description
+            console.log('desc: ' + styleDescription)
             console.log("Selected style:", styleName);
             const styleRef = style.file_ref;
             console.log("File reference of selected style:", styleRef);
             // Navigate to the Sonify page with the selected style
-            navigate('/sonify', { state: { dataName, dataRef, styleName, styleRef, soniType, ra, dec } });
+            navigate('/sonify', { state: { dataName, dataRef, styleName, styleDescription, styleRef, soniType, ra, dec } });
         }
     }
 

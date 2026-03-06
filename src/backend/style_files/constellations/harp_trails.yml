@@ -1,8 +1,8 @@
 name: 'Harp Trails'
 
 description: >
-  'The stars in the constellation appear left to right, 
-  with stars with a higher altitude mapped to higher pitch. Brighter stars are louder. Harp base sound.'
+  The stars in the constellation appear left to right, 
+  with stars with a higher altitude mapped to higher pitch. Brighter stars are louder. Harp base sound.
 
 sound: 'Harp'
 preset: 'sustain'

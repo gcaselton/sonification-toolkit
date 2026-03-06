@@ -79,14 +79,14 @@ export default function Settings() {
 
   if (loading) {
     return (
-      <PageContainer hideBackButton showHome>
+      <PageContainer>
         <LoadingMessage msg="Loading settings..." />
       </PageContainer>
     );
   }
 
   return (
-    <PageContainer hideBackButton showHome>
+    <PageContainer>
       <Box as="main" role="main">
         <Heading as='h1'>Settings</Heading>
         <br />
