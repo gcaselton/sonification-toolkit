@@ -141,7 +141,7 @@ def ensure_two_columns(ext: str, contents: bytes):
             df = table.to_pandas()
 
     else:
-        raise HTTPException(415, "Unsupported format")
+        raise HTTPException(415, "Unsupported file format")
     
     # Flag to send to the frontend to inform user that data was sliced
     reduced = False
@@ -183,6 +183,32 @@ async def uploadData(file: UploadFile):
     file_ref = f'session:{file.filename}'
 
     return {'file_ref': file_ref, 'reduced': reduced}
+
+@router.get('/get-inputs/')
+def get_inputs(file_ref: str):
+    
+    filepath = str(resolve_file(file_ref))
+    
+    if filepath.endswith('.csv'):
+        df = pd.read_csv(filepath)
+        
+        # If all column names are numeric, the data likely has no headers
+        if all(str(col).replace('.', '').replace('-', '').isnumeric() for col in df.columns):
+            df = pd.read_csv(filepath, header=None)
+            df.columns = [f"Column {i + 1}" for i in range(len(df.columns))]
+        
+        cols = df.columns.tolist()
+        
+    elif filepath.endswith('.fits'):
+    
+        cols = ['Time', 'Flux']
+    
+    else:
+        raise HTTPException(415, "Unsupported file format")
+    
+    return cols
+        
+    
 
 @router.get('/suggested-data/{category}/')
 def get_suggested(category: str):

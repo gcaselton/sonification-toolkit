@@ -1,6 +1,6 @@
 import { ChakraProvider, defaultSystem} from '@chakra-ui/react'
 import { ColorModeProvider } from './components/ui/color-mode'
-import { Flex } from '@chakra-ui/react'
+import { Box } from '@chakra-ui/react'
 import ReactDOM from "react-dom/client";
 import { HashRouter, Routes, Route } from "react-router-dom";
 import Lightcurves from './components/pages/Lightcurves';
@@ -46,12 +46,8 @@ function App() {
   return (
     <ChakraProvider value={defaultSystem}>
       <ColorModeProvider>
-        <Flex
-          direction="column"
-          align="center"
-          justify="flex-start"
+        <Box
           minH="100vh"
-          p={8}
           bg="bg"
         >
           <HashRouter>
@@ -68,7 +64,7 @@ function App() {
               <Route path="/settings" element={<Settings />} />
             </Routes>
           </HashRouter>
-        </Flex>
+        </Box>
       </ColorModeProvider>
     </ChakraProvider>
   );
