@@ -591,6 +591,7 @@ export default function Lightcurves() {
                 }}
                 key={uploadKey}
                 maxFiles={1}
+                maxFileSize={1e+7}
                 w="200px"
                 onFileAccept={({ files }) => handleFileAccept(files)}
                 _hover={{ transform: "scale(1.05)" }}

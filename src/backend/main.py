@@ -5,7 +5,7 @@ for lib in ["uvicorn", "matplotlib", "httpcore", "asyncio", "httpx", "urllib3", 
 
 logger = logging.getLogger("uvicorn.error")
 
-from fastapi import FastAPI, BackgroundTasks, Request
+from fastapi import FastAPI, BackgroundTasks, Request, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse, JSONResponse
@@ -13,7 +13,6 @@ from fastapi.responses import HTMLResponse, JSONResponse
 from light_curves import router as light_curve_router
 from constellations import router as constellations_router
 from night_sky import router as night_sky_router
-from performance import router as performance_router
 from core import router as core_router
 from settings import router as settings_router
 from paths import SYNTHS_DIR, SAMPLES_DIR, TMP_DIR, ROOT_DIR
@@ -132,7 +131,7 @@ async def session_middleware(request: Request, call_next):
 
 
 # Import API endpoints
-for router in [light_curve_router, constellations_router, night_sky_router, core_router, performance_router, settings_router]:
+for router in [light_curve_router, constellations_router, night_sky_router, core_router, settings_router]:
     app.include_router(router)
 
 @app.get("/")
@@ -167,14 +166,6 @@ async def cleanup_status():
         }
     }
 
-@app.post("/cleanup/manual")
-async def manual_cleanup(background_tasks: BackgroundTasks):
-    """Trigger manual cleanup."""
-    result = storage_manager.run_cleanup()
-    return {
-        "message": "Manual cleanup completed",
-        "result": result
-    }
 
 if __name__ == "__main__":
     import uvicorn

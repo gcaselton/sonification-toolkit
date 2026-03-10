@@ -15,14 +15,17 @@ import { apiUrl, lightCurvesAPI, coreAPI } from "../../apiConfig";
 import { LuUpload, LuX, LuPlus } from "react-icons/lu";
 
 import {
+  Alert,
   Box,
   Button,
   Card,
   Checkbox,
+  CloseButton,
   Collapsible,
   createListCollection,
   Dialog,
   FileUpload,
+  Span,
   Heading,
   HStack,
   VStack,
@@ -82,9 +85,14 @@ export default function CustomStyleMenu({
     function: string | null;
   }
 
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
-  const [loading, setLoading] = useState(false);
+  interface ParamMetadata {
+    name: string;
+    desc: string;
+  }
+
+  const [styleName, setStyleName] = useState("");
+  const [styleDescription, setStyleDescription] = useState("");
+  
   const [errorMessage, setErrorMessage] = useState("");
 
   const [sound, setSound] = useState<BaseSound>(defaultSound);
@@ -96,30 +104,30 @@ export default function CustomStyleMenu({
   const [pitch, setPitch] = useState(false);
   const [scale, setScale] = useState("None");
   const [quality, setQuality] = useState("maj");
+
   const [soundOptions, setSoundOptions] = useState(
     createListCollection<BaseSound & { label: string; value: string }>({
       items: [],
     }),
   );
-  const [InputOptions, setInputOptions] = useState(
-    createListCollection<{ label: string; value: string }>({
+  const [inputOptions, setInputOptions] = useState(
+    createListCollection<{ label: string; value: string, description: string }>({
       items: [],
     }),
   );
 
-  const [loadingSounds, setLoadingSounds] = useState(true);
-  const [loadingInputs, setLoadingInputs] = useState(true)
-  const [loadingCustomPreview, setLoadingCustomPreview] = useState(false);
+  const [outputOptions, setOutputOptions] = useState(
+    createListCollection<{ label: string; value: string, description: string }>({
+      items: [],
+    }),
+  );
 
-  const outputOptions = createListCollection({
-    items: [
-      {label: 'Time', value: 'time'},
-      {label: 'Filter Cutoff', value: 'cutoff'},
-      {label: 'Pitch', value: 'pitch'},
-      {label: 'Volume', value: 'volume'},
-      {label: 'Azimuth', value: 'azimuth'},
-    ]
-  })
+  const [loading, setLoading] = useState(false);
+  const [loadingSounds, setLoadingSounds] = useState(true);
+  const [loadingInputs, setLoadingInputs] = useState(true);
+  const [loadingOutputs, setLoadingOutputs] = useState(true);
+  const [loadingCustomPreview, setLoadingCustomPreview] = useState(false);
+  const [autoMappedTime, setAutoMappedTime] = useState(false);
 
   const rootNoteOptions = createListCollection({
     items: [
@@ -176,27 +184,63 @@ export default function CustomStyleMenu({
 
   useEffect(() => {
     setLoadingInputs(true);
+    setLoadingOutputs(true);
 
-    const fetchInputs = async () => {
+    const fetchParams = async () => {
       try {
-        const url = `${coreAPI}/get-inputs/?file_ref=${encodeURIComponent(dataRef)}`
-        const inputs = await apiRequest(url,{},'GET') as string[];
+        const [inputs, outputs] = await Promise.all([
+          apiRequest(
+            `${coreAPI}/get-inputs/?file_ref=${encodeURIComponent(dataRef)}`,
+            {},
+            "GET",
+          ) as Promise<ParamMetadata[]>,
+          apiRequest(`${coreAPI}/get-outputs/`, {}, "GET") as Promise<
+            ParamMetadata[]
+          >,
+        ]);
 
-        const collection = createListCollection({
-          items: inputs.map((input) => ({
-            label: input,
-            value: input,
-          })),
-        });
-        setInputOptions(collection);
+        const inputItems = inputs.map((input) => ({
+          label: input.name,
+          value: input.name,
+          description: input.desc,
+        }));
+
+        const outputItems = outputs.map((output) => ({
+          label: output.name,
+          value: output.name.toLowerCase(),
+          description: output.desc,
+        }));
+
+        setInputOptions(createListCollection({ items: inputItems }));
+        setOutputOptions(createListCollection({ items: outputItems }));
+
+        // Auto-map time → time if both exist
+        const hasTimeInput = inputItems.some((i) => i.value.toLowerCase() === "time");
+        const hasTimeOutput = outputItems.some((o) => o.value.toLowerCase() === "time");
+
+        if (hasTimeInput && hasTimeOutput) {
+          setParameterMappings([
+            {
+              input: "Time",
+              input_range: null,
+              output: "time",
+              output_range: null,
+              function: null,
+            },
+          ]);
+
+          setAutoMappedTime(true);
+        }
+
       } catch (error) {
-        console.error("Error fetching inputs:", error);
+        console.error("Error fetching parameters:", error);
       } finally {
         setLoadingInputs(false);
+        setLoadingOutputs(false);
       }
     };
 
-    fetchInputs();
+    fetchParams();
   }, []);
 
   useEffect(() => {
@@ -307,11 +351,11 @@ export default function CustomStyleMenu({
     >
       <Dialog.Backdrop />
       <Dialog.Positioner>
-        <Dialog.Content>
+        <Dialog.Content maxH="90vh">
           <Dialog.Header>
             <Dialog.Title>Custom Style</Dialog.Title>
           </Dialog.Header>
-          <Dialog.Body>
+          <Dialog.Body overflowY="auto">
             <VStack gap={5} align="stretch">
               <FileUpload.Root>
                 <FileUpload.HiddenInput />
@@ -320,7 +364,7 @@ export default function CustomStyleMenu({
                     content="Upload your own .yml style file"
                     positioning={{ placement: "right" }}
                   >
-                    <Button variant="solid" colorPalette="teal">
+                    <Button variant="solid" colorPalette="teal" size="sm">
                       <LuUpload /> Upload style file
                     </Button>
                   </Tooltip>
@@ -328,6 +372,7 @@ export default function CustomStyleMenu({
                 <FileUpload.List />
               </FileUpload.Root>
               <Select.Root
+                size="sm"
                 collection={soundOptions}
                 value={[sound.name]}
                 onValueChange={(e) => {
@@ -375,7 +420,30 @@ export default function CustomStyleMenu({
                     positioning={{ placement: "right" }}
                   />
                 </HStack>
-
+                {autoMappedTime && (
+                  <Alert.Root
+                    status="info"
+                    size="sm"
+                    colorPalette="teal"
+                    variant="subtle"
+                    alignItems="center"
+                    pb={1}
+                    pt={1}
+                  >
+                    <Alert.Indicator />
+                    <Alert.Content>
+                      <Alert.Description>
+                        Automatically mapped Time to Time
+                      </Alert.Description>
+                    </Alert.Content>
+                    <CloseButton
+                      variant="subtle"
+                      size="2xs"
+                      my="auto"
+                      onClick={() => setAutoMappedTime(false)}
+                    />
+                  </Alert.Root>
+                )}
                 {parameterMappings.map((mapping, index) => (
                   <Card.Root key={index} variant="elevated" size="sm">
                     <Card.Body>
@@ -383,9 +451,15 @@ export default function CustomStyleMenu({
                         {/* Input / Output row */}
                         <HStack align="flex-end">
                           <Field.Root>
-                            <Field.Label>Input</Field.Label>
+                            <HStack>
+                              <Field.Label>Input</Field.Label>
+                              <InfoTip
+                                content="Choose the data variable to be sonified"
+                                positioning={{ placement: "right" }}
+                              />
+                            </HStack>
                             <Select.Root
-                              collection={InputOptions}
+                              collection={inputOptions}
                               value={mapping.input ? [mapping.input] : []}
                               onValueChange={(e) =>
                                 updateMapping(index, "input", e.value[0])
@@ -404,12 +478,24 @@ export default function CustomStyleMenu({
                               <Portal>
                                 <Select.Positioner>
                                   <Select.Content>
-                                    {InputOptions.items.map((option) => (
+                                    {inputOptions.items.map((option) => (
                                       <Select.Item
                                         item={option}
                                         key={option.value}
                                       >
-                                        {option.label}
+                                        <Stack>
+                                          <Select.ItemText>
+                                            {option.label}
+                                          </Select.ItemText>
+                                          {option.description && (
+                                            <Span
+                                              color="fg.muted"
+                                              textStyle="xs"
+                                            >
+                                              {option.description}
+                                            </Span>
+                                          )}
+                                        </Stack>
                                         <Select.ItemIndicator />
                                       </Select.Item>
                                     ))}
@@ -419,10 +505,18 @@ export default function CustomStyleMenu({
                             </Select.Root>
                           </Field.Root>
 
-                          <Text pb={2}>→</Text>
+                          <Text pb={1} textStyle="xl">
+                            →
+                          </Text>
 
                           <Field.Root>
-                            <Field.Label>Output</Field.Label>
+                            <HStack>
+                              <Field.Label>Output</Field.Label>
+                              <InfoTip
+                                content="Choose which sound property the input data will control"
+                                positioning={{ placement: "right" }}
+                              />
+                            </HStack>
                             <Select.Root
                               collection={outputOptions}
                               value={mapping.output ? [mapping.output] : []}
@@ -448,7 +542,19 @@ export default function CustomStyleMenu({
                                         item={option}
                                         key={option.value}
                                       >
-                                        {option.label}
+                                        <Stack gap="0">
+                                          <Select.ItemText>
+                                            {option.label}
+                                          </Select.ItemText>
+                                          {option.description && (
+                                            <Span
+                                              color="fg.muted"
+                                              textStyle="xs"
+                                            >
+                                              {option.description}
+                                            </Span>
+                                          )}
+                                        </Stack>
                                         <Select.ItemIndicator />
                                       </Select.Item>
                                     ))}
@@ -457,7 +563,7 @@ export default function CustomStyleMenu({
                               </Portal>
                             </Select.Root>
                           </Field.Root>
-                          <Tooltip content='Remove Mapping'>
+                          <Tooltip content="Remove Mapping">
                             <IconButton
                               aria-label="Remove mapping"
                               variant="ghost"
@@ -469,14 +575,14 @@ export default function CustomStyleMenu({
                           </Tooltip>
                         </HStack>
 
-                        {/* Range options — collapsible */}
+                        {/* Options — collapsible */}
                         <Collapsible.Root>
                           <Collapsible.Trigger>
                             <Collapsible.Context>
                               {({ open }) => (
                                 <Text
                                   fontSize="xs"
-                                  color="teal.400"
+                                  color="teal.500"
                                   cursor="pointer"
                                 >
                                   {open ? "−" : "+"} Options
@@ -508,6 +614,12 @@ export default function CustomStyleMenu({
                                         mapping.input_range?.[1] ?? 0,
                                       ])
                                     }
+                                    step={0.01}
+                                    min={0}
+                                    max={200}
+                                    formatOptions={{
+                                      style: 'percent'
+                                    }}
                                     size="sm"
                                     width="80px"
                                   >

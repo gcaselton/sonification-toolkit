@@ -65,14 +65,14 @@
 
 .gradient-custom {
   background: linear-gradient(
-    45deg,
-    #f8f9fa,
-    #f8f9fa 10px,
-    #e9ecef 10px,
-    #e9ecef 20px
+    -45deg,
+    #edeff1,
+    #d9dbdd,
+    #bbbdc0,
+    #818284
   );
-  border: 2px dashed #adb5bd;
-  animation: subtlePulse 3s ease-in-out infinite;
+  background-size: 400% 400%;
+  animation: gradientMove 18s ease infinite;
   position: relative;
 }
 

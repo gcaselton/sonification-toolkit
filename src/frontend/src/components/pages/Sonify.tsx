@@ -247,7 +247,7 @@ export default function Sonify() {
   return (
     <PageContainer>
       <Box position="relative" as="main" role="main">
-        <Heading as="h1">Step 3: Sonify</Heading>
+        <Heading as="h1">Step 4: Sonify</Heading>
         <br />
         <Text textStyle="lg">
           Set the length of the sonification and specify the audio system you

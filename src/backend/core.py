@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, UploadFile, File, Cookie, Response
+from fastapi import APIRouter, HTTPException, UploadFile, File, Cookie, Response, Request
 from fastapi.responses import FileResponse
 from extensions import sonify
 from pathlib import Path
@@ -9,7 +9,9 @@ from config import GITHUB_USER, GITHUB_REPO
 from context import session_id_var
 from utils import resolve_file
 from request_models import DataRequest, SoundRequest, SoundSettings, SonificationRequest
-import logging, httpx, yaml, os, uuid, aiofiles, zipfile, traceback
+import logging, httpx, yaml, os, uuid, aiofiles, zipfile, traceback, filetype
+import lightkurve as lk
+from param_descriptions import INPUTS, OUTPUTS
 
 import numpy as np
 import pandas as pd
@@ -24,8 +26,10 @@ router = APIRouter(prefix='/core')
 logging.basicConfig(level=logging.DEBUG)
 LOG = logging.getLogger(__name__)
 
-    
+# Useful constants for '/upload-data/' endpoint
 ACCEPTED_UPLOAD_FORMATS = ['.csv', '.fits']
+SESSION_QUOTA_MB = 50
+SESSION_QUOTA_BYTES = SESSION_QUOTA_MB * 1024 * 1024
 
 FORMATTED_FILENAMES = {
     'light_curves': 'Light Curve',
@@ -56,6 +60,17 @@ def get_or_create_session(
 
     return {'session_id': session_id}
 
+def get_session_size(session_dir: str) -> int:
+    """Returns total size in bytes of all files in a session directory."""
+    try:
+        return sum(
+            f.stat().st_size
+            for f in Path(session_dir).rglob('*')
+            if f.is_file()
+        )
+    except Exception as e:
+        LOG.warning("Could not calculate session size: %s", e)
+        return 0
 
 @router.post('/generate-sonification/')
 def generate_sonification(request: SonificationRequest):
@@ -157,7 +172,7 @@ def ensure_two_columns(ext: str, contents: bytes):
 
 
 @router.post('/upload-data/')
-async def uploadData(file: UploadFile):
+async def uploadData(file: UploadFile, request: Request):
     """
     Function for the user to upload their own data to the system, which is then written
     to the tmp directory. The maximum file size is 10mb, as this is a limit set in nginx.
@@ -165,24 +180,133 @@ async def uploadData(file: UploadFile):
     - **file**: The user-uploaded data file.
     - Returns: The filepath of the saved data file.
     """
-    
-    ext = os.path.splitext(file.filename)[-1]
-    
-    if ext not in ACCEPTED_UPLOAD_FORMATS:
-        raise HTTPException(status_code=415, detail='Uploaded data must be in .csv or .fits format')
-    
-    # check that the uploaded data is only two columns (x,y) and reduce if necessary
-    contents = await file.read()
-    df, reduced = ensure_two_columns(ext, contents)
-    
+
+    # Client details for logging
+    ip = request.client.host
     session_id = session_id_var.get()
-    filepath = os.path.join(TMP_DIR, session_id, file.filename)
+
+    LOG.info(
+        "Upload attempt | filename=%s | session=%s | ip=%s",
+        file.filename,
+        session_id,
+        ip
+    )
+
+    suffixes = Path(file.filename).suffixes
+
+    # Check for multiple extensions
+    if len(suffixes) != 1:
+        LOG.warning(
+            "Upload rejected | filename=%s | reason=multiple_extensions | session=%s | ip=%s",
+            file.filename,
+            session_id,
+            ip
+        )
+        raise HTTPException(400, "Files with multiple extensions are not allowed")
+
+    ext = suffixes[0].lower()
+
+    if ext not in ACCEPTED_UPLOAD_FORMATS:
+        LOG.warning(
+            "Upload rejected | ext=%s | reason=rejected_extension | session=%s | ip=%s",
+            ext,
+            session_id,
+            ip
+        )
+        raise HTTPException(
+            status_code=415,
+            detail='Uploaded data must be in .csv or .fits format'
+        )
+
+    MAX_SIZE = 10 * 1024 * 1024
+
+    contents = await file.read()
+    await file.close()
+
+    # Check for empty file
+    if not contents:
+        LOG.warning(
+            "Upload rejected | reason=empty_file | session=%s | ip=%s",
+            session_id,
+            ip
+        )
+        raise HTTPException(400, "Uploaded file is empty")
+
+    # Double check the file size isn't > 10mb
+    if len(contents) > MAX_SIZE:
+        LOG.warning(
+            "Upload rejected | size=%d | reason=file_too_large | session=%s | ip=%s",
+            len(contents),
+            session_id,
+            ip
+        )
+        raise HTTPException(400, "File too large")
+
+    # Check CSV is actually text
+    if ext == ".csv":
+        try:
+            contents.decode('utf-8')
+        except UnicodeDecodeError:
+            LOG.warning(
+            "Upload rejected | reason=invalid_csv | session=%s | ip=%s",
+            session_id,
+            ip
+        )
+        raise HTTPException(415, "Invalid CSV file")
+        
+    # Check that magic bytes match expected type for FITS
+    kind = filetype.guess(contents)
+    mime = kind.mime if kind else None
+
+    if ext == ".fits" and mime not in ["application/fits", "image/fits", "application/octet-stream"]:
+        LOG.warning(
+            "Upload rejected | mime=%s | reason=invalid_fits_mime | session=%s | ip=%s",
+            mime,
+            session_id,
+            ip
+        )
+        raise HTTPException(415, "Invalid FITS file")
+
+    # Check that the uploaded data is only two columns (x,y) and reduce if necessary
+    df, reduced = ensure_two_columns(ext, contents)
+
+    # Create random ID to store file under
+    new_name = f"{uuid.uuid4()}.csv"
+
+    # Ensure session directory exists
+    session_dir = os.path.join(TMP_DIR, session_id)
+    os.makedirs(session_dir, exist_ok=True)
     
+    # Check session quota
+    current_usage = get_session_size(session_dir)
+    if current_usage + len(contents) > SESSION_QUOTA_BYTES:
+        LOG.warning(
+            "Upload rejected | reason=quota_exceeded | usage=%d | file_size=%d | session=%s | ip=%s",
+            current_usage,
+            len(contents),
+            session_id,
+            ip
+        )
+        raise HTTPException(429, f"Session storage quota of {SESSION_QUOTA_MB}MB exceeded")
+
+    filepath = os.path.join(session_dir, new_name)
+
+    # Write to new csv file
     df.to_csv(filepath, index=False)
 
-    file_ref = f'session:{file.filename}'
+    LOG.info(
+        "Upload success | original=%s | stored=%s | size=%d | session=%s | ip=%s",
+        file.filename,
+        new_name,
+        len(contents),
+        session_id,
+        ip
+    )
 
-    return {'file_ref': file_ref, 'reduced': reduced}
+    file_ref = f"session:{new_name}"
+
+    return {"file_ref": file_ref, "reduced": reduced}
+
 
 @router.get('/get-inputs/')
 def get_inputs(file_ref: str):
@@ -196,17 +320,23 @@ def get_inputs(file_ref: str):
         if all(str(col).replace('.', '').replace('-', '').isnumeric() for col in df.columns):
             df = pd.read_csv(filepath, header=None)
             df.columns = [f"Column {i + 1}" for i in range(len(df.columns))]
-        
-        cols = df.columns.tolist()
+            
+        inputs = [{'name': col, 'desc': INPUTS.get(col.lower, '')} for col in df.columns]
         
     elif filepath.endswith('.fits'):
-    
-        cols = ['Time', 'Flux']
+        
+        inputs = [{'name': 'Time', 'desc': ''},
+                  {'name': 'Flux', 'desc': INPUTS['flux']}]
     
     else:
         raise HTTPException(415, "Unsupported file format")
-    
-    return cols
+
+    return inputs
+
+@router.get('/get-outputs/')
+def get_outputs():
+    # Return names and descriptions of output parameters
+    return [{'name': k.capitalize(), 'desc': v} for k, v in OUTPUTS.items()]
         
     
 

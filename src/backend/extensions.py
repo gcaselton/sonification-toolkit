@@ -77,6 +77,7 @@ def validate_input_params(style: dict, data: Path | str | tuple):
                   raise ValueError('Data file must be a .csv or .fits file.')
             
             col_headers = df.columns.tolist()
+            print(col_headers)
             col_headers_lower = [col.lower() for col in col_headers]
 
             mappings = style['parameters']

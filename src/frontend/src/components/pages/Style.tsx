@@ -110,7 +110,7 @@ export default function Style() {
   return (
     <PageContainer>
       <Box position="relative" as="main" role="main">
-        <Heading as="h1">Step 2: Style</Heading>
+        <Heading as="h1">Step 3: Style</Heading>
         <br />
         <Text textStyle="lg">
           Choose from the styles below, or configure your own
