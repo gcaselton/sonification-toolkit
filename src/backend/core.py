@@ -8,10 +8,11 @@ from sounds import all_sounds, online_sounds, local_sounds, asset_cache, format_
 from config import GITHUB_USER, GITHUB_REPO
 from context import session_id_var
 from utils import resolve_file
-from request_models import DataRequest, SoundRequest, SoundSettings, SonificationRequest
-import logging, httpx, yaml, os, uuid, aiofiles, zipfile, traceback, filetype
+from request_models import DataRequest, SoundRequest, CustomStyleSettings, SonificationRequest
+import logging, httpx, yaml, os, uuid, aiofiles, zipfile, traceback, filetype, pprint, numbers
 import lightkurve as lk
 from param_descriptions import INPUTS, OUTPUTS
+from strauss.sources import param_lim_dict
 
 import numpy as np
 import pandas as pd
@@ -167,6 +168,10 @@ def ensure_two_columns(ext: str, contents: bytes):
         # reduce to first two columns if needed
         df = df.iloc[:, :2]
         reduced = True
+        
+    # If there are no meaningful headers, assign default names
+    if all(isinstance(col, numbers.Number) for col in df.columns):
+        df.columns = ["Column 1", "Column 2"]
 
     return df, reduced
 
@@ -308,6 +313,10 @@ async def uploadData(file: UploadFile, request: Request):
     return {"file_ref": file_ref, "reduced": reduced}
 
 
+def round_range(range: list, dp: int = 2) -> list:
+    return [round(float(v), dp) for v in range]
+
+
 @router.get('/get-inputs/')
 def get_inputs(file_ref: str):
     
@@ -321,12 +330,32 @@ def get_inputs(file_ref: str):
             df = pd.read_csv(filepath, header=None)
             df.columns = [f"Column {i + 1}" for i in range(len(df.columns))]
             
-        inputs = [{'name': col, 'desc': INPUTS.get(col.lower, '')} for col in df.columns]
+        inputs = [
+            {
+                'name': col, 
+                'desc': INPUTS.get(col.lower(), '')
+            }
+            for col in df.columns
+        ]
         
     elif filepath.endswith('.fits'):
         
-        inputs = [{'name': 'Time', 'desc': ''},
-                  {'name': 'Flux', 'desc': INPUTS['flux']}]
+        lc = lk.read(filepath)
+        time = lc.time.value
+        flux = lc.flux.value
+        # Mask NaN values in flux
+        flux = flux[~np.isnan(flux)]
+ 
+        inputs = [
+            {
+                'name': 'Time', 
+                'desc': ''
+            },
+            {
+                'name': 'Flux',
+                'desc': INPUTS['flux']
+            }
+        ]
     
     else:
         raise HTTPException(415, "Unsupported file format")
@@ -441,7 +470,7 @@ def preview_style_settings(request: DataRequest, category: str):
         raise HTTPException(status_code=404, detail=str(e))
     
 @router.post('/save-sound-settings/')
-def save_sound_settings(settings: SoundSettings):
+def save_sound_settings(settings: CustomStyleSettings):
     """
     Save sound settings for the sonification.
 
@@ -464,29 +493,14 @@ def save_sound_settings(settings: SoundSettings):
     # Return the file reference
     return {'file_ref': file_ref}
 
-default_lims = {
-    'cutoff': [0.1, 0.9],
-    'pitch': [0, 1],
-    'pitch_shift': [0, 24],
-    'volume': [0, 1],
-    'azimuth': [0, 1]
-}
-
-def format_settings(settings: SoundSettings):
-
-    param_choices = {
-        'cutoff': settings.filterCutOff,
-        'pitch': settings.pitch,
-        'volume': settings.volume,
-        'azimuth': settings.leftRightPan
-    }
-
-    # Populate the list of parameters based on user selections
-    parameters = [{'input': 'flux', 'output': k} for k, v in param_choices.items() if v]
-
+def format_settings(settings: CustomStyleSettings):
+    
+    # Remove null entries
+    params = [{k: v for k, v in m.items() if v is not None} for m in settings.map]
+        
     style = {
         "sound": settings.sound,
-        "parameters": parameters
+        "parameters": params
     }
 
     if settings.chordMode:
@@ -494,11 +508,10 @@ def format_settings(settings: SoundSettings):
     else:
         if settings.scale != 'None':
             style['harmony'] = f"{settings.rootNote} {settings.scale}"
-
-    
+            
+    print(style)
     
     return style
-
 
 
 async def download_online_asset(target_name: str):

@@ -113,6 +113,7 @@ class BaseStyle(BaseModel):
         if ' ' in value: # likely a scale e.g. "C major"
             try:
                 root, quality = value.split(' ', 1)
+                quality = 'hijaroshi' if quality == 'hirajoshi' else quality
                 scale  = parse_scale(root, quality)
             except Exception as e:
                 raise ValueError(f'Invalid scale "{value}": {e}')

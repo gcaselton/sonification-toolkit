@@ -8,12 +8,9 @@ from typing import Optional, Literal
 class DataRequest(BaseModel):
     file_ref: str
 
-class SoundSettings(BaseModel):
+class CustomStyleSettings(BaseModel):
     sound: str
-    filterCutOff: bool
-    pitch: bool
-    volume: bool
-    leftRightPan: bool
+    map: list[dict]
     chordMode: bool
     rootNote: str
     scale: str

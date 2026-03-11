@@ -73,6 +73,7 @@ def validate_input_params(style: dict, data: Path | str | tuple):
 
                   lc = lk.read(data_filepath)
                   df = lc.to_pandas()
+                  df['time'] = None
             else:
                   raise ValueError('Data file must be a .csv or .fits file.')
             
@@ -192,6 +193,8 @@ def parse_harmony(harmony: str, sound_folder, sound_path):
             
             # Likely a scale e.g 'C major'
             root, quality = harmony.split(' ', 1)
+            print(quality)
+            quality = 'hijaroshi' if quality == 'hirajoshi' else quality
             notes = parse_scale(starting_note=root, mode=quality, octaves=2) # 3 octave range as default, could give users the option?
             notes = [[str(note - 12) for note in notes]] # -12 so it starts on 2nd octave
       else:
@@ -299,10 +302,12 @@ def convert_percent_to_values(param_lims: tuple):
     return (low_val, high_val)
 
 
-def scale_events(x, y, params: list[ParameterMapping], length):
+def scale_events(labelled_data: dict, params: list[ParameterMapping], length):
 
       user_settings = load_settings_from_file()
       resolution = user_settings['data_resolution']
+      
+      
 
       new_x, new_y = downsample_data(x, y, length, resolution)
 
@@ -344,12 +349,19 @@ def light_curve_sources(data, style: BaseStyle, length):
             y = data[1]
             
       elif isinstance(data, Path):
+            
+            labelled_data = {}
+            
             if data.suffix == '.fits':
 
                   lc = lk.read(data)
                   lc = lc.remove_nans()
-                  x = lc.time.value
-                  y = lc.flux.value
+                  
+                  time = ensure_array(lc.time.value)
+                  flux = ensure_array(lc.flux.value)
+                  
+                  labelled_data['Time'] = time
+                  labelled_data['Flux'] = flux
 
             elif data.suffix == '.csv':
 
@@ -358,42 +370,39 @@ def light_curve_sources(data, style: BaseStyle, length):
                   # Remove rows with NaN values in either column
                   df = df.dropna()
 
-                  x = df.iloc[:, 0].to_list()  # first column
-                  y = df.iloc[:, 1].to_list()  # second column
+                  col1, col2 = df.columns[:2]
 
-
-      x = ensure_array(x)
-      y = ensure_array(y)
+                  labelled_data[col1] = df.iloc[:, 0].to_numpy()
+                  labelled_data[col2] = df.iloc[:, 1].to_numpy()
 
       is_scale = ((style.harmony and ' ' in style.harmony) or (style.preset == 'staccato'))
 
       pitches = [0] if is_scale else [0,1,2,3]
-
-      for mapping in style.parameters:
-            if mapping.output == 'pitch':
-                  if is_scale:
-                        # Return Events type for scale mapping
-                        return scale_events(x, y, style.parameters, length)
-                  else:
-                        # Change pitch for pitch_shift if we want Objects type
-                        mapping.output = 'pitch_shift'
-                        
-      data_dict = {'pitch': pitches, 
-                  'time_evo': [x]*len(pitches)}
-      m_lims = {'time_evo': ('0%', '100%')}
+      
+      data_dict = {'pitch': pitches}
+      m_lims = {}
       p_lims = {}
 
       for mapping in style.parameters:
             
+            if mapping.output == 'pitch':
+                  if is_scale:
+                        # Return Events type for scale mapping
+                        return scale_events(labelled_data, style.parameters, length)
+                  else:
+                        # Change pitch for pitch_shift if we want Objects type
+                        mapping.output = 'pitch_shift'
+                        
+            mapping.output = 'time_evo' if mapping.output == 'time' else mapping.output
+                        
             if isinstance(mapping.input, float):
                   # Is a constant spatial param, e.g. azimuth or polar
                   data_dict[mapping.output] = [mapping.input]
             else:
                   # Every other type of param
-                  data_dict[mapping.output] = [y]*len(pitches)
-                  m_lims[mapping.output] = mapping.input_range
+                  data_dict[mapping.output] = [labelled_data[mapping.input]]*len(pitches)
+                  m_lims[mapping.output] = mapping.input_range if mapping.input_range else ('0%', '100%')
                   
-            
             if mapping.output_range:
                   p_lims[mapping.output] = mapping.output_range
       

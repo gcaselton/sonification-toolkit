@@ -64,18 +64,14 @@ export default function Style() {
     }
   };
 
-  const handleStyleCreated = (style: {
-    name: string;
-    fileRef: string;
-    description: string;
-  }) => {
+  const handleStyleCreated = (styleRef: string) => {
     navigate("/sonify", {
       state: {
         dataName,
         dataRef,
-        styleName: style.name,
-        styleDescription: style.description,
-        styleRef: style.fileRef,
+        styleRef,
+        styleName: 'Custom',
+        styleDescription: '',
         soniType,
         ra,
         dec,

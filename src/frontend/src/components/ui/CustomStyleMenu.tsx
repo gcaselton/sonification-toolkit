@@ -22,6 +22,8 @@ import {
   Checkbox,
   CloseButton,
   Collapsible,
+  Grid,
+  GridItem,
   createListCollection,
   Dialog,
   FileUpload,
@@ -49,11 +51,7 @@ interface CustomStyleMenuProps {
   onOpenChange: (open: boolean) => void;
   soniType: string;
   dataRef: string;
-  onStyleCreated: (style: {
-    name: string;
-    fileRef: string;
-    description: string;
-  }) => void;
+  onStyleCreated: (styleRef: string) => void;
 }
 
 export default function CustomStyleMenu({
@@ -63,7 +61,6 @@ export default function CustomStyleMenu({
   dataRef,
   onStyleCreated,
 }: CustomStyleMenuProps) {
-
 
   interface BaseSound {
     name: string;
@@ -88,20 +85,25 @@ export default function CustomStyleMenu({
   interface ParamMetadata {
     name: string;
     desc: string;
+    range: [number, number];
   }
 
   const [styleName, setStyleName] = useState("");
   const [styleDescription, setStyleDescription] = useState("");
-  
+
   const [errorMessage, setErrorMessage] = useState("");
 
   const [sound, setSound] = useState<BaseSound>(defaultSound);
   const [parameterMappings, setParameterMappings] = useState<
     ParameterMapping[]
   >([]);
+
+  const pitchMapped = parameterMappings.some(
+    (m) => m.output.toLowerCase() === "pitch",
+  );
+
   const [chordMode, setChordMode] = useState(false);
   const [rootNote, setRootNote] = useState("C");
-  const [pitch, setPitch] = useState(false);
   const [scale, setScale] = useState("None");
   const [quality, setQuality] = useState("maj");
 
@@ -111,18 +113,26 @@ export default function CustomStyleMenu({
     }),
   );
   const [inputOptions, setInputOptions] = useState(
-    createListCollection<{ label: string; value: string, description: string }>({
+    createListCollection<{
+      label: string;
+      value: string;
+      description: string;
+    }>({
       items: [],
     }),
   );
 
   const [outputOptions, setOutputOptions] = useState(
-    createListCollection<{ label: string; value: string, description: string }>({
+    createListCollection<{
+      label: string;
+      value: string;
+      description: string;
+    }>({
       items: [],
     }),
   );
 
-  const [loading, setLoading] = useState(false);
+  const [applyLoading, setApplyLoading] = useState(false);
   const [loadingSounds, setLoadingSounds] = useState(true);
   const [loadingInputs, setLoadingInputs] = useState(true);
   const [loadingOutputs, setLoadingOutputs] = useState(true);
@@ -215,8 +225,12 @@ export default function CustomStyleMenu({
         setOutputOptions(createListCollection({ items: outputItems }));
 
         // Auto-map time → time if both exist
-        const hasTimeInput = inputItems.some((i) => i.value.toLowerCase() === "time");
-        const hasTimeOutput = outputItems.some((o) => o.value.toLowerCase() === "time");
+        const hasTimeInput = inputItems.some(
+          (i) => i.value.toLowerCase() === "time",
+        );
+        const hasTimeOutput = outputItems.some(
+          (o) => o.value.toLowerCase() === "time",
+        );
 
         if (hasTimeInput && hasTimeOutput) {
           setParameterMappings([
@@ -231,7 +245,6 @@ export default function CustomStyleMenu({
 
           setAutoMappedTime(true);
         }
-
       } catch (error) {
         console.error("Error fetching parameters:", error);
       } finally {
@@ -329,6 +342,7 @@ export default function CustomStyleMenu({
       const response = await apiRequest(preview_endpoint, {
         file_ref: fileRef,
       });
+
       const audioUrl = `${coreAPI}/audio/${response.file_ref}`;
       const preview = new Audio(audioUrl);
       preview.play();
@@ -339,8 +353,13 @@ export default function CustomStyleMenu({
   };
 
   const handleApply = async () => {
-    return
-  }
+    setApplyLoading(true);
+
+    const styleRef = await saveSoundSettings();
+    
+    onStyleCreated(styleRef);
+    setApplyLoading(false);
+  };
 
   return (
     <Dialog.Root
@@ -351,26 +370,13 @@ export default function CustomStyleMenu({
     >
       <Dialog.Backdrop />
       <Dialog.Positioner>
-        <Dialog.Content maxH="90vh">
+        <Dialog.Content maxH="90vh" overflow='hidden'>
           <Dialog.Header>
             <Dialog.Title>Custom Style</Dialog.Title>
           </Dialog.Header>
           <Dialog.Body overflowY="auto">
             <VStack gap={5} align="stretch">
-              <FileUpload.Root>
-                <FileUpload.HiddenInput />
-                <FileUpload.Trigger asChild>
-                  <Tooltip
-                    content="Upload your own .yml style file"
-                    positioning={{ placement: "right" }}
-                  >
-                    <Button variant="solid" colorPalette="teal" size="sm">
-                      <LuUpload /> Upload style file
-                    </Button>
-                  </Tooltip>
-                </FileUpload.Trigger>
-                <FileUpload.List />
-              </FileUpload.Root>
+              
               <Select.Root
                 size="sm"
                 collection={soundOptions}
@@ -416,7 +422,7 @@ export default function CustomStyleMenu({
                 <HStack>
                   <Text fontWeight="medium">Parameter Mappings</Text>
                   <InfoTip
-                    content="Map input data parameters to output sound parameters"
+                    content="Map input data variables to output sound properties"
                     positioning={{ placement: "right" }}
                   />
                 </HStack>
@@ -444,289 +450,277 @@ export default function CustomStyleMenu({
                     />
                   </Alert.Root>
                 )}
-                {parameterMappings.map((mapping, index) => (
-                  <Card.Root key={index} variant="elevated" size="sm">
-                    <Card.Body>
-                      <VStack align="stretch" gap={3}>
-                        {/* Input / Output row */}
-                        <HStack align="flex-end">
-                          <Field.Root>
-                            <HStack>
-                              <Field.Label>Input</Field.Label>
-                              <InfoTip
-                                content="Choose the data variable to be sonified"
-                                positioning={{ placement: "right" }}
-                              />
-                            </HStack>
-                            <Select.Root
-                              collection={inputOptions}
-                              value={mapping.input ? [mapping.input] : []}
-                              onValueChange={(e) =>
-                                updateMapping(index, "input", e.value[0])
-                              }
-                              size="sm"
-                            >
-                              <Select.HiddenSelect />
-                              <Select.Control>
-                                <Select.Trigger>
-                                  <Select.ValueText placeholder="Select..." />
-                                </Select.Trigger>
-                                <Select.IndicatorGroup>
-                                  <Select.Indicator />
-                                </Select.IndicatorGroup>
-                              </Select.Control>
-                              <Portal>
-                                <Select.Positioner>
-                                  <Select.Content>
-                                    {inputOptions.items.map((option) => (
-                                      <Select.Item
-                                        item={option}
-                                        key={option.value}
-                                      >
-                                        <Stack>
-                                          <Select.ItemText>
-                                            {option.label}
-                                          </Select.ItemText>
-                                          {option.description && (
-                                            <Span
-                                              color="fg.muted"
-                                              textStyle="xs"
-                                            >
-                                              {option.description}
-                                            </Span>
-                                          )}
-                                        </Stack>
-                                        <Select.ItemIndicator />
-                                      </Select.Item>
-                                    ))}
-                                  </Select.Content>
-                                </Select.Positioner>
-                              </Portal>
-                            </Select.Root>
-                          </Field.Root>
-
-                          <Text pb={1} textStyle="xl">
-                            →
-                          </Text>
-
-                          <Field.Root>
-                            <HStack>
-                              <Field.Label>Output</Field.Label>
-                              <InfoTip
-                                content="Choose which sound property the input data will control"
-                                positioning={{ placement: "right" }}
-                              />
-                            </HStack>
-                            <Select.Root
-                              collection={outputOptions}
-                              value={mapping.output ? [mapping.output] : []}
-                              onValueChange={(e) =>
-                                updateMapping(index, "output", e.value[0])
-                              }
-                              size="sm"
-                            >
-                              <Select.HiddenSelect />
-                              <Select.Control>
-                                <Select.Trigger>
-                                  <Select.ValueText placeholder="Select..." />
-                                </Select.Trigger>
-                                <Select.IndicatorGroup>
-                                  <Select.Indicator />
-                                </Select.IndicatorGroup>
-                              </Select.Control>
-                              <Portal>
-                                <Select.Positioner>
-                                  <Select.Content>
-                                    {outputOptions.items.map((option) => (
-                                      <Select.Item
-                                        item={option}
-                                        key={option.value}
-                                      >
-                                        <Stack gap="0">
-                                          <Select.ItemText>
-                                            {option.label}
-                                          </Select.ItemText>
-                                          {option.description && (
-                                            <Span
-                                              color="fg.muted"
-                                              textStyle="xs"
-                                            >
-                                              {option.description}
-                                            </Span>
-                                          )}
-                                        </Stack>
-                                        <Select.ItemIndicator />
-                                      </Select.Item>
-                                    ))}
-                                  </Select.Content>
-                                </Select.Positioner>
-                              </Portal>
-                            </Select.Root>
-                          </Field.Root>
-                          <Tooltip content="Remove Mapping">
-                            <IconButton
-                              aria-label="Remove mapping"
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => removeMapping(index)}
-                            >
-                              <LuX />
-                            </IconButton>
-                          </Tooltip>
-                        </HStack>
-
-                        {/* Options — collapsible */}
-                        <Collapsible.Root>
-                          <Collapsible.Trigger>
-                            <Collapsible.Context>
-                              {({ open }) => (
-                                <Text
-                                  fontSize="xs"
-                                  color="teal.500"
-                                  cursor="pointer"
-                                >
-                                  {open ? "−" : "+"} Options
-                                </Text>
-                              )}
-                            </Collapsible.Context>
-                          </Collapsible.Trigger>
-                          <Collapsible.Content>
-                            <HStack gap={6} mt={3} align="flex-end">
-                              {/* Input range */}
-                              <VStack align="flex-start" gap={1}>
-                                <HStack>
-                                  <Text fontSize="xs" fontWeight="medium">
-                                    Input Range
-                                  </Text>
-                                  <InfoTip
-                                    content="Clamp or normalise the input data to this range before mapping."
-                                    positioning={{ placement: "right" }}
-                                  />
-                                </HStack>
-                                <HStack gap={2}>
-                                  <NumberInput.Root
-                                    value={
-                                      mapping.input_range?.[0]?.toString() ?? ""
-                                    }
-                                    onValueChange={(e) =>
-                                      updateMapping(index, "input_range", [
-                                        parseFloat(e.value) || 0,
-                                        mapping.input_range?.[1] ?? 0,
-                                      ])
-                                    }
-                                    step={0.01}
-                                    min={0}
-                                    max={200}
-                                    formatOptions={{
-                                      style: 'percent'
-                                    }}
-                                    size="sm"
-                                    width="80px"
-                                  >
-                                    <NumberInput.Input placeholder="Min" />
-                                    <NumberInput.Control />
-                                  </NumberInput.Root>
-                                  <Text fontSize="sm">–</Text>
-                                  <NumberInput.Root
-                                    value={
-                                      mapping.input_range?.[1]?.toString() ?? ""
-                                    }
-                                    onValueChange={(e) =>
-                                      updateMapping(index, "input_range", [
-                                        mapping.input_range?.[0] ?? 0,
-                                        parseFloat(e.value) || 0,
-                                      ])
-                                    }
-                                    size="sm"
-                                    width="80px"
-                                  >
-                                    <NumberInput.Input placeholder="Max" />
-                                    <NumberInput.Control />
-                                  </NumberInput.Root>
-                                </HStack>
-                              </VStack>
-
-                              {/* Output range */}
-                              <VStack align="flex-start" gap={1}>
-                                <HStack>
-                                  <Text fontSize="xs" fontWeight="medium">
-                                    Output Range
-                                  </Text>
-                                  <InfoTip
-                                    content="Scale the mapped output to this range."
-                                    positioning={{ placement: "right" }}
-                                  />
-                                </HStack>
-                                <HStack gap={2}>
-                                  <NumberInput.Root
-                                    value={
-                                      mapping.output_range?.[0]?.toString() ??
-                                      ""
-                                    }
-                                    onValueChange={(e) =>
-                                      updateMapping(index, "output_range", [
-                                        parseFloat(e.value) || 0,
-                                        mapping.output_range?.[1] ?? 0,
-                                      ])
-                                    }
-                                    size="sm"
-                                    width="80px"
-                                  >
-                                    <NumberInput.Input placeholder="Min" />
-                                    <NumberInput.Control />
-                                  </NumberInput.Root>
-                                  <Text fontSize="sm">–</Text>
-                                  <NumberInput.Root
-                                    value={
-                                      mapping.output_range?.[1]?.toString() ??
-                                      ""
-                                    }
-                                    onValueChange={(e) =>
-                                      updateMapping(index, "output_range", [
-                                        mapping.output_range?.[0] ?? 0,
-                                        parseFloat(e.value) || 0,
-                                      ])
-                                    }
-                                    size="sm"
-                                    width="80px"
-                                  >
-                                    <NumberInput.Input placeholder="Max" />
-                                    <NumberInput.Control />
-                                  </NumberInput.Root>
-                                </HStack>
-                              </VStack>
+                {parameterMappings.map((mapping, index) => {
+                  return (
+                    <Card.Root key={index} variant="elevated" size="sm">
+                      <Card.Body>
+                        <VStack align="stretch" gap={3}>
+                          {/* Input / Output row */}
+                          <HStack align="flex-end">
+                            <Field.Root>
                               <HStack>
-                                <Checkbox.Root
-                                  checked={mapping.function === "invert"}
-                                  onCheckedChange={(e) =>
-                                    updateMapping(
-                                      index,
-                                      "function",
-                                      e.checked ? "invert" : null,
-                                    )
-                                  }
-                                  colorPalette="teal"
-                                >
-                                  <Checkbox.HiddenInput />
-                                  <Checkbox.Control />
-                                  <Checkbox.Label>Invert</Checkbox.Label>
-                                </Checkbox.Root>
+                                <Field.Label>Input</Field.Label>
                                 <InfoTip
-                                  content="Reverses the direction of the input data, so that the biggest values become the smallest and vice versa. E.g. Magnitude increases as stars get dimmer, but it's usually useful to flip that relationship so that the sound parameter increases as stars get brighter."
+                                  content="Choose the data variable to be sonified"
                                   positioning={{ placement: "right" }}
-                                  contentProps={{ maxW: "200px" }}
                                 />
                               </HStack>
-                            </HStack>
-                          </Collapsible.Content>
-                        </Collapsible.Root>
-                      </VStack>
-                    </Card.Body>
-                  </Card.Root>
-                ))}
+                              <Select.Root
+                                collection={inputOptions}
+                                value={mapping.input ? [mapping.input] : []}
+                                onValueChange={(e) =>
+                                  updateMapping(index, "input", e.value[0])
+                                }
+                                size="sm"
+                              >
+                                <Select.HiddenSelect />
+                                <Select.Control>
+                                  <Select.Trigger>
+                                    <Select.ValueText placeholder="Select..." />
+                                  </Select.Trigger>
+                                  <Select.IndicatorGroup>
+                                    <Select.Indicator />
+                                  </Select.IndicatorGroup>
+                                </Select.Control>
+                                <Portal>
+                                  <Select.Positioner>
+                                    <Select.Content>
+                                      {inputOptions.items.map((option) => (
+                                        <Select.Item
+                                          item={option}
+                                          key={option.value}
+                                        >
+                                          <Stack>
+                                            <Select.ItemText>
+                                              {option.label}
+                                            </Select.ItemText>
+                                            {option.description && (
+                                              <Span
+                                                color="fg.muted"
+                                                textStyle="xs"
+                                              >
+                                                {option.description}
+                                              </Span>
+                                            )}
+                                          </Stack>
+                                          <Select.ItemIndicator />
+                                        </Select.Item>
+                                      ))}
+                                    </Select.Content>
+                                  </Select.Positioner>
+                                </Portal>
+                              </Select.Root>
+                            </Field.Root>
+
+                            <Text pb={1} textStyle="xl">
+                              →
+                            </Text>
+
+                            <Field.Root>
+                              <HStack>
+                                <Field.Label>Output</Field.Label>
+                                <InfoTip
+                                  content="Choose which sound property the input data will control"
+                                  positioning={{ placement: "right" }}
+                                />
+                              </HStack>
+                              <Select.Root
+                                collection={outputOptions}
+                                value={mapping.output ? [mapping.output] : []}
+                                onValueChange={(e) =>
+                                  updateMapping(index, "output", e.value[0])
+                                }
+                                size="sm"
+                              >
+                                <Select.HiddenSelect />
+                                <Select.Control>
+                                  <Select.Trigger>
+                                    <Select.ValueText placeholder="Select..." />
+                                  </Select.Trigger>
+                                  <Select.IndicatorGroup>
+                                    <Select.Indicator />
+                                  </Select.IndicatorGroup>
+                                </Select.Control>
+                                <Portal>
+                                  <Select.Positioner>
+                                    <Select.Content>
+                                      {outputOptions.items.map((option) => {
+                                        const isUsedElsewhere =
+                                          parameterMappings.some(
+                                            (m, i) =>
+                                              m.output === option.value &&
+                                              i !== index,
+                                          );
+
+                                        return (
+                                          <Select.Item
+                                            item={{
+                                              ...option,
+                                              disabled: isUsedElsewhere,
+                                            }}
+                                            key={option.value}
+                                          >
+                                            <Stack gap="0">
+                                              <Select.ItemText>
+                                                {option.label}
+                                              </Select.ItemText>
+                                              {option.description && (
+                                                <Span
+                                                  color="fg.muted"
+                                                  textStyle="xs"
+                                                >
+                                                  {option.description}
+                                                </Span>
+                                              )}
+                                            </Stack>
+                                            <Select.ItemIndicator />
+                                          </Select.Item>
+                                        );
+                                      })}
+                                    </Select.Content>
+                                  </Select.Positioner>
+                                </Portal>
+                              </Select.Root>
+                            </Field.Root>
+                            <Tooltip content="Remove Mapping">
+                              <IconButton
+                                aria-label="Remove mapping"
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => removeMapping(index)}
+                              >
+                                <LuX />
+                              </IconButton>
+                            </Tooltip>
+                          </HStack>
+
+                          {/* Options — collapsible */}
+                          <Collapsible.Root>
+                            <Collapsible.Trigger>
+                              <Collapsible.Context>
+                                {({ open }) => (
+                                  <Text
+                                    fontSize="xs"
+                                    color="teal.500"
+                                    cursor="pointer"
+                                  >
+                                    {open ? "−" : "+"} Options
+                                  </Text>
+                                )}
+                              </Collapsible.Context>
+                            </Collapsible.Trigger>
+                            <Collapsible.Content>
+                              <VStack align="stretch" gap={5} mt={3}>
+                                {/* Output range */}
+                                <VStack align="flex-start" gap={1}>
+                                  <HStack>
+                                    <Text fontSize="xs" fontWeight="medium">
+                                      Output Range
+                                    </Text>
+                                    <InfoTip
+                                      content="Use this to adjust the limits of the output sound parameter. E.g. setting this at 0.3 - 1 on a Volume mapping would mean that the lowest data point would be played at 30% volume, instead of 0% volume."
+                                      positioning={{ placement: "right" }}
+                                      contentProps={{ maxW: "300px" }}
+                                    />
+                                  </HStack>
+                                  <HStack gap={10}>
+                                    <HStack>
+                                      <NumberInput.Root
+                                        value={
+                                          mapping.output_range?.[0]?.toString() ??
+                                          "0"
+                                        }
+                                        onValueChange={(e) =>
+                                          updateMapping(index, "output_range", [
+                                            Math.min(
+                                              parseFloat(e.value),
+                                              (mapping.output_range?.[1] ?? 1) -
+                                                0.01,
+                                            ),
+                                            mapping.output_range?.[1] ?? 1,
+                                          ])
+                                        }
+                                        min={0}
+                                        max={
+                                          (mapping.output_range?.[1] ?? 1) -
+                                          0.01
+                                        }
+                                        step={0.1}
+                                        size="sm"
+                                        width="80px"
+                                      >
+                                        <NumberInput.Input placeholder="0" />
+                                        <NumberInput.Control />
+                                      </NumberInput.Root>
+                                      <Text fontSize="sm">–</Text>
+                                      <NumberInput.Root
+                                        value={
+                                          mapping.output_range?.[1]?.toString() ??
+                                          "1"
+                                        }
+                                        onValueChange={(e) =>
+                                          updateMapping(index, "output_range", [
+                                            mapping.output_range?.[0] ?? 0,
+                                            Math.max(
+                                              parseFloat(e.value),
+                                              (mapping.output_range?.[0] ?? 0) +
+                                                0.01,
+                                            ),
+                                          ])
+                                        }
+                                        min={
+                                          (mapping.output_range?.[0] ?? 0) +
+                                          0.01
+                                        }
+                                        max={1}
+                                        step={0.1}
+                                        size="sm"
+                                        width="80px"
+                                      >
+                                        <NumberInput.Input placeholder="1" />
+                                        <NumberInput.Control />
+                                      </NumberInput.Root>
+                                    </HStack>
+
+                                    <HStack>
+                                      <Checkbox.Root
+                                        checked={mapping.function === "invert"}
+                                        onCheckedChange={(e) =>
+                                          updateMapping(
+                                            index,
+                                            "function",
+                                            e.checked ? "invert" : null,
+                                          )
+                                        }
+                                        colorPalette="teal"
+                                      >
+                                        <Checkbox.HiddenInput />
+                                        <Checkbox.Control />
+                                        <Checkbox.Label>
+                                          Invert data
+                                        </Checkbox.Label>
+                                      </Checkbox.Root>
+                                      <InfoTip
+                                        content="Reverses the direction of the input data, so that the biggest values become the smallest and vice versa. E.g. Magnitude increases as stars get dimmer, but it's usually useful to flip that relationship so that the sound parameter increases as stars get brighter."
+                                        positioning={{ placement: "right" }}
+                                        contentProps={{ maxW: "300px" }}
+                                      />
+                                    </HStack>
+                                  </HStack>
+                                </VStack>
+
+                                {/* Invert */}
+                              </VStack>
+                            </Collapsible.Content>
+                          </Collapsible.Root>
+                        </VStack>
+                      </Card.Body>
+                    </Card.Root>
+                  );
+                })}
 
                 <Button
-                  variant="outline"
+                  variant="subtle"
                   colorPalette="teal"
                   size="sm"
                   onClick={addMapping}
@@ -800,7 +794,7 @@ export default function CustomStyleMenu({
                         content="Pitch must be selected to use a scale."
                         openDelay={100}
                         closeDelay={100}
-                        disabled={pitch}
+                        disabled={pitchMapped}
                       >
                         <Box>
                           <Select.Root
@@ -810,7 +804,7 @@ export default function CustomStyleMenu({
                             value={[scale]}
                             onValueChange={(e) => setScale(e.value[0])}
                             mb={3}
-                            disabled={!pitch}
+                            disabled={!pitchMapped}
                           >
                             <Select.HiddenSelect />
                             <Select.Label>Scale</Select.Label>

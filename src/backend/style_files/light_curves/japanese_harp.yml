@@ -1,0 +1,16 @@
+name: "Japanese Harp"
+
+description: "Harp plays a Japanese hirajoshi scale, where pitch increases with brightness."
+
+sound: "Harp"
+preset: 'staccato'
+mods: 
+  volume_envelope: 
+    use: 'on'
+    R: 1
+
+parameters:
+  - input: "flux"
+    output: "pitch"
+
+harmony: 'C hirajoshi'
