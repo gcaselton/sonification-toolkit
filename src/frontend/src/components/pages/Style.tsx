@@ -32,9 +32,7 @@ export default function Style() {
     fetch(`${coreAPI}/styles/${soniType}`)
       .then((res) => res.json())
       .then((data) => {
-        if (soniType === "light_curves") {
-          data.push({ name: "Custom" });
-        }
+        data.push({ name: "Custom" });
         setSuggestedStyles(data);
       })
       .catch((err) => {

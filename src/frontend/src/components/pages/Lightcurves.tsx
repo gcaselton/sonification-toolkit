@@ -371,7 +371,7 @@ export default function Lightcurves() {
     setUploadKey((k) => k + 1);
   };
 
-  const uploadDisabled = true
+  const uploadDisabled = false
 
   return (
     <PageContainer>

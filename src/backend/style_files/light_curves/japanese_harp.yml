@@ -13,4 +13,7 @@ parameters:
   - input: "flux"
     output: "pitch"
 
+  - input: 'time'
+    output: 'time'
+
 harmony: 'C hirajoshi'

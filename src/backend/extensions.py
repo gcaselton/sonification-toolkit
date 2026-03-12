@@ -11,6 +11,8 @@ from pychord.utils import transpose_note
 from paths import *
 from pydantic import ValidationError
 from night_sky import handle_observer
+from copy import deepcopy
+import pprint
 
 import lightkurve as lk
 import numpy as np
@@ -22,6 +24,22 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+BASIC_LOOP = {
+      'looping': 'forwardback',
+      'loop_start': 0,
+      'loop_end': 5.
+}
+
+LOOPING_MODS = {
+      'Space Strings': BASIC_LOOP,
+      'Deep Crackle': BASIC_LOOP,
+      'Dark Drone': BASIC_LOOP,
+      'Bright Mallets': {
+            'looping': 'forward',
+            'loop_start': 0.3,
+            'loop_end': 5
+      }
+}
 
 def read_YAML_file(filepath):
     
@@ -156,6 +174,8 @@ def setup_strauss(data: Path | str | tuple, style: BaseStyle, sonify_type, lengt
 
             if style.mods:
                   generator.modify_preset(style.mods)
+            elif style.sound in LOOPING_MODS:
+                  generator.modify_preset(LOOPING_MODS[style.sound])
 
       mappings = style.parameters
 
@@ -180,6 +200,10 @@ def setup_strauss(data: Path | str | tuple, style: BaseStyle, sonify_type, lengt
                   notes = parse_harmony(style.harmony, folder, path)
             else:
                   notes = [style.harmony]
+            
+            if 'pitch' not in outputs:
+                  # Use the first note in the harmony
+                  notes = [[notes[0][0]]]
       else:
             notes = [['A3']] # Change this?
       
@@ -196,16 +220,63 @@ def parse_harmony(harmony: str, sound_folder, sound_path):
             print(quality)
             quality = 'hijaroshi' if quality == 'hirajoshi' else quality
             notes = parse_scale(starting_note=root, mode=quality, octaves=2) # 3 octave range as default, could give users the option?
-            notes = [[str(note - 12) for note in notes]] # -12 so it starts on 2nd octave
+            notes = [str(note) for note in notes]
+            if sound_folder == 'samples':
+                  notes = constrain_notes(notes, sound_path)
+            notes = [notes]
+            
+            print(notes)
       else:
             # Likely a chord e.g. 'Cmaj7'
             notes = voice_chord(harmony, sound_folder, sound_path)
 
       return notes
 
+def constrain_notes(desired_notes, sound_path):
+    
+    sample_folder = Path(sound_path)
+    available_notes = [p.stem for p in sample_folder.iterdir() if p.is_file()]
+    
+    def extract_note(stem):
+        return stem.split('_')[-1]
+    
+    available_note_set = {extract_note(stem) for stem in available_notes}
+    
+    constrained = []
+    
+    for note in desired_notes:
+        if note in available_note_set:
+            constrained.append(note)
+        else:
+            pitch_class = ''.join(c for c in note if not c.isdigit())
+            octave = int(''.join(c for c in note if c.isdigit() or c == '-'))
+            
+            matched = None
+            max_range = 10
+            for delta in range(0, max_range):
+                for direction in ([0] if delta == 0 else [delta, -delta]):
+                    candidate = f"{pitch_class}{octave + direction}"
+                    if candidate in available_note_set:
+                        matched = candidate
+                        break
+                if matched:
+                    break
+            
+            if matched:
+                constrained.append(matched)
+    
+    return constrained
+                  
+
 def univariate_sources(xy_data: tuple, params, chord_mode):
       # NOTE to do: make this into a more generic function for univariate data?
       pass
+
+def parse_percentile(val):
+    """Extract numeric value from a percentile string like '110%', or return the float directly."""
+    if isinstance(val, str):
+        return float(val.strip('%'))
+    return float(val)
 
 def constellation_sources(data: Path | str , style: BaseStyle, length):
 
@@ -221,7 +292,9 @@ def constellation_sources(data: Path | str , style: BaseStyle, length):
       input_params = [mapping.input for mapping in style.parameters if isinstance(mapping.input, str)]
       df = df.dropna(subset=input_params)
 
-      data_dict = {}
+      data_dict = {
+            'pitch': [0]*len(df)
+      }
       m_lims = {}
       p_lims = {}
       my_funcs = {}
@@ -240,7 +313,7 @@ def constellation_sources(data: Path | str , style: BaseStyle, length):
 
             # Invert data for e.g. magnitude (smaller magnitude is brighter)
             if mapping.function == 'invert':
-                  my_funcs[output] = lambda x: -x
+                  my_funcs[output] = lambda x: np.negative(x)
 
             # Map data
             if isinstance(input, float):
@@ -254,11 +327,25 @@ def constellation_sources(data: Path | str , style: BaseStyle, length):
             if mapping.output_range:
                   p_lims[output] = mapping.output_range
                   
+                  
+      # Ensure time upper limit is at least 110% to allow some time at the end
+      if 'time' in m_lims and m_lims['time'] is not None:
+            lower, upper = m_lims['time']
+            if parse_percentile(upper) <= 100:
+                  m_lims['time'] = (lower, '110%')
+      else:
+            m_lims['time'] = ('0%', '110%')
+                  
 
       sources = Events(data_dict.keys())
+      
+      print(data_dict)
+      print("m_lims:", m_lims)
+      print("p_lims:", p_lims)
      
       sources.fromdict(data_dict)
       sources.apply_mapping_functions(map_funcs=my_funcs, map_lims=m_lims, param_lims=p_lims)
+      print("mapped time:", sources.mapping['time'])
 
 
       return sources
@@ -303,24 +390,35 @@ def convert_percent_to_values(param_lims: tuple):
 
 
 def scale_events(labelled_data: dict, params: list[ParameterMapping], length):
-
+      
       user_settings = load_settings_from_file()
       resolution = user_settings['data_resolution']
       
+      time_input = next((p.input for p in params if p.output == 'time'), None)
+
+      if time_input is None:
+            raise ValueError('There must be one parameter mapped to time.')
       
+      x = labelled_data[time_input]
+      y = next(v for k, v in labelled_data.items() if k != time_input)
 
       new_x, new_y = downsample_data(x, y, length, resolution)
 
       data = {'pitch': new_y,
               'time': new_x}
 
-      m_lims = {'time': ('0%','101%'),
+      m_lims = {'time': ('0%','110%'),
                 'pitch': ('0%', '100%')
                 }
       
       p_lims = {}
+      funcs = {}
 
       for mapping in params:
+            
+            if mapping.function == 'invert':
+                  funcs[mapping.output] = lambda x: np.negative(x)
+                  
             if mapping.output not in data.keys():
                   
                   if isinstance(mapping.input, float):
@@ -329,28 +427,32 @@ def scale_events(labelled_data: dict, params: list[ParameterMapping], length):
                   else:
                         # all other mappings 
                         data[mapping.output] = new_y
-                        m_lims[mapping.output] = mapping.input_range
+                        m_lims[mapping.output] = mapping.input_range if mapping.input_range else ('0%', '100%')
+                        
+                        if mapping.output == 'azimuth':
+                              data['polar'] = [0.5]*len(new_x)
                   
                   if mapping.output_range:
                         p_lims[mapping.output] = mapping.output_range
       
       sources = Events(data.keys())
       sources.fromdict(data)
-      sources.apply_mapping_functions(map_lims=m_lims, param_lims=p_lims) # Problem here: 'pitch cannot be evolved'
+      sources.apply_mapping_functions(map_funcs=funcs, map_lims=m_lims, param_lims=p_lims) # Problem here: 'pitch cannot be evolved'
       
 
       return sources
 
 def light_curve_sources(data, style: BaseStyle, length):
+      
+      labelled_data = {}
 
       if isinstance(data, tuple):
-
-            x = data[0]
-            y = data[1]
+            
+            labelled_data['time'] = data[0]
+            labelled_data['flux'] = data[1]
             
       elif isinstance(data, Path):
             
-            labelled_data = {}
             
             if data.suffix == '.fits':
 
@@ -360,8 +462,8 @@ def light_curve_sources(data, style: BaseStyle, length):
                   time = ensure_array(lc.time.value)
                   flux = ensure_array(lc.flux.value)
                   
-                  labelled_data['Time'] = time
-                  labelled_data['Flux'] = flux
+                  labelled_data['time'] = time
+                  labelled_data['flux'] = flux
 
             elif data.suffix == '.csv':
 
@@ -371,6 +473,9 @@ def light_curve_sources(data, style: BaseStyle, length):
                   df = df.dropna()
 
                   col1, col2 = df.columns[:2]
+                  
+                  col1 = col1.lower()
+                  col2 = col2.lower()
 
                   labelled_data[col1] = df.iloc[:, 0].to_numpy()
                   labelled_data[col2] = df.iloc[:, 1].to_numpy()
@@ -380,18 +485,25 @@ def light_curve_sources(data, style: BaseStyle, length):
       pitches = [0] if is_scale else [0,1,2,3]
       
       data_dict = {'pitch': pitches}
+      funcs = {}
       m_lims = {}
       p_lims = {}
+      
+      # Make a copy of params before mutating 'time' to 'time_evo' later
+      params_copy = deepcopy(style.parameters)
 
       for mapping in style.parameters:
             
             if mapping.output == 'pitch':
                   if is_scale:
                         # Return Events type for scale mapping
-                        return scale_events(labelled_data, style.parameters, length)
+                        return scale_events(labelled_data, params_copy, length)
                   else:
                         # Change pitch for pitch_shift if we want Objects type
                         mapping.output = 'pitch_shift'
+            
+            if mapping.function == 'invert':
+                  funcs[mapping.output] = lambda x: np.negative(x)
                         
             mapping.output = 'time_evo' if mapping.output == 'time' else mapping.output
                         
@@ -403,13 +515,16 @@ def light_curve_sources(data, style: BaseStyle, length):
                   data_dict[mapping.output] = [labelled_data[mapping.input]]*len(pitches)
                   m_lims[mapping.output] = mapping.input_range if mapping.input_range else ('0%', '100%')
                   
+                  if mapping.output == 'azimuth':
+                        data_dict['polar'] = [0.5]*len(pitches)
+                  
             if mapping.output_range:
                   p_lims[mapping.output] = mapping.output_range
       
 
       sources = Objects(data_dict.keys())
       sources.fromdict(data_dict)
-      sources.apply_mapping_functions(map_lims=m_lims, param_lims=p_lims)
+      sources.apply_mapping_functions(map_funcs=funcs, map_lims=m_lims, param_lims=p_lims)
 
       return sources
 
@@ -472,7 +587,7 @@ def voice_chord(chord_name: str, sound_folder: str, sound_path: str):
       # Check that the desired octaves are present in the desired sound samples
       if sound_folder == 'samples':
             sample_folder = Path(sound_path)
-            available_notes = [p.name for p in sample_folder.iterdir() if p.is_file()]
+            available_notes = [p.stem for p in sample_folder.iterdir() if p.is_file()]
 
             # Move lowest note up an octave and highest note down if not available in the sound folder
             notes[0] = f'{root}3' if f'{root}2' not in available_notes else f'{root}2'

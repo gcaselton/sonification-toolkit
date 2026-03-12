@@ -286,6 +286,18 @@ export default function CustomStyleMenu({
     fetchSounds();
   }, []);
 
+  useEffect(() => {
+    const hasTimeMapping = parameterMappings.some(
+      (m) =>
+        m.input.toLowerCase() === "time" && m.output.toLowerCase() === "time",
+    );
+
+    if (!hasTimeMapping) {
+      setAutoMappedTime(false);
+    }
+  }, [parameterMappings]);
+  
+
   const addMapping = () => {
     setParameterMappings((prev) => [
       ...prev,
@@ -317,7 +329,11 @@ export default function CustomStyleMenu({
     const url = `${coreAPI}/save-sound-settings/`;
     const data = {
       sound: sound.name.replace(/\s*🎹$/, ""),
-      map: parameterMappings,
+      map: parameterMappings.map((m) => ({
+        ...m,
+        input: m.input.toLowerCase(),
+        output: m.output.toLowerCase(),
+      })),
       chordMode: chordMode,
       rootNote: rootNote,
       scale: scale,
@@ -370,13 +386,12 @@ export default function CustomStyleMenu({
     >
       <Dialog.Backdrop />
       <Dialog.Positioner>
-        <Dialog.Content maxH="90vh" overflow='hidden'>
+        <Dialog.Content maxH="90vh" overflow="hidden">
           <Dialog.Header>
             <Dialog.Title>Custom Style</Dialog.Title>
           </Dialog.Header>
           <Dialog.Body overflowY="auto">
             <VStack gap={5} align="stretch">
-              
               <Select.Root
                 size="sm"
                 collection={soundOptions}
@@ -484,7 +499,7 @@ export default function CustomStyleMenu({
                                 </Select.Control>
                                 <Portal>
                                   <Select.Positioner>
-                                    <Select.Content>
+                                    <Select.Content maxH='200px' overflowY='auto'>
                                       {inputOptions.items.map((option) => (
                                         <Select.Item
                                           item={option}
@@ -733,12 +748,15 @@ export default function CustomStyleMenu({
                 <Collapsible.Root transition="opacity 0.3s ease-in-out">
                   <Collapsible.Trigger>
                     <Text
-                      color="teal"
+                      color="teal.600"
                       fontWeight="medium"
                       cursor="pointer"
                       mb={3}
                     >
-                      Musical Settings 🎹
+                      <Span _hover={{ textDecoration: "underline" }}>
+                        Musical Settings
+                      </Span>{" "}
+                      🎹
                     </Text>
                   </Collapsible.Trigger>
                   <Collapsible.Content>
@@ -875,6 +893,11 @@ export default function CustomStyleMenu({
               )}
             </VStack>
           </Dialog.Body>
+          {parameterMappings.length === 0 && (
+            <Text pb={2} fontSize="sm" color="fg.muted" textAlign="center">
+              Add at least one parameter mapping to continue
+            </Text>
+          )}
           <Dialog.Footer display="flex" justifyContent="center">
             <Button
               width="30%"
@@ -886,6 +909,7 @@ export default function CustomStyleMenu({
             </Button>
             <Button
               loading={loadingCustomPreview}
+              disabled={parameterMappings.length === 0}
               width="30%"
               colorPalette="teal"
               variant="outline"
@@ -894,6 +918,7 @@ export default function CustomStyleMenu({
               Preview
             </Button>
             <Button
+              disabled={parameterMappings.length === 0}
               width="30%"
               colorPalette="teal"
               onClick={() => handleApply()}

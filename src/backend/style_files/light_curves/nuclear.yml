@@ -13,3 +13,6 @@ parameters:
   - input: "flux"
     output: "cutoff"
     output_range: [0.3, 1]
+
+  - input: 'time'
+    output: 'time'

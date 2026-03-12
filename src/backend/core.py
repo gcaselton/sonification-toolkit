@@ -7,7 +7,7 @@ from strauss.sources import param_lim_dict
 from sounds import all_sounds, online_sounds, local_sounds, asset_cache, format_name
 from config import GITHUB_USER, GITHUB_REPO
 from context import session_id_var
-from utils import resolve_file
+from utils import resolve_file, is_number
 from request_models import DataRequest, SoundRequest, CustomStyleSettings, SonificationRequest
 import logging, httpx, yaml, os, uuid, aiofiles, zipfile, traceback, filetype, pprint, numbers
 import lightkurve as lk
@@ -37,6 +37,8 @@ FORMATTED_FILENAMES = {
     'constellations': 'Constellation',
     'night_sky': 'Night Sky'
 }
+
+MASTER_VOL = 0.5
 
 
 @router.get('/session/')
@@ -96,7 +98,7 @@ def generate_sonification(request: SonificationRequest):
         ext = '.wav'
         filename = f'{request.data_name} {category}{ext}'
         filepath = TMP_DIR / session_id / filename
-        soni.save(filepath)
+        soni.save(filepath, master_volume=MASTER_VOL)
 
         file_ref = f'session:{filename}'
 
@@ -170,7 +172,7 @@ def ensure_two_columns(ext: str, contents: bytes):
         reduced = True
         
     # If there are no meaningful headers, assign default names
-    if all(isinstance(col, numbers.Number) for col in df.columns):
+    if all(is_number(col) for col in df.columns):
         df.columns = ["Column 1", "Column 2"]
 
     return df, reduced
@@ -256,8 +258,8 @@ async def uploadData(file: UploadFile, request: Request):
             "Upload rejected | reason=invalid_csv | session=%s | ip=%s",
             session_id,
             ip
-        )
-        raise HTTPException(415, "Invalid CSV file")
+            )
+            raise HTTPException(415, "Invalid CSV file")
         
     # Check that magic bytes match expected type for FITS
     kind = filetype.guess(contents)
@@ -339,12 +341,6 @@ def get_inputs(file_ref: str):
         ]
         
     elif filepath.endswith('.fits'):
-        
-        lc = lk.read(filepath)
-        time = lc.time.value
-        flux = lc.flux.value
-        # Mask NaN values in flux
-        flux = flux[~np.isnan(flux)]
  
         inputs = [
             {
@@ -453,15 +449,14 @@ def preview_style_settings(request: DataRequest, category: str):
     data = (x, y)
 
     try:
-        soni = sonify(data, style, category, length=5,  system='mono')
-
+        soni = sonify(data, style, category, length=5,  system='stereo')
 
         id = str(uuid.uuid4().hex)
         ext = '.wav'
         filename = f'{category}_{id}{ext}'
         session_id = session_id_var.get()
         filepath = os.path.join(TMP_DIR, session_id, filename)
-        soni.save(filepath)
+        soni.save(filepath, master_volume=MASTER_VOL)
 
         file_ref = f'session:{filename}'
 

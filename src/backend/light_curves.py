@@ -19,7 +19,7 @@ from astroquery.simbad import Simbad
 from astroquery.mast import Observations
 from scipy.ndimage import gaussian_filter1d
 from request_models import StarQuery, DataRequest, DownloadRequest, PlotRequest, RefineRequest
-from utils import resolve_file
+from utils import resolve_file, is_number
 
 
 router = APIRouter(prefix='/light-curves')
@@ -246,6 +246,8 @@ def plot_lightcurve(request: DataRequest):
     return {'image': img_base64}
 
 
+
+
 def plot_and_format_lc(filepath: str):
 
     # Check file extension
@@ -255,8 +257,8 @@ def plot_and_format_lc(filepath: str):
         
         # Get column names for labels
         columns = df.columns.tolist()
-        x_label = columns[0] if not str(columns[0]).isdigit() else 'X'
-        y_label = columns[1] if not str(columns[1]).isdigit() else 'Y'
+        x_label = columns[0] if not is_number(columns[0]) else 'Column 1'
+        y_label = columns[1] if not is_number(columns[1]) else 'Column 2'
         
         time = df[columns[0]].values
         flux = df[columns[1]].values

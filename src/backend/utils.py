@@ -35,3 +35,12 @@ def resolve_file(file_ref: str) -> Path:
     
     
     return path
+
+
+def is_number(x):
+    try:
+        float(x)
+        return True
+    except ValueError:
+        return False
+
