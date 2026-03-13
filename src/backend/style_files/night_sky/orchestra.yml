@@ -1,8 +1,12 @@
-name: 'Stars Appearing'
+name: 'Orchestra'
 
-description: 'A glockenspiel plays the brightest stars first, with pitch mapped to colour.'
+description: 'An orchestra plays the night sky from brightest to dimmest stars, where higher notes signify bluer/hotter stars.'
 
-sound: 'Glockenspiel'
+sound: 'Orchestra'
+preset: 'staccato'
+mods: 
+  volume_envelope: 
+    R: 4
 
 parameters:
   
@@ -16,11 +20,11 @@ parameters:
     function: 'invert'
 
   - input: 'magnitude'
-    input_range: ['0%', '110%']
+    input_range: ['0%', '120%']
     output: 'time'
 
   - input: 'relative_az'
     output: 'azimuth'
     output_range: [0.25, 0.75]
 
-harmony: ['C#3', 'F#3', 'G#3', 'D#4', 'F4']
+harmony: ['F2', 'C2', 'F3', 'A3', 'E4', 'G4']

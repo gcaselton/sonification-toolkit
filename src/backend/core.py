@@ -108,7 +108,10 @@ def generate_sonification(request: SonificationRequest):
         raise
     except Exception as e:
         LOG.error("Error generating sonification:\n" + traceback.format_exc())
-        raise
+        raise HTTPException(
+            status_code=500,
+            detail=f"{type(e).__name__}: {str(e)}"
+        )
     
 
 @router.get('/audio/{file_ref}')

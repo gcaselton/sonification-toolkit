@@ -1,6 +1,6 @@
 name: "Windy"
 
-description: "White Noise + Filter Cutoff."
+description: "Static noise gets brighter as star brightness increases."
 
 sound: "White Noise"
 

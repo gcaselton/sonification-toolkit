@@ -191,7 +191,7 @@ export default function Constellations({
                   <Field.Label>Number of Stars</Field.Label>
                   <NumberInput.Root
                     min={1}
-                    max={1000}
+                    max={300}
                     value={nStars}
                     onValueChange={(e) => {
                       setNStars(e.value);
@@ -201,7 +201,7 @@ export default function Constellations({
                     <NumberInput.Control />
                     <NumberInput.Input />
                   </NumberInput.Root>
-                  { (Number(nStars) >= 500) &&
+                  { (Number(nStars) > 100) &&
                     <Field.HelperText>Warning: Sonification may take significantly longer to generate for large numbers of stars</Field.HelperText>}
                 </Field.Root>
               </HStack>

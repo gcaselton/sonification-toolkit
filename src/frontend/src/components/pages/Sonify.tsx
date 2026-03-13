@@ -172,9 +172,9 @@ export default function Sonify() {
       const response = await apiRequest(url, data);
       console.log("Sonification result:", response);
       return response.file_ref;
-    } catch (error) {
+    } catch (error: any) {
       setErrorMessage(
-        "Error generating sonification. Please try again with different Style settings.",
+        error?.message ?? "Unknown error generating sonification.",
       );
       console.error("Error fetching sonification:", error);
     }
@@ -459,7 +459,7 @@ export default function Sonify() {
           </Box>
         </HStack>
         <ActionBar.Root open={soniClicked}>
-          <ActionBar.Positioner>
+          <ActionBar.Positioner zIndex={1400}>
             <ActionBar.Content
               w={loading ? "20%" : "50%"}
               justifyContent="center"

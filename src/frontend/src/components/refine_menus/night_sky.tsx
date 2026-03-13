@@ -94,7 +94,7 @@ export default function Constellations({ dataRef, dataName, onApply }: RefineMen
           <Field.Label>Magnitude less than</Field.Label>
           <NumberInput.Root
             min={-1.5}
-            max={21}
+            max={6}
             value={magnitude}
             onValueChange={(e) => {
               setMagnitude(e.value);

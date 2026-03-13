@@ -199,14 +199,13 @@ def setup_strauss(data: Path | str | tuple, style: BaseStyle, sonify_type, lengt
                   notes = parse_harmony(style.harmony, folder, path)
             else:
                   notes = [style.harmony]
-            
-            if 'pitch' not in outputs:
-                  # Use the first note in the harmony
-                  notes = [[notes[0][0]]]
+                  
       else:
             notes = [['A3']] # Change this?
+            
+      pitch_bin_mode = 'uniform' if 'pitch' in outputs else 'adaptive'
       
-      score = Score(notes,length)
+      score = Score(notes,length, pitch_binning=pitch_bin_mode)
 
       return score, sources, generator
 
@@ -472,9 +471,6 @@ def light_curve_sources(data, style: BaseStyle, length):
                   df = df.dropna()
 
                   col1, col2 = df.columns[:2]
-                  
-                  col1 = col1.lower()
-                  col2 = col2.lower()
 
                   labelled_data[col1] = df.iloc[:, 0].to_numpy()
                   labelled_data[col2] = df.iloc[:, 1].to_numpy()
@@ -500,6 +496,10 @@ def light_curve_sources(data, style: BaseStyle, length):
                   else:
                         # Change pitch for pitch_shift if we want Objects type
                         mapping.output = 'pitch_shift'
+                        
+                        if not mapping.output_range:
+                              # Enforce a one octave range for pitch_shift mappings
+                              mapping.output_range = (0,12)
             
             if mapping.function == 'invert':
                   funcs[mapping.output] = lambda x: np.negative(x)
@@ -520,7 +520,8 @@ def light_curve_sources(data, style: BaseStyle, length):
             if mapping.output_range:
                   p_lims[mapping.output] = mapping.output_range
       
-
+      print(p_lims)
+      
       sources = Objects(data_dict.keys())
       sources.fromdict(data_dict)
       sources.apply_mapping_functions(map_funcs=funcs, map_lims=m_lims, param_lims=p_lims)
