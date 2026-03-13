@@ -9,7 +9,7 @@ from config import GITHUB_USER, GITHUB_REPO
 from context import session_id_var
 from utils import resolve_file, is_number
 from request_models import DataRequest, SoundRequest, CustomStyleSettings, SonificationRequest
-import logging, httpx, yaml, os, uuid, aiofiles, zipfile, traceback, filetype, pprint, numbers
+import logging, httpx, yaml, os, uuid, aiofiles, zipfile, traceback, filetype, numbers
 import lightkurve as lk
 from param_descriptions import INPUTS, OUTPUTS
 from strauss.sources import param_lim_dict
@@ -320,11 +320,11 @@ def round_range(range: list, dp: int = 2) -> list:
 
 
 @router.get('/get-inputs/')
-def get_inputs(file_ref: str):
+def get_inputs(file_ref: str, soni_type: str, user_upload: bool = False ):
     
     filepath = str(resolve_file(file_ref))
     
-    if filepath.endswith('.csv'):
+    if filepath.endswith('.csv') and user_upload:
         df = pd.read_csv(filepath)
         
         # If all column names are numeric, the data likely has no headers
@@ -335,33 +335,32 @@ def get_inputs(file_ref: str):
         inputs = [
             {
                 'name': col, 
-                'desc': INPUTS.get(col.lower(), '')
+                'desc': '',
+                'key': col
             }
             for col in df.columns
         ]
-        
-    elif filepath.endswith('.fits'):
+
+    else:
  
         inputs = [
             {
-                'name': 'Time', 
-                'desc': ''
-            },
-            {
-                'name': 'Flux',
-                'desc': INPUTS['flux']
+                'name': INPUTS[soni_type][col]['name'], 
+                'desc': INPUTS[soni_type][col]['desc'],
+                'key': col
             }
+            for col in INPUTS[soni_type]
         ]
     
-    else:
-        raise HTTPException(415, "Unsupported file format")
 
     return inputs
 
 @router.get('/get-outputs/')
 def get_outputs():
-    # Return names and descriptions of output parameters
-    return [{'name': k.capitalize(), 'desc': v} for k, v in OUTPUTS.items()]
+    return [
+        {'name': v['name'], 'desc': v['desc'], 'key': k}
+        for k, v in OUTPUTS.items()
+    ]
         
     
 

@@ -18,6 +18,7 @@ export default function Style() {
   const soniType = location.state.soniType;
   const ra = location.state.ra ?? null;
   const dec = location.state.dec ?? null;
+  const userUpload = location.state.userUpload;
 
   // Dialog open/close
   const [open, setOpen] = useState(false);
@@ -170,6 +171,7 @@ export default function Style() {
           onOpenChange={setOpen}
           soniType={soniType}
           dataRef={dataRef}
+          userUpload={userUpload}
           onStyleCreated={handleStyleCreated}
         />
       </Box>

@@ -16,6 +16,7 @@ export default function Refine() {
     const soniType = location.state.soniType
     const ra = location.state.ra ?? null;
     const dec = location.state.dec ?? null;
+    const userUpload = location.state.userUpload ?? false;
 
     // Dynamically import the menu component
     const Menu = lazy(() => import(`../refine_menus/${soniType}.tsx`));
@@ -41,7 +42,8 @@ export default function Refine() {
                                 dataName, 
                                 soniType, 
                                 ra: newRa ?? ra, 
-                                dec: newDec ?? dec 
+                                dec: newDec ?? dec,
+                                userUpload 
                             } });
                             }}/>
                 </Suspense>

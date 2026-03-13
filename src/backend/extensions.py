@@ -12,7 +12,6 @@ from paths import *
 from pydantic import ValidationError
 from night_sky import handle_observer
 from copy import deepcopy
-import pprint
 
 import lightkurve as lk
 import numpy as np

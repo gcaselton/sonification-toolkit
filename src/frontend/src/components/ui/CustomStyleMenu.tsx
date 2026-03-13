@@ -51,6 +51,7 @@ interface CustomStyleMenuProps {
   onOpenChange: (open: boolean) => void;
   soniType: string;
   dataRef: string;
+  userUpload: boolean;
   onStyleCreated: (styleRef: string) => void;
 }
 
@@ -59,6 +60,7 @@ export default function CustomStyleMenu({
   onOpenChange,
   soniType,
   dataRef,
+  userUpload,
   onStyleCreated,
 }: CustomStyleMenuProps) {
 
@@ -85,7 +87,7 @@ export default function CustomStyleMenu({
   interface ParamMetadata {
     name: string;
     desc: string;
-    range: [number, number];
+    key: string;
   }
 
   const [styleName, setStyleName] = useState("");
@@ -102,6 +104,8 @@ export default function CustomStyleMenu({
     (m) => m.output.toLowerCase() === "pitch",
   );
 
+  const hasValidMapping = parameterMappings.some((m) => m.input && m.output);
+
   const [chordMode, setChordMode] = useState(false);
   const [rootNote, setRootNote] = useState("C");
   const [scale, setScale] = useState("None");
@@ -112,11 +116,13 @@ export default function CustomStyleMenu({
       items: [],
     }),
   );
+
   const [inputOptions, setInputOptions] = useState(
     createListCollection<{
       label: string;
       value: string;
       description: string;
+      key: string;
     }>({
       items: [],
     }),
@@ -127,6 +133,7 @@ export default function CustomStyleMenu({
       label: string;
       value: string;
       description: string;
+      key: string;
     }>({
       items: [],
     }),
@@ -200,7 +207,7 @@ export default function CustomStyleMenu({
       try {
         const [inputs, outputs] = await Promise.all([
           apiRequest(
-            `${coreAPI}/get-inputs/?file_ref=${encodeURIComponent(dataRef)}`,
+            `${coreAPI}/get-inputs/?file_ref=${encodeURIComponent(dataRef)}&soni_type=${soniType}&user_upload=${userUpload}`,
             {},
             "GET",
           ) as Promise<ParamMetadata[]>,
@@ -213,12 +220,14 @@ export default function CustomStyleMenu({
           label: input.name,
           value: input.name,
           description: input.desc,
+          key: input.key
         }));
 
         const outputItems = outputs.map((output) => ({
           label: output.name,
           value: output.name.toLowerCase(),
           description: output.desc,
+          key: output.key
         }));
 
         setInputOptions(createListCollection({ items: inputItems }));
@@ -237,7 +246,7 @@ export default function CustomStyleMenu({
             {
               input: "Time",
               input_range: null,
-              output: "time",
+              output: "Time",
               output_range: null,
               function: null,
             },
@@ -331,8 +340,12 @@ export default function CustomStyleMenu({
       sound: sound.name.replace(/\s*🎹$/, ""),
       map: parameterMappings.map((m) => ({
         ...m,
-        input: m.input.toLowerCase(),
-        output: m.output.toLowerCase(),
+        input:
+          inputOptions.items.find((i) => i.value === m.input)?.key ??
+          m.input.toLowerCase(),
+        output:
+          outputOptions.items.find((o) => o.value === m.output)?.key ??
+          m.output.toLowerCase(),
       })),
       chordMode: chordMode,
       rootNote: rootNote,
@@ -376,6 +389,8 @@ export default function CustomStyleMenu({
     onStyleCreated(styleRef);
     setApplyLoading(false);
   };
+
+  
 
   return (
     <Dialog.Root
@@ -893,7 +908,7 @@ export default function CustomStyleMenu({
               )}
             </VStack>
           </Dialog.Body>
-          {parameterMappings.length === 0 && (
+          {!hasValidMapping && (
             <Text pb={2} fontSize="sm" color="fg.muted" textAlign="center">
               Add at least one parameter mapping to continue
             </Text>
@@ -909,7 +924,7 @@ export default function CustomStyleMenu({
             </Button>
             <Button
               loading={loadingCustomPreview}
-              disabled={parameterMappings.length === 0}
+              disabled={!hasValidMapping}
               width="30%"
               colorPalette="teal"
               variant="outline"
@@ -918,7 +933,7 @@ export default function CustomStyleMenu({
               Preview
             </Button>
             <Button
-              disabled={parameterMappings.length === 0}
+              disabled={!hasValidMapping}
               width="30%"
               colorPalette="teal"
               onClick={() => handleApply()}

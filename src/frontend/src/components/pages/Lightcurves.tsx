@@ -99,6 +99,7 @@ export default function Lightcurves() {
   const [pendingNav, setPendingNav] = useState<null | {
     dataRef: string;
     dataName: string;
+    userUpload: boolean;
   }>(null);
   const [uploadKey, setUploadKey] = useState(0);
 
@@ -270,6 +271,7 @@ export default function Lightcurves() {
     const navInfo = {
       dataRef: result.file_ref,
       dataName: file.name.split('.')[0],
+      userUpload: true
     };
 
     setUploading(false);
