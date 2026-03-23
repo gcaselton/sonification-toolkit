@@ -375,6 +375,10 @@ export default function Lightcurves() {
 
   const uploadDisabled = false
 
+  const filterCount = [tessChecked, keplerChecked, k2Checked].filter(
+    Boolean,
+  ).length;
+
   return (
     <PageContainer>
       <Box as="main" role="main">
@@ -407,7 +411,11 @@ export default function Lightcurves() {
               <Dialog.Footer>
                 <Flex justify="center" w="full" gap={3}>
                   <Dialog.ActionTrigger asChild>
-                    <Button variant="outline" colorPalette="teal" onClick={handleCancelReduced}>
+                    <Button
+                      variant="outline"
+                      colorPalette="teal"
+                      onClick={handleCancelReduced}
+                    >
                       Cancel
                     </Button>
                   </Dialog.ActionTrigger>
@@ -417,14 +425,12 @@ export default function Lightcurves() {
                 </Flex>
               </Dialog.Footer>
               <Dialog.CloseTrigger asChild>
-                <CloseButton size="sm" onClick={handleCancelReduced}/>
+                <CloseButton size="sm" onClick={handleCancelReduced} />
               </Dialog.CloseTrigger>
             </Dialog.Content>
           </Dialog.Positioner>
         </Dialog.Root>
-        <Heading as="h1">
-          Light Curves
-        </Heading>
+        <Heading as="h1">Light Curves</Heading>
         <br />
         <Text textStyle="lg">
           Search for a specific star or choose from the suggestions below
@@ -440,7 +446,7 @@ export default function Lightcurves() {
                   width="100%"
                 >
                   <Input
-                    placeholder="Search for a star by name, KIC or EPIC identifier"
+                    placeholder="Search for a star by name, TIC, KIC or EPIC identifier"
                     type="text"
                     name="star_name"
                     variant="outline"
@@ -469,32 +475,47 @@ export default function Lightcurves() {
                   <Box borderWidth="1px" padding={3} borderRadius="md">
                     <Text mb={3}>Missions</Text>
                     <HStack align="start" gap={3}>
-                      <Checkbox.Root
-                        checked={tessChecked}
-                        onCheckedChange={(e) => setTessChecked(!!e.checked)}
-                      >
-                        <Checkbox.HiddenInput />
-                        <Checkbox.Control />
-                        <Checkbox.Label>TESS</Checkbox.Label>
-                      </Checkbox.Root>
-
-                      <Checkbox.Root
-                        checked={keplerChecked}
-                        onCheckedChange={(e) => setKeplerChecked(!!e.checked)}
-                      >
-                        <Checkbox.HiddenInput />
-                        <Checkbox.Control />
-                        <Checkbox.Label>Kepler</Checkbox.Label>
-                      </Checkbox.Root>
-
-                      <Checkbox.Root
-                        checked={k2Checked}
-                        onCheckedChange={(e) => setK2Checked(!!e.checked)}
-                      >
-                        <Checkbox.HiddenInput />
-                        <Checkbox.Control />
-                        <Checkbox.Label>K2</Checkbox.Label>
-                      </Checkbox.Root>
+                      {[
+                        {
+                          label: "TESS",
+                          checked: tessChecked,
+                          onChange: setTessChecked,
+                        },
+                        {
+                          label: "Kepler",
+                          checked: keplerChecked,
+                          onChange: setKeplerChecked,
+                        },
+                        {
+                          label: "K2",
+                          checked: k2Checked,
+                          onChange: setK2Checked,
+                        },
+                      ].map(({ label, checked, onChange }) => {
+                        const isDisabled = checked && filterCount === 1;
+                        return (
+                          <Tooltip
+                            key={label}
+                            content="At least one mission must be selected"
+                            disabled={!isDisabled}
+                            openDelay={100}
+                            portalled
+                            positioning={{ placement: 'bottom' }}
+                          >
+                            <Box display='inline-flex'>
+                            <Checkbox.Root
+                              checked={checked}
+                              onCheckedChange={(e) => onChange(!!e.checked)}
+                              disabled={isDisabled}
+                            >
+                              <Checkbox.HiddenInput />
+                              <Checkbox.Control />
+                              <Checkbox.Label>{label}</Checkbox.Label>
+                            </Checkbox.Root>
+                            </Box>
+                          </Tooltip>
+                        );
+                      })}
                     </HStack>
                   </Box>
                 </Collapsible.Content>
@@ -593,22 +614,19 @@ export default function Lightcurves() {
                 }}
                 key={uploadKey}
                 maxFiles={1}
-                maxFileSize={1e+7}
+                maxFileSize={1e7}
                 w="200px"
                 onFileAccept={({ files }) => handleFileAccept(files)}
                 _hover={{ transform: "scale(1.05)" }}
                 transition="transform 0.2s ease"
-                cursor={uploadDisabled ? 'disabled' : 'pointer'}
+                cursor={uploadDisabled ? "disabled" : "pointer"}
                 role="button"
                 aria-label="Upload your data"
               >
                 <FileUpload.HiddenInput />
                 <FileUpload.Dropzone>
                   <Icon size="lg" color="fg.muted">
-                    {uploading ?
-                    <Spinner/> :
-                    <LuUpload />
-                    }
+                    {uploading ? <Spinner /> : <LuUpload />}
                   </Icon>
                   <FileUpload.DropzoneContent>
                     <Box textStyle="md">Upload your own</Box>

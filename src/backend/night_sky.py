@@ -112,6 +112,8 @@ def handle_observer(observer: dict, style: dict):
     
     style['parameters'] = params
     
+    print(style)
+    
     return style
     
     

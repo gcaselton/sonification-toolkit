@@ -60,10 +60,12 @@ def sonify(data: Path | str | tuple, style_file: Path | str | dict, sonify_type:
       validate_input_params(style_dict, data)
       
       if observer:
-            handle_observer(observer, style_dict)
+            style_dict = handle_observer(observer, style_dict)
             
       # Validate entire style file
       validated_style = BaseStyle.model_validate(style_dict)
+      
+      print(validated_style.parameters)
         
       # Set up Sonification elements
       score, sources, generator = setup_strauss(data, validated_style, sonify_type, length)
@@ -95,7 +97,6 @@ def validate_input_params(style: dict, data: Path | str | tuple):
                   raise ValueError('Data file must be a .csv or .fits file.')
             
             col_headers = df.columns.tolist()
-            print(col_headers)
             col_headers_lower = [col.lower() for col in col_headers]
 
             mappings = style['parameters']
@@ -199,14 +200,13 @@ def setup_strauss(data: Path | str | tuple, style: BaseStyle, sonify_type, lengt
                   notes = parse_harmony(style.harmony, folder, path)
             else:
                   notes = [style.harmony]
-            
-            # if 'pitch' not in outputs:
-            #       # Use the first note in the harmony
-            #       notes = [[notes[0][0]]]
+                  
       else:
             notes = [['A3']] # Change this?
+            
+      pitch_bin_mode = 'uniform' if 'pitch' in outputs else 'adaptive'
       
-      score = Score(notes,length, 'uniform')
+      score = Score(notes,length, pitch_binning=pitch_bin_mode)
 
       return score, sources, generator
 
@@ -216,7 +216,7 @@ def parse_harmony(harmony: str, sound_folder, sound_path):
             
             # Likely a scale e.g 'C major'
             root, quality = harmony.split(' ', 1)
-            print(quality)
+       
             quality = 'hijaroshi' if quality == 'hirajoshi' else quality
             notes = parse_scale(starting_note=root, mode=quality, octaves=2) # 3 octave range as default, could give users the option?
             notes = [str(note) for note in notes]
@@ -224,7 +224,6 @@ def parse_harmony(harmony: str, sound_folder, sound_path):
                   notes = constrain_notes(notes, sound_path)
             notes = [notes]
             
-            print(notes)
       else:
             # Likely a chord e.g. 'Cmaj7'
             notes = voice_chord(harmony, sound_folder, sound_path)
@@ -335,17 +334,10 @@ def constellation_sources(data: Path | str , style: BaseStyle, length):
       else:
             m_lims['time'] = ('0%', '110%')
                   
-
       sources = Events(data_dict.keys())
-      
-      print(data_dict)
-      print("m_lims:", m_lims)
-      print("p_lims:", p_lims)
      
       sources.fromdict(data_dict)
       sources.apply_mapping_functions(map_funcs=my_funcs, map_lims=m_lims, param_lims=p_lims)
-      print("mapped time:", sources.mapping['time'])
-
 
       return sources
       
@@ -422,7 +414,7 @@ def scale_events(labelled_data: dict, params: list[ParameterMapping], length):
                   
                   if isinstance(mapping.input, float):
                         # Is a fixed spatial param e.g. azimuth
-                        data[mapping.output] = [mapping.input]
+                        data[mapping.output] = [mapping.input]*len(new_x)
                   else:
                         # all other mappings 
                         data[mapping.output] = new_y
@@ -472,9 +464,6 @@ def light_curve_sources(data, style: BaseStyle, length):
                   df = df.dropna()
 
                   col1, col2 = df.columns[:2]
-                  
-                  col1 = col1.lower()
-                  col2 = col2.lower()
 
                   labelled_data[col1] = df.iloc[:, 0].to_numpy()
                   labelled_data[col2] = df.iloc[:, 1].to_numpy()
@@ -500,6 +489,10 @@ def light_curve_sources(data, style: BaseStyle, length):
                   else:
                         # Change pitch for pitch_shift if we want Objects type
                         mapping.output = 'pitch_shift'
+                        
+                        if not mapping.output_range:
+                              # Enforce a one octave range for pitch_shift mappings
+                              mapping.output_range = (0,12)
             
             if mapping.function == 'invert':
                   funcs[mapping.output] = lambda x: np.negative(x)
@@ -520,7 +513,7 @@ def light_curve_sources(data, style: BaseStyle, length):
             if mapping.output_range:
                   p_lims[mapping.output] = mapping.output_range
       
-
+      
       sources = Objects(data_dict.keys())
       sources.fromdict(data_dict)
       sources.apply_mapping_functions(map_funcs=funcs, map_lims=m_lims, param_lims=p_lims)

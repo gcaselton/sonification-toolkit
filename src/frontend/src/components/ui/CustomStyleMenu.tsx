@@ -225,7 +225,7 @@ export default function CustomStyleMenu({
 
         const outputItems = outputs.map((output) => ({
           label: output.name,
-          value: output.name.toLowerCase(),
+          value: output.name,
           description: output.desc,
           key: output.key
         }));

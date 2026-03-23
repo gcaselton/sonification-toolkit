@@ -108,7 +108,10 @@ def generate_sonification(request: SonificationRequest):
         raise
     except Exception as e:
         LOG.error("Error generating sonification:\n" + traceback.format_exc())
-        raise
+        raise HTTPException(
+            status_code=500,
+            detail=f"{type(e).__name__}: {str(e)}"
+        )
     
 
 @router.get('/audio/{file_ref}')
@@ -156,7 +159,27 @@ def ensure_two_columns(ext: str, contents: bytes):
                 raise HTTPException(400, "FITS file contains no table")
 
             table = Table(table_hdu.data)
+            
+            # convert to dataframe
             df = table.to_pandas()
+            
+            df.columns = [col.lower() for col in df.columns]
+
+            # find time + flux columns
+            time_col = next((col for col in df.columns if "time" in col), None)
+            flux_col = next((col for col in df.columns if "flux" in col), None)
+
+            if time_col is None or flux_col is None:
+                raise HTTPException(400, "FITS file must contain time and flux columns")
+
+            # select only those columns
+            df = df[[time_col, flux_col]]
+            
+            df = df.rename(columns={
+                time_col: "Time (days)",
+                flux_col: "Flux (electrons per second)"
+            })
+
 
     else:
         raise HTTPException(415, "Unsupported file format")
@@ -261,18 +284,6 @@ async def uploadData(file: UploadFile, request: Request):
             )
             raise HTTPException(415, "Invalid CSV file")
         
-    # Check that magic bytes match expected type for FITS
-    kind = filetype.guess(contents)
-    mime = kind.mime if kind else None
-
-    if ext == ".fits" and mime not in ["application/fits", "image/fits", "application/octet-stream"]:
-        LOG.warning(
-            "Upload rejected | mime=%s | reason=invalid_fits_mime | session=%s | ip=%s",
-            mime,
-            session_id,
-            ip
-        )
-        raise HTTPException(415, "Invalid FITS file")
 
     # Check that the uploaded data is only two columns (x,y) and reduce if necessary
     df, reduced = ensure_two_columns(ext, contents)
