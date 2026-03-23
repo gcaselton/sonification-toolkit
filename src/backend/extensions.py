@@ -200,13 +200,13 @@ def setup_strauss(data: Path | str | tuple, style: BaseStyle, sonify_type, lengt
             else:
                   notes = [style.harmony]
             
-            if 'pitch' not in outputs:
-                  # Use the first note in the harmony
-                  notes = [[notes[0][0]]]
+            # if 'pitch' not in outputs:
+            #       # Use the first note in the harmony
+            #       notes = [[notes[0][0]]]
       else:
             notes = [['A3']] # Change this?
       
-      score = Score(notes,length)
+      score = Score(notes,length, 'uniform')
 
       return score, sources, generator
 

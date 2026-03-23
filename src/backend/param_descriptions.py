@@ -15,6 +15,11 @@ INPUTS = {
             {
             'name': 'Flux',
             'desc': 'Brightness of the star over time'
+            },
+        'time':
+            {
+                'name': 'Time',
+                'desc': ''
             }
         },
     'constellations':
