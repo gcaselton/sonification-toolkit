@@ -213,7 +213,7 @@ export default function ObserverSetup({
         >
           <Combobox.Label>Location</Combobox.Label>
           <Combobox.Control>
-            <Combobox.Input placeholder="Type a city..." />
+            <Combobox.Input placeholder="Enter a location..." />
             <Combobox.IndicatorGroup>
               <Combobox.ClearTrigger />
               <Combobox.Trigger />

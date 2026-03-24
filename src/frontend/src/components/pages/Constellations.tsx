@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from 'react-router-dom';
 import { LuTelescope } from "react-icons/lu";
 import PageContainer from "../ui/PageContainer";
-import { getImage } from "../../utils/assets";
+import { getImage, randomRange } from "../../utils/assets";
 import { coreAPI } from "../../apiConfig";
 import { SuggestedData } from "./Lightcurves";
 
@@ -158,8 +158,7 @@ export default function Constellations() {
     });
   };
 
-  // Generate a random time for each twinkle animation to make each unique
-  const randomRange = (min: number, max: number) => Math.random() * (max - min) + min;
+  
   
   // Needed to use ComboBox search/filter
   const { contains } = useFilter({ sensitivity: "base" })
@@ -171,10 +170,13 @@ export default function Constellations() {
 
   return (
     <PageContainer>
-      <Box as='main' role="main">
-        <Heading as='h1'>Constellations</Heading>
+      <Box as="main" role="main">
+        <Heading as="h1">Constellations</Heading>
         <br />
-        <Text textStyle="lg">Search for a specific constellation or choose from the suggestions below</Text>
+        <Text textStyle="lg">
+          Search for a specific constellation or choose from the suggestions
+          below
+        </Text>
         <br />
         <br />
         <Box display="flex" justifyContent="center">
@@ -183,15 +185,16 @@ export default function Constellations() {
             onInputValueChange={(e) => filter(e.inputValue)}
             onValueChange={(details) => {
               if (details.value.length > 0) {
-                setTimeout(() => { // short delay
+                setTimeout(() => {
+                  // short delay
                   handleSelectConstellation(details.value[0]);
-                }, 300); 
+                }, 300);
               }
             }}
             width="50%"
           >
             <Combobox.Control>
-              <InputGroup startElement={<LuTelescope size="1.1rem"/>}>
+              <InputGroup startElement={<LuTelescope size="1.1rem" />}>
                 <Combobox.Input placeholder="Search for a constellation" />
               </InputGroup>
               <Combobox.IndicatorGroup>
@@ -217,50 +220,69 @@ export default function Constellations() {
         <br />
         <br />
         <Box animation="fade-in 300ms ease-out">
-        <Heading size="2xl" as='h2'>Suggested</Heading>
-        <br />
-        <Stack gap="4" direction="row" wrap="wrap">
-                      {suggested.map((suggestion) => (
-                        <Card.Root
-                        width="200px" 
-                        key={suggestion.name} 
-                        variant='elevated' 
-                        _hover={{transform: "scale(1.05)"}} 
-                        transition="transform 0.2s ease"
-                        cursor='pointer'
-                        tabIndex={0}
-                        role="button"
-                        aria-label={`Sonify ${suggestion.name}: ${suggestion.description}`}
-                        onClick={() => handleSelectConstellation(suggestion.name)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter' || e.key === ' ') {
-                            e.preventDefault();
-                            handleSelectConstellation(suggestion.name);
-                          }
-                        }}>
-                          <Box position="relative" bg="black" borderRadius="8px" overflow="hidden">
-                              <img
-                                src={getImage(suggestion.name, '.png')}
-                                alt={`${suggestion.name} constellation`}
-                                style={{ 
-                                  width: "100%", 
-                                  display: "block",
-                                  animation: `twinkle ${randomRange(2, 3)}s infinite alternate`,
-                                  }}
-                              />
-                          
-                          </Box>
-                          <Card.Body>
-                            <Card.Title mb="2">{suggestion.name}</Card.Title>
-                            <Card.Description>{suggestion.description}</Card.Description>
-                          </Card.Body>
-                        </Card.Root>
-                      ))}
-                    </Stack>
-                    <br />
-                  </Box>           
-        
+          <Heading size="2xl" as="h2">
+            Suggested
+          </Heading>
+          <br />
+          <Stack gap="4" direction="row" wrap="wrap">
+            {suggested.map((suggestion) => (
+              <Card.Root
+                width="200px"
+                key={suggestion.name}
+                variant="elevated"
+                _hover={{ transform: "scale(1.05)" }}
+                transition="transform 0.2s ease"
+                cursor="pointer"
+                tabIndex={0}
+                role="button"
+                aria-label={`Sonify ${suggestion.name}: ${suggestion.description}`}
+                onClick={() => handleSelectConstellation(suggestion.name)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    handleSelectConstellation(suggestion.name);
+                  }
+                }}
+              >
+                <Box
+                  position="relative"
+                  bg="black"
+                  borderRadius="8px"
+                  overflow="hidden"
+                >
+                  <img
+                    src={getImage(suggestion.name, ".png")}
+                    alt={`${suggestion.name} constellation`}
+                    style={{
+                      width: "100%",
+                      display: "block",
+                      borderRadius: "8px",
+                      animation: `twinkle ${randomRange(2, 3)}s infinite alternate`,
+                    }}
+                  />
+                </Box>
+                <Card.Body>
+                  <Card.Title mb="2">{suggestion.name}</Card.Title>
+                  <Card.Description>{suggestion.description}</Card.Description>
+                </Card.Body>
+              </Card.Root>
+            ))}
+          </Stack>
+          <br />
+        </Box>
+        <Text textAlign="center" fontSize="sm" color="gray.500" mt={4}>
+          Image credit:{" "}
+          <Link
+            href="https://noirlab.edu"
+            color="gray.400"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            NSF NOIRLab
+          </Link>{" "}
+          (CC BY 4.0)
+        </Text>
       </Box>
     </PageContainer>
-  )
+  );
 }

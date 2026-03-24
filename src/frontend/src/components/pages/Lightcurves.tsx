@@ -7,7 +7,7 @@ import { SonifyButton, PlotButton } from "../ui/Buttons";
 import { PlotDialog } from "../ui/PlotDialog";
 import { Tooltip } from "../ui/Tooltip";
 import ErrorMsg from "../ui/ErrorMsg";
-import { getImage } from "../../utils/assets";
+import { getImage, randomRange } from "../../utils/assets";
 import { apiUrl, lightCurvesAPI, coreAPI } from "../../apiConfig";
 import { apiRequest } from "../../utils/requests";
 import { plotData } from "../../utils/plot";
@@ -565,11 +565,16 @@ export default function Lightcurves() {
                     }
                   }}
                 >
-                  <Box position="relative">
+                  <Box position="relative" bg='black' borderRadius='8px'>
                     <img
-                      src={getImage(star.name)}
+                      src={getImage('star', '.svg')}
                       alt={`${star.name} star`}
-                      style={{ width: "100%", borderRadius: "8px" }}
+                      style={{ 
+                        width: "100%",
+                        borderRadius: "8px", 
+                        display: "block",
+                        animation: `twinkle ${randomRange(2, 3)}s infinite alternate`,
+                        }}
                     />
 
                     <Box

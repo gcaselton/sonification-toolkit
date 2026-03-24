@@ -45,7 +45,7 @@ export default function PageContainer({
             opacity={0.5}
             _hover={{ opacity: 1 }}
             transition="opacity 0.15s ease"
-            cursor="pointer"    
+            cursor="pointer"
             onClick={() => navigate("/help")}
             role="button"
           >
@@ -78,11 +78,13 @@ export default function PageContainer({
           <Link
             href="https://github.com/james-trayford/strauss"
             colorPalette="teal"
+            target="_blank"
+            rel="noopener noreferrer"
           >
             STRAUSS
           </Link>
         </Text>
-        <Text fontSize="xs">v0.1 (Pre-Alpha)</Text>
+        <Text fontSize="xs">v0.2 (Alpha)</Text>
       </Flex>
     </Box>
   );

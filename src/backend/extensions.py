@@ -194,17 +194,19 @@ def setup_strauss(data: Path | str | tuple, style: BaseStyle, sonify_type, lengt
             raise ValueError(f'Sonification type "{sonify_type}" not recognised.')
       
       # Handle chord or scale
+      is_chord = False
+      
       if style.harmony:
 
             if isinstance(style.harmony, str):
-                  notes = parse_harmony(style.harmony, folder, path)
+                  notes, is_chord = parse_harmony(style.harmony, folder, path)
             else:
                   notes = [style.harmony]
                   
       else:
             notes = [['A3']] # Change this?
             
-      pitch_bin_mode = 'uniform' if 'pitch' in outputs else 'adaptive'
+      pitch_bin_mode = 'uniform' if 'pitch' in outputs and not is_chord else 'adaptive'
       
       score = Score(notes,length, pitch_binning=pitch_bin_mode)
 
@@ -212,9 +214,10 @@ def setup_strauss(data: Path | str | tuple, style: BaseStyle, sonify_type, lengt
 
 def parse_harmony(harmony: str, sound_folder, sound_path):
 
-      if ' ' in harmony: 
+      if ' ' in harmony:
             
             # Likely a scale e.g 'C major'
+            is_chord = False 
             root, quality = harmony.split(' ', 1)
        
             quality = 'hijaroshi' if quality == 'hirajoshi' else quality
@@ -226,9 +229,10 @@ def parse_harmony(harmony: str, sound_folder, sound_path):
             
       else:
             # Likely a chord e.g. 'Cmaj7'
+            is_chord = True
             notes = voice_chord(harmony, sound_folder, sound_path)
 
-      return notes
+      return notes, is_chord
 
 def constrain_notes(desired_notes, sound_path):
     

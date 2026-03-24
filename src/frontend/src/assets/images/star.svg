@@ -1,0 +1,14 @@
+<svg width="120" height="120" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+  <!-- Soft glow -->
+  <circle cx="60" cy="60" r="20" fill="white" opacity="0.08"></circle>
+  
+  <!-- Main glow -->
+  <circle cx="60" cy="60" r="10" fill="white" opacity="0.2"></circle>
+
+  <!-- Core -->
+  <circle cx="60" cy="60" r="3" fill="white"></circle>
+
+  <!-- Diffraction spikes (subtle cross) -->
+  <line x1="60" y1="30" x2="60" y2="90" stroke="white" stroke-width="1" opacity="0.4"></line>
+  <line x1="30" y1="60" x2="90" y2="60" stroke="white" stroke-width="1" opacity="0.4"></line>
+</svg>
