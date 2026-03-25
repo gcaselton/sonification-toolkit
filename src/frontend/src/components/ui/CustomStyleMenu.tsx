@@ -12,7 +12,7 @@ import PageContainer from "../ui/PageContainer";
 import { ToggleTip, InfoTip } from "../ui/ToggleTip";
 import { Tooltip } from "../ui/Tooltip";
 import { apiUrl, lightCurvesAPI, coreAPI } from "../../apiConfig";
-import { LuUpload, LuX, LuPlus } from "react-icons/lu";
+import { LuUpload, LuX, LuPlus, LuVolume2 } from "react-icons/lu";
 
 import {
   Alert,
@@ -381,6 +381,29 @@ export default function CustomStyleMenu({
     }
   };
 
+  const handleStyleUpload = async (files: File[]) => {
+    const file = files[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const res = await fetch(`${coreAPI}/upload-style/`, {
+      method: "POST",
+      body: formData,
+      credentials: "include",
+    });
+
+    if (!res.ok) {
+      const errorData = await res.json().catch(() => ({}));
+      console.error("Style upload failed:", errorData?.detail);
+      return;
+    }
+
+    const result = await res.json();
+    onStyleCreated(result.file_ref);
+  };
+
   const handleApply = async () => {
     setApplyLoading(true);
 
@@ -407,6 +430,29 @@ export default function CustomStyleMenu({
           </Dialog.Header>
           <Dialog.Body overflowY="auto">
             <VStack gap={5} align="stretch">
+              <HStack align="center" gap={4}>
+                <Text fontSize="xs" color="fg.muted" whiteSpace="nowrap">
+                  Have a Style File?
+                </Text>
+                <FileUpload.Root
+                  accept={{ "application/yaml": [".yaml", ".yml"] }}
+                  maxFiles={1}
+                  maxFileSize={1*1024*1024} // 1MB file limit
+                  onFileAccept={({ files }) => handleStyleUpload(files)}
+                >
+                  <FileUpload.HiddenInput />
+                  <FileUpload.Trigger asChild>
+                    <Button
+                      size="xs"
+                      variant="subtle"
+                      colorPalette="teal"
+                      aria-label="Upload style file"
+                    >
+                      <LuUpload /> Upload
+                    </Button>
+                  </FileUpload.Trigger>
+                </FileUpload.Root>
+              </HStack>
               <Select.Root
                 size="sm"
                 collection={soundOptions}
@@ -514,7 +560,10 @@ export default function CustomStyleMenu({
                                 </Select.Control>
                                 <Portal>
                                   <Select.Positioner>
-                                    <Select.Content maxH='200px' overflowY='auto'>
+                                    <Select.Content
+                                      maxH="200px"
+                                      overflowY="auto"
+                                    >
                                       {inputOptions.items.map((option) => (
                                         <Select.Item
                                           item={option}
@@ -930,7 +979,10 @@ export default function CustomStyleMenu({
               variant="outline"
               onClick={() => handlePreviewStyle()}
             >
-              Preview
+              <HStack gap={3}>
+                <LuVolume2 />
+                Preview
+              </HStack>
             </Button>
             <Button
               disabled={!hasValidMapping}

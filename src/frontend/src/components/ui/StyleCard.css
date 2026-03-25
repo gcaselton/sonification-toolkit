@@ -81,14 +81,11 @@
   50% { opacity: 0.92; }
 }
 
-.gear-icon {
+.icon {
   position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  font-size: 3rem;
-  color: #6c757d;
-  opacity: 0.5;
   pointer-events: none;
 }
 

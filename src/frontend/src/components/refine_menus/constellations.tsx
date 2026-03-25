@@ -139,6 +139,8 @@ export default function Constellations({
               href="https://en.wikipedia.org/wiki/IAU_designated_constellations"
               color="teal.500"
               textDecoration="underline"
+              target="_blank"
+              rel="noopener noreferrer"
             >
               constellation boundaries
             </Link>

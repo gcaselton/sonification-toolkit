@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './StyleCard.css';
 import { Text, IconButton, Box, VStack } from "@chakra-ui/react";
-import { Volume2, VolumeOff } from 'lucide-react';
+import { Volume2, VolumeOff, Upload, Settings } from 'lucide-react';
 import { getAudio } from '../../utils/assets';
 
 interface StyleCardProps {
@@ -89,7 +89,7 @@ export default function StyleCard({ title, description, gradientClass, isCustom 
           </IconButton>
         </Box>
       }
-      {isCustom && <span className="gear-icon">⚙️</span>}
+      {isCustom && <Settings className="icon" size={48}/>}
       <Text className="style-title">{title}</Text>
     </div>
   );

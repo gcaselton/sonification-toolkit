@@ -576,24 +576,104 @@ async def ensure_sound_available(request: SoundRequest):
     else: print('Sound already exists in local dir')
 
 
-@router.post("/upload-yaml/")
-async def upload_yaml(file: UploadFile = File(...)):
-    if not file.filename.endswith(('.yaml', '.yml')):
-        return {"error": "Only YAML files are allowed"}
-    
+@router.post("/upload-style/")
+async def upload_style(file: UploadFile = File(...), request: Request = None):
+
+    ip = request.client.host
+    session_id = session_id_var.get()
+
+    LOG.info(
+        "Style upload attempt | filename=%s | session=%s | ip=%s",
+        file.filename,
+        session_id,
+        ip
+    )
+
+    # Check for multiple extensions
+    suffixes = Path(file.filename).suffixes
+    if len(suffixes) != 1:
+        LOG.warning(
+            "Style upload rejected | filename=%s | reason=multiple_extensions | session=%s | ip=%s",
+            file.filename, session_id, ip
+        )
+        raise HTTPException(400, "Files with multiple extensions are not allowed")
+
+    ext = suffixes[0].lower()
+    if ext not in {'.yaml', '.yml'}:
+        LOG.warning(
+            "Style upload rejected | ext=%s | reason=rejected_extension | session=%s | ip=%s",
+            ext, session_id, ip
+        )
+        raise HTTPException(415, "Uploaded style must be in .yaml or .yml format")
+
+    MAX_SIZE = 1 * 1024 * 1024  # 1MB limit as style files should be very small
+
     contents = await file.read()
+    await file.close()
+
+    if not contents:
+        LOG.warning(
+            "Style upload rejected | reason=empty_file | session=%s | ip=%s",
+            session_id, ip
+        )
+        raise HTTPException(400, "Uploaded file is empty")
+
+    if len(contents) > MAX_SIZE:
+        LOG.warning(
+            "Style upload rejected | size=%d | reason=file_too_large | session=%s | ip=%s",
+            len(contents), session_id, ip
+        )
+        raise HTTPException(400, "File too large")
+
+    # Validate YAML
+    try:
+        contents.decode('utf-8')
+    except UnicodeDecodeError:
+        LOG.warning(
+            "Style upload rejected | reason=invalid_utf8 | session=%s | ip=%s",
+            session_id, ip
+        )
+        raise HTTPException(415, "File does not appear to be a valid YAML file")
+
     try:
         parsed_yaml = yaml.safe_load(contents)
-        # Save the file to a temporary location
-        session_id = session_id_var.get()
-        tmp_file_path = TMP_DIR / session_id / file.filename
-        with open(tmp_file_path, 'wb') as f:
-            f.write(contents)
     except yaml.YAMLError as e:
-        return {"error": "Invalid YAML", "details": str(e)}
-    
-    file_ref = f'session:{file.filename}'
+        LOG.warning(
+            "Style upload rejected | reason=invalid_yaml | session=%s | ip=%s",
+            session_id, ip
+        )
+        raise HTTPException(415, f"Invalid YAML: {str(e)}")
 
+    # Ensure session directory exists
+    session_dir = os.path.join(TMP_DIR, session_id)
+    os.makedirs(session_dir, exist_ok=True)
+
+    # Check session quota
+    current_usage = get_session_size(session_dir)
+    if current_usage + len(contents) > SESSION_QUOTA_BYTES:
+        LOG.warning(
+            "Style upload rejected | reason=quota_exceeded | usage=%d | file_size=%d | session=%s | ip=%s",
+            current_usage, len(contents), session_id, ip
+        )
+        raise HTTPException(429, f"Session storage quota of {SESSION_QUOTA_MB}MB exceeded")
+
+    new_name = f"{uuid.uuid4()}{ext}"
+    filepath = os.path.join(session_dir, new_name)
+
+    with open(filepath, 'wb') as f:
+        f.write(contents)
+
+    LOG.info(
+        "Style upload success | original=%s | stored=%s | size=%d | session=%s | ip=%s",
+        file.filename,
+        new_name,
+        len(contents),
+        session_id,
+        ip
+    )
+
+    file_ref = f"session:{new_name}"
+    
     return {"file_ref": file_ref, "parsed": parsed_yaml}
 
 
