@@ -24,10 +24,10 @@ INPUTS = {
         },
     'constellations':
         {
-        'ra': 
+        'ra_corrected': 
             {
             'name': 'RA',
-            'desc': 'Right Ascension'
+            'desc': 'Right Ascension (increases West to East)'
             },
         'dec': 
             {
@@ -55,12 +55,7 @@ INPUTS = {
             'name': 'Absolute Magnitude',
             'desc': 'How bright the star would appear from a distance of 10 parsecs'
             },
-        'colour': _COLOUR,
-        'ra_corrected':
-            {
-                'name': 'RA (corrected)',
-                'desc': 'Adjusted Right Ascension for constellations that cross the 24hr line (increases East to West)'
-            }    
+        'colour': _COLOUR  
         },
     'night_sky':
         {
@@ -99,6 +94,10 @@ OUTPUTS = {
     },
     'azimuth': {
         'name': 'Azimuth',
-        'desc': 'Positions the sound left or right in the stereo field'
+        'desc': 'The position of the sound in surround space (0 and 1 are behind, 0.5 is front)'
     },
+    'pan': {
+        'name': 'Pan',
+        'desc': 'The position of the sound in stereo (0 is left, 1 is right)'
+    }
 }

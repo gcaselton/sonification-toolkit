@@ -35,9 +35,6 @@ logging.basicConfig(level=logging.DEBUG)
 LOG = logging.getLogger(__name__)
 
 
-
-
-
 def run_lightkurve_search(idents, authors, cancel_event: threading.Event):
     
     # Set a timeout on MAST requests
@@ -326,7 +323,7 @@ def get_range(request: DataRequest):
     if filepath.endswith('.fits'):
         lc = lk.read(filepath)
         x = lc.time.value
-        range = [min(x), max(x)]
+        value_range = [float(min(x)), float(max(x))]
 
     elif filepath.endswith('.csv'):
         df = pd.read_csv(filepath)
@@ -334,11 +331,11 @@ def get_range(request: DataRequest):
         time_col = df.columns[0]
 
         x = df[time_col].values
-        range = [min(x), max(x)]
+        value_range = [float(min(x)), float(max(x))]
     else:
         raise HTTPException(status_code=400, detail='File extension not supported: ' + request.file_ref.split(':')[-1])
 
-    return{'range': range}
+    return{'range': value_range}
 
 
 @router.post('/preview-refined/')

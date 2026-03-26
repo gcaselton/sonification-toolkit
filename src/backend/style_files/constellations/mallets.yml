@@ -1,0 +1,25 @@
+name: Mallets
+
+description: >
+  Mallets play the stars from left to right, with bluer/hotter stars playing a higher pitch,
+  and redder/cooler stars playing lower pitches.
+
+sound: 'Mallets'
+
+parameters:
+    
+  - input: 'magnitude'
+    output: 'volume'
+    output_range: [0.1, 1]
+    function: 'invert'
+
+  - input: 'ra_corrected'
+    output: 'time'
+    function: 'invert'
+
+  - input: 'colour'
+    output: 'pitch'
+    output_range: [0.1, 1]
+    function: 'invert'
+
+harmony: C blues

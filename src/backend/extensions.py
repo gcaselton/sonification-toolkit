@@ -305,10 +305,15 @@ def constellation_sources(data: Path | str , style: BaseStyle, length):
 
             input = mapping.input
             output = mapping.output
+            
+            # Swap out pan for azimuth and rescale the range
+            if output == 'pan':
+                  output = 'azimuth'
+                  mapping.output_range = tuple(0.25 + 0.5 * x for x in mapping.output_range) if mapping.output_range else (0.25, 0.75)
 
             if output == 'azimuth' and isinstance(input, str):
-                  # Rescale input values if using azimuth to restrict to the frontal stereo field
-                  df[input] = rescale_col(df, input, (0.25, 0.75))
+                  # Rescale input values if using azimuth
+                  df[input] = rescale_col(df, input, (0, 1))
 
                   # Add constant polar of 0.5
                   data_dict['polar'] = np.full(len(df), 0.5)
@@ -416,6 +421,11 @@ def scale_events(labelled_data: dict, params: list[ParameterMapping], length):
                   
             if mapping.output not in data.keys():
                   
+                  # Swap out pan for azimuth and rescale the range
+                  if mapping.output == 'pan':
+                        mapping.output = 'azimuth'
+                        mapping.output_range = tuple(0.25 + 0.5 * x for x in mapping.output_range) if mapping.output_range else (0.25, 0.75)
+                  
                   if isinstance(mapping.input, float):
                         # Is a fixed spatial param e.g. azimuth
                         data[mapping.output] = [mapping.input]*len(new_x)
@@ -502,6 +512,12 @@ def light_curve_sources(data, style: BaseStyle, length):
                   funcs[mapping.output] = lambda x: np.negative(x)
                         
             mapping.output = 'time_evo' if mapping.output == 'time' else mapping.output
+            
+            # Swap out pan for azimuth and rescale the range
+            if mapping.output == 'pan':
+                  mapping.output = 'azimuth'
+                  mapping.output_range = tuple(0.25 + 0.5 * x for x in mapping.output_range) if mapping.output_range else (0.25, 0.75)
+
                         
             if isinstance(mapping.input, float):
                   # Is a constant spatial param, e.g. azimuth or polar

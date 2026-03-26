@@ -168,140 +168,174 @@ export default function LightCurves({ dataName, dataRef, onApply }: RefineMenuPr
 
   return (
     <Stack
-          gap="10"
-          align="start"
-          justify="center"
-          direction={{ base: "column", md: "row" }}
-        >
-      <Box flex='1' maxWidth='50%'>
-        <VStack justify='center' gap='16'>
-        {/* render slider only when we have cropRange & cropValues */}
-        {!slidersLoading && cropRange && cropValues ? (
-          <VStack>
-          <HStack align="center">
-            <Text textStyle="md">Trim start</Text>
+      gap="10"
+      align="start"
+      justify="center"
+      direction={{ base: "column", md: "row" }}
+    >
+      <Box flex="1" maxWidth="50%">
+        <VStack justify="center" gap="16">
+          {/* render slider only when we have cropRange & cropValues */}
+          {!slidersLoading && cropRange && cropValues ? (
+            <VStack>
+              <HStack align="center">
+                <Text textStyle="md">Trim start</Text>
 
-            <NumberInput.Root
-              value={startText}
-              min={cropRange[0]}
-              max={cropValues[1]}
-              onValueChange={(e) => setStartText(e.value)}
-              onBlur={() => {
-                const n = Number(startText)
-                if (!Number.isNaN(n)) {
-                  setCropValues(([_, end]) => [n, end]);
-                  fetchPreviewPlot([n, cropValues[1]], sigma);
-                } else {
-                  setStartText(String(cropValues[0]))
-                }
+                <NumberInput.Root
+                  value={startText}
+                  min={cropRange[0]}
+                  max={cropValues[1]}
+                  onValueChange={(e) => setStartText(e.value)}
+                  onBlur={() => {
+                    const n = Number(startText);
+                    if (!Number.isNaN(n)) {
+                      const clamped = Math.min(
+                        Math.max(n, cropRange[0]), // not below range min
+                        cropValues[1] - 0.1, // not >= end value
+                      );
+                      setCropValues(([_, end]) => [clamped, end]);
+                      setStartText(String(clamped));
+                      fetchPreviewPlot([clamped, cropValues[1]], sigma);
+                    } else {
+                      setStartText(String(cropValues[0]));
+                    }
+                  }}
+                >
+                  <NumberInput.Input />
+                </NumberInput.Root>
+
+                <Text textStyle="md">and end</Text>
+
+                <NumberInput.Root
+                  value={endText}
+                  min={cropValues[0]}
+                  max={cropRange[1]}
+                  onValueChange={(e) => setEndText(e.value)}
+                  onBlur={() => {
+                    const n = Number(endText);
+                    if (!Number.isNaN(n)) {
+                      const clamped = Math.max(
+                        Math.min(n, cropRange[1]), // not above range max
+                        cropValues[0] + 0.1, // not <= start value
+                      );
+                      setCropValues(([start, _]) => [start, clamped]);
+                      setEndText(String(clamped));
+                      fetchPreviewPlot([cropValues[0], clamped], sigma);
+                    } else {
+                      setEndText(String(cropValues[1]));
+                    }
+                  }}
+                >
+                  <NumberInput.Input />
+                </NumberInput.Root>
+
+                <Text textStyle="md">points</Text>
+              </HStack>
+              <Slider.Root
+                w="100%"
+                step={0.01}
+                colorPalette="teal"
+                min={cropRange[0]}
+                max={cropRange[1]}
+                value={cropValues}
+                minStepsBetweenThumbs={0.1}
+                animation="fade-in 300ms ease-out"
+                onValueChange={(e) => {
+                  setCropValues(e.value as [number, number]);
+                  setStartText(String(e.value[0]));
+                  setEndText(String(e.value[1]));
+                }}
+                onValueChangeEnd={(e) => {
+                  fetchPreviewPlot(e.value as [number, number], sigma); // only runs on mouse release
+                }}
+              >
+                <Slider.Control>
+                  <Slider.Track>
+                    <Slider.Range />
+                  </Slider.Track>
+                  <Slider.Thumbs />
+                  <Slider.Marks marks={sliderMarks} />
+                </Slider.Control>
+              </Slider.Root>
+            </VStack>
+          ) : (
+            <Box width="100%">
+              <Skeleton height="4em" />
+            </Box>
+          )}
+          {!slidersLoading ? (
+            <Slider.Root
+              w="100%"
+              colorPalette="teal"
+              min={0}
+              max={10}
+              value={[sigma]}
+              animation="fade-in 300ms ease-out"
+              onValueChange={(e) => {
+                setSigma(e.value[0]);
+              }}
+              onValueChangeEnd={(e) => {
+                fetchPreviewPlot(cropValues, e.value[0]);
               }}
             >
-              <NumberInput.Input />
-            </NumberInput.Root>
-
-            <Text textStyle="md">and end</Text>
-
-            <NumberInput.Root
-              value={endText}
-              min={cropValues[0]}
-              max={cropRange[1]}
-              onValueChange={(e) => setEndText(e.value)}
-              onBlur={() => {
-                const n = Number(endText)
-                if (!Number.isNaN(n)) {
-                  setCropValues(([start, _]) => [start, n]);
-                  fetchPreviewPlot([cropValues[0], n], sigma);
-                } else {
-                  setEndText(String(cropValues[1]))
-                }
-              }}
+              <HStack>
+                <Slider.Label textStyle="md">Smoothing Factor</Slider.Label>
+                <InfoTip
+                  content="This is the standard deviation to give to a Gaussian filter, removing noise from the signal."
+                  positioning={{ placement: "top" }}
+                />
+                <Code textStyle="md" ml="auto">
+                  {sigma}
+                </Code>
+              </HStack>
+              <Slider.Control>
+                <Slider.Track>
+                  <Slider.Range />
+                </Slider.Track>
+                <Slider.Thumbs />
+              </Slider.Control>
+            </Slider.Root>
+          ) : (
+            <Box width="100%">
+              <Skeleton height="4em" />
+            </Box>
+          )}
+          {!slidersLoading ? (
+            <HStack
+              gap="5"
+              justify="center"
+              w="100%"
+              animation="fade-in 300ms ease-out"
             >
-              <NumberInput.Input />
-            </NumberInput.Root>
-
-            <Text textStyle="md">points</Text>
-          </HStack>
-          <Slider.Root
-            w="100%"
-            step={0.01}
-            colorPalette="teal"
-            min={cropRange[0]}
-            max={cropRange[1]}
-            value={cropValues}
-            animation="fade-in 300ms ease-out"
-            onValueChange={(e) => {
-              setCropValues(e.value as [number, number]);
-              setStartText(String(e.value[0]));
-              setEndText(String(e.value[1]));
-            }}
-            onValueChangeEnd={(e) => {
-              fetchPreviewPlot(e.value as [number, number], sigma); // only runs on mouse release
-            }}
-          >
-            <Slider.Control>
-              <Slider.Track>
-                <Slider.Range />
-              </Slider.Track>
-              <Slider.Thumbs />
-              <Slider.Marks marks={sliderMarks} />
-            </Slider.Control>
-          </Slider.Root>
-          </VStack>
-        ) : (
-          <Box width="100%">
-            <Skeleton height='4em'/>
-          </Box>
-        )}
-        {!slidersLoading ? (
-          <Slider.Root  
-            w='100%'
-            colorPalette='teal'
-            min={0}
-            max={10}
-            value={[sigma]}
-            animation="fade-in 300ms ease-out"
-            onValueChange={(e) => {
-              setSigma(e.value[0]);
-            }}
-            onValueChangeEnd={(e) => {
-              fetchPreviewPlot(cropValues, e.value[0]);
-            }}
-            >
-            <HStack>
-              <Slider.Label textStyle='md'>Smoothing Factor</Slider.Label>
-              <InfoTip content='This is the standard deviation to give to a Gaussian filter, removing noise from the signal.' positioning={{placement: 'top'}}/>
-              <Code textStyle='md' ml='auto'>{sigma}</Code>
+              <Button
+                w="40%"
+                onClick={handleClickApply}
+                colorPalette="teal"
+                loading={applyLoading}
+                loadingText="Saving..."
+                variant={applyButtonOn ? "solid" : "surface"}
+              >
+                {applyButtonOn ? "Apply & Continue" : "Skip"} <LuArrowRight />
+              </Button>
             </HStack>
-            <Slider.Control>
-              <Slider.Track>
-                <Slider.Range />
-              </Slider.Track>
-              <Slider.Thumbs />
-            </Slider.Control>
-          </Slider.Root>
-        ) : (
-          <Box width="100%">
-            <Skeleton height='4em'/>
-          </Box>
-        )}
-      {!slidersLoading ? (
-      <HStack gap='5' justify="center" w="100%" animation="fade-in 300ms ease-out">
-        <Button w='40%' onClick={handleClickApply} colorPalette="teal" loading={applyLoading} loadingText="Saving..." variant={applyButtonOn ? 'solid' : 'surface'}>
-          {applyButtonOn ? 'Apply & Continue' : 'Skip'} <LuArrowRight/>
-        </Button>
-      </HStack>) : (
-      <Box width="100%">
-        <Skeleton height='4em'/>
-      </Box>
-      )}
-      </VStack>
+          ) : (
+            <Box width="100%">
+              <Skeleton height="4em" />
+            </Box>
+          )}
+        </VStack>
       </Box>
 
-      <Box flex='1'>
+      <Box flex="1">
         {imageLoading ? (
           <LoadingMessage msg="" icon="pulsar" />
         ) : imageSrc ? (
-            <Image src={imageSrc} alt={`Plot of the ${dataName} light curve.`} animation="fade-in 300ms ease-out" rounded='md'/>
+          <Image
+            src={imageSrc}
+            alt={`Plot of the ${dataName} light curve.`}
+            animation="fade-in 300ms ease-out"
+            rounded="md"
+          />
         ) : (
           <ErrorMsg message="Unable to plot data." />
         )}

@@ -9,13 +9,18 @@ from config import GITHUB_USER, GITHUB_REPO
 from context import session_id_var
 from utils import resolve_file, is_number
 from request_models import DataRequest, SoundRequest, CustomStyleSettings, SonificationRequest
-import logging, httpx, yaml, os, uuid, aiofiles, zipfile, traceback, filetype, numbers
+import logging, httpx, yaml, os, uuid, aiofiles, zipfile, traceback, filetype, numbers, base64, gc
 import lightkurve as lk
 from param_descriptions import INPUTS, OUTPUTS
 from strauss.sources import param_lim_dict
 
 import numpy as np
 import pandas as pd
+import matplotlib
+matplotlib.use("Agg") 
+from matplotlib.figure import Figure
+from scipy.io import wavfile
+from scipy.signal import spectrogram
 from io import BytesIO
 from astropy.io import fits
 from astropy.table import Table
@@ -112,7 +117,72 @@ def generate_sonification(request: SonificationRequest):
             status_code=500,
             detail=f"{type(e).__name__}: {str(e)}"
         )
+
+@router.post('/generate-spectrogram/')
+def generate_spectrogram(request: DataRequest):
+
+    filepath = resolve_file(request.file_ref)
+
+    try:
+  
+        sr, data = wavfile.read(str(filepath))
+        
+        #Frequency parameters
+        freq_min = 20
+        freq_max = 22000
+
+        # Convert to mono if stereo
+        if data.ndim > 1:
+            data = data.mean(axis=1)
+
+        # Normalise to float
+        data = data.astype(np.float32) / np.iinfo(np.int32).max
+
+        freqs, times, Sxx = spectrogram(
+            data,
+            fs=sr,
+            window='hann',
+            nperseg=2048,
+            noverlap=1024,
+            scaling='spectrum'
+        )
+
+        # Convert to dB
+        Sxx_dB = 10 * np.log10(Sxx / np.max(Sxx) + 1e-12)
+
+        fig = Figure(figsize=(6, 4))
+        ax = fig.add_subplot(111)
+        
+        ax.pcolormesh(
+            times,
+            freqs,
+            Sxx_dB,
+            shading='gouraud',
+            cmap='gnuplot2',
+            vmin=None,
+            vmax=None
+        )
+
+        ax.set_xlabel('Time (s)')
+        ax.set_yscale('log')
+        ax.set_ylim(freq_min, freq_max)
+        ax.set_ylabel('Frequency (Hz)')
+        ax.spines['top'].set_visible(False)
+        ax.spines['right'].set_visible(False)
+
+        buf = BytesIO()
+        fig.savefig(buf, format='png', bbox_inches='tight', dpi=150)
+        buf.seek(0)
+        img_base64 = base64.b64encode(buf.read()).decode('utf-8')
+
+        buf.close()
+        gc.collect()
+
+    except Exception as e:
+        LOG.error("Error generating spectrogram:\n" + traceback.format_exc())
+        raise HTTPException(status_code=500, detail=f"{type(e).__name__}: {str(e)}")
     
+    return {'image': img_base64}
 
 @router.get('/audio/{file_ref}')
 def get_audio(file_ref: str):
@@ -146,6 +216,7 @@ def ensure_two_columns(ext: str, contents: bytes):
     
     if ext == ".csv":
         df = pd.read_csv(BytesIO(contents))
+        df = df.dropna(axis=1, how='all') # Remove empty columns
 
     elif ext == ".fits":
         with fits.open(BytesIO(contents)) as hdul:

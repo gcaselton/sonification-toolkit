@@ -233,8 +233,6 @@ export default function Lightcurves() {
 
   const handleFileAccept = async (files: FileList | File[]) => {
 
-    setUploading(true);
-
     const file = files[0];
 
     if (!file) {
@@ -500,18 +498,18 @@ export default function Lightcurves() {
                             disabled={!isDisabled}
                             openDelay={100}
                             portalled
-                            positioning={{ placement: 'bottom' }}
+                            positioning={{ placement: "bottom" }}
                           >
-                            <Box display='inline-flex'>
-                            <Checkbox.Root
-                              checked={checked}
-                              onCheckedChange={(e) => onChange(!!e.checked)}
-                              disabled={isDisabled}
-                            >
-                              <Checkbox.HiddenInput />
-                              <Checkbox.Control />
-                              <Checkbox.Label>{label}</Checkbox.Label>
-                            </Checkbox.Root>
+                            <Box display="inline-flex">
+                              <Checkbox.Root
+                                checked={checked}
+                                onCheckedChange={(e) => onChange(!!e.checked)}
+                                disabled={isDisabled}
+                              >
+                                <Checkbox.HiddenInput />
+                                <Checkbox.Control />
+                                <Checkbox.Label>{label}</Checkbox.Label>
+                              </Checkbox.Root>
                             </Box>
                           </Tooltip>
                         );
@@ -565,16 +563,16 @@ export default function Lightcurves() {
                     }
                   }}
                 >
-                  <Box position="relative" bg='black' borderRadius='8px'>
+                  <Box position="relative" bg="black" borderRadius="8px">
                     <img
-                      src={getImage('star', '.svg')}
+                      src={getImage("star", ".svg")}
                       alt={`${star.name} star`}
-                      style={{ 
+                      style={{
                         width: "100%",
-                        borderRadius: "8px", 
+                        borderRadius: "8px",
                         display: "block",
                         animation: `twinkle ${randomRange(2, 3)}s infinite alternate`,
-                        }}
+                      }}
                     />
 
                     <Box
@@ -628,14 +626,24 @@ export default function Lightcurves() {
                 role="button"
                 aria-label="Upload your data"
               >
-                <FileUpload.HiddenInput />
+                <FileUpload.HiddenInput
+                  onChange={(e) => {
+                    if (e.target.files && e.target.files.length > 0) {
+                      setUploading(true);
+                    }
+                  }}
+                />
                 <FileUpload.Dropzone>
                   <Icon size="lg" color="fg.muted">
                     {uploading ? <Spinner /> : <LuUpload />}
                   </Icon>
                   <FileUpload.DropzoneContent>
-                    <Box textStyle="md">Upload your own</Box>
-                    <Box color="fg.muted">.csv, .fits up to 10MB</Box>
+                    <Box textStyle="md">
+                      {uploading ? "Uploading..." : "Upload your own"}
+                    </Box>
+                    <Box color="fg.muted">
+                      {uploading ? "Please wait" : ".csv, .fits up to 10MB"}
+                    </Box>
                   </FileUpload.DropzoneContent>
                 </FileUpload.Dropzone>
               </FileUpload.Root>

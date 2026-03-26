@@ -176,9 +176,6 @@ def correct_ra(ra):
     if ra.max() - ra.min() > 12:  # difference > 12h → likely wraparound
         ra[ra < 12] += 24 # add 24h to RA values < 12h to unwrap
 
-    # Invert so RA increases left → right
-    ra = -ra
-
     return ra
 
 
@@ -248,6 +245,9 @@ def plot_and_format_constellation(df: pd.DataFrame, lines: bool):
     padding_dec = dec_range * 0.2
     ax.set_xlim(x.min() - padding_ra, x.max() + padding_ra)
     ax.set_ylim(y.min() - padding_dec, y.max() + padding_dec)
+    
+    # Invert x axis so RA increases left to right
+    ax.invert_xaxis()
 
     # Label stars with proper names if available (using unwrapped RA)
     for i, row in df.iterrows():

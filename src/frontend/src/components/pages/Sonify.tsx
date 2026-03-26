@@ -30,18 +30,18 @@ import {
   Text,
   Flex,
   Portal,
+  SegmentGroup,
   NumberInput,
   Separator,
   VStack,
   Select,
   HStack,
 } from "@chakra-ui/react";
-import { LuAudioLines, LuDownload, LuLocateFixed } from "react-icons/lu";
+import { LuAudioLines, LuDownload, LuLocateFixed, LuDatabase } from "react-icons/lu";
 import { plotData } from "../../utils/plot";
 import ObserverSetup, { ObserverValues, ORIENTATIONS } from "../utils/ObserverSetup";
 
 export default function Sonify() {
-
   // Route states
   const location = useLocation();
   const dataName = location.state.dataName;
@@ -53,8 +53,8 @@ export default function Sonify() {
   const ra = location.state.ra ?? null;
   const dec = location.state.dec ?? null;
 
-  console.log('Ra: ' + ra)
-  console.log('Dec: ' + dec)
+  console.log("Ra: " + ra);
+  console.log("Dec: " + dec);
 
   // Define length limits based on sonification type
   const defaultsDict = {
@@ -75,22 +75,33 @@ export default function Sonify() {
     defaults.audio_system,
   ]);
   const [audioFilename, setAudioFilename] = useState("");
+
   const [soniReady, setSoniReady] = useState(false);
   const [soniClicked, setSoniClicked] = useState(false);
+
+  // States to control spectrogram
+  const [specReady, setSpecReady] = useState(false);
+  const [specLoading, setSpecLoading] = useState(false);
+  const [specImage, setSpecImage] = useState<string | null>(null);
+
+  // States to control data plot
+  const [imageSrc, setImageSrc] = useState<string | null>(null);
+  const [imageLoading, setImageLoading] = useState(true);
+  const [activePlot, setActivePlot] = useState<"data" | "spectrogram">("data");
+
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string>("");
 
   const [daysPerSec, setDaysPerSec] = useState("");
   const [totalDays, setTotalDays] = useState<number>(0);
 
-  const [imageSrc, setImageSrc] = useState<string | null>(null);
-  const [imageLoading, setImageLoading] = useState(true);
-
   // Tracks audio files to prevent caching
-  const [audioKey, setAudioKey] = useState('');
+  const [audioKey, setAudioKey] = useState("");
 
   const [observerOpen, setObserverOpen] = useState(false);
-  const [observerValues, setObserverValues] = useState<ObserverValues | null>(null);
+  const [observerValues, setObserverValues] = useState<ObserverValues | null>(
+    null,
+  );
 
   // Generate the plot once when component mounts
   useEffect(() => {
@@ -107,6 +118,11 @@ export default function Sonify() {
     }
     fetchPlot();
   }, [dataRef]);
+
+  // Auto-switch to spectrogram for light curves when it's ready
+  useEffect(() => {
+    if (specImage && soniType === 'light_curves') setActivePlot("spectrogram");
+  }, [specImage]);
 
   // Fetch data range once on load for lightcurves
   useEffect(() => {
@@ -184,6 +200,7 @@ export default function Sonify() {
     event.preventDefault();
     setSoniClicked(true);
     setSoniReady(false);
+    setSpecReady(false);
     setLoading(true);
 
     requestSonification().then((fileRef) => {
@@ -193,10 +210,24 @@ export default function Sonify() {
         setAudioKey(Date.now().toString());
         setAudioFilename(`${fileRef}`);
         setSoniReady(true);
+
+        // Request spectrogram
+        setSpecLoading(true);
+        requestSpectrogram(fileRef).then((image) => {
+          setSpecImage(image);
+          setSpecLoading(false);
+        });
       } else {
         console.error("No sonification file returned.");
       }
     });
+  };
+
+  const requestSpectrogram = async (fileRef: string) => {
+    const response = await apiRequest(`${coreAPI}/generate-spectrogram/`, {
+      file_ref: fileRef,
+    });
+    return response.image;
   };
 
   const handleLengthChange = (value: string) => {
@@ -235,9 +266,9 @@ export default function Sonify() {
   }
 
   const summaryItems = [
-    { label: "Description", value: styleDescription, downloadable: false},
+    { label: "Description", value: styleDescription, downloadable: false },
     { label: "Data", value: dataName, downloadable: true, fileRef: dataRef },
-    { label: "Style", value: styleName, downloadable: true, fileRef: styleRef }
+    { label: "Style", value: styleName, downloadable: true, fileRef: styleRef },
   ];
 
   const COMPASS = Object.fromEntries(
@@ -253,6 +284,7 @@ export default function Sonify() {
           Set the length of the sonification and specify the audio system you
           intend to play it on
         </Text>
+        <br />
         <br />
         <HStack gap="4" align="start" justify="center">
           <Box width="50%">
@@ -444,18 +476,67 @@ export default function Sonify() {
             <br />
           </Box>
           <Box width="50%">
-            {imageLoading ? (
-              <LoadingMessage msg="" icon="pulsar" />
-            ) : imageSrc ? (
-              <Image
-                src={imageSrc}
-                alt={`A plot of the ${dataName} ${formatSoniType(soniType)}`}
-                rounded="md"
-                animation="fade-in 300ms ease-out"
-              />
-            ) : (
-              <ErrorMsg message="Unable to plot data." />
+            {soniReady && (
+              <Flex justify="center" mb={2}>
+                <SegmentGroup.Root
+                  value={activePlot}
+                  onValueChange={(e) =>
+                    setActivePlot(e.value as "data" | "spectrogram")
+                  }
+                  size="sm"
+                >
+                  <SegmentGroup.Indicator />
+                  <SegmentGroup.Item value="data" cursor="pointer">
+                    <SegmentGroup.ItemText>
+                      <HStack>
+                        <LuDatabase /> Data
+                      </HStack>
+                    </SegmentGroup.ItemText>
+                    <SegmentGroup.ItemHiddenInput />
+                  </SegmentGroup.Item>
+                  <SegmentGroup.Item
+                    value="spectrogram"
+                    cursor="pointer"
+                    disabled={!specImage && !specLoading}
+                  >
+                    <SegmentGroup.ItemText>
+                      <HStack>
+                        <LuAudioLines /> Spectrogram
+                      </HStack>
+                    </SegmentGroup.ItemText>
+                    <SegmentGroup.ItemHiddenInput />
+                  </SegmentGroup.Item>
+                </SegmentGroup.Root>
+              </Flex>
             )}
+
+            {activePlot === "data" &&
+              (imageLoading ? (
+                <LoadingMessage msg="" icon="pulsar" />
+              ) : imageSrc ? (
+                <Image
+                  src={imageSrc}
+                  alt={`A plot of the ${dataName} ${formatSoniType(soniType)}`}
+                  rounded="md"
+                  animation="fade-in 300ms ease-out"
+                />
+              ) : (
+                <ErrorMsg message="Unable to plot data." />
+              ))}
+
+            {activePlot === "spectrogram" &&
+              (specLoading ? (
+                <LoadingMessage msg="Generating spectrogram..." icon="pulsar" />
+              ) : specImage ? (
+                <Image
+                  src={`data:image/png;base64,${specImage}`}
+                  alt="Spectrogram"
+                  rounded="md"
+                  animation="fade-in 300ms ease-out"
+                />
+              ) : (
+                <ErrorMsg message="Unable to generate spectrogram." />
+              ))}
           </Box>
         </HStack>
         <ActionBar.Root open={soniClicked}>

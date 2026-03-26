@@ -4,7 +4,7 @@ description: >
   Uses a library of orchestral sounds to provide a mixed sonic texture.
   Brightest stars appear first, and their colour is mapped to pitch (higher pitch = bluer star).
 
-sound: 'Harp'
+sound: 'Orchestra'
 preset: 'sustain'
 mods: 
   looping: 'forwardback'
@@ -30,6 +30,7 @@ parameters:
   - input: 'ra_corrected'
     output: 'azimuth'
     output_range: [0.25, 0.75]
+    function: 'invert'
 
 
 harmony: ['C3', 'D3', 'E3', 'G3', 'A3', 'B3', 'C4', 'D4', 'E4', 'G4']

@@ -104,7 +104,9 @@ export default function CustomStyleMenu({
     (m) => m.output.toLowerCase() === "pitch",
   );
 
-  const hasValidMapping = parameterMappings.some((m) => m.input && m.output);
+  const hasTimeMapping = parameterMappings.some(
+    (m) => m.input && m.output.toLowerCase() === "time",
+  );
 
   const [chordMode, setChordMode] = useState(false);
   const [rootNote, setRootNote] = useState("C");
@@ -437,7 +439,7 @@ export default function CustomStyleMenu({
                 <FileUpload.Root
                   accept={{ "application/yaml": [".yaml", ".yml"] }}
                   maxFiles={1}
-                  maxFileSize={1*1024*1024} // 1MB file limit
+                  maxFileSize={1 * 1024 * 1024} // 1MB file limit
                   onFileAccept={({ files }) => handleStyleUpload(files)}
                 >
                   <FileUpload.HiddenInput />
@@ -622,7 +624,10 @@ export default function CustomStyleMenu({
                                 </Select.Control>
                                 <Portal>
                                   <Select.Positioner>
-                                    <Select.Content>
+                                    <Select.Content
+                                      maxH="200px"
+                                      overflowY="auto"
+                                    >
                                       {outputOptions.items.map((option) => {
                                         const isUsedElsewhere =
                                           parameterMappings.some(
@@ -957,9 +962,9 @@ export default function CustomStyleMenu({
               )}
             </VStack>
           </Dialog.Body>
-          {!hasValidMapping && (
+          {!hasTimeMapping && (
             <Text pb={2} fontSize="sm" color="fg.muted" textAlign="center">
-              Add at least one parameter mapping to continue
+              One parameter must be mapped to <strong>Time</strong> to continue.
             </Text>
           )}
           <Dialog.Footer display="flex" justifyContent="center">
@@ -973,7 +978,7 @@ export default function CustomStyleMenu({
             </Button>
             <Button
               loading={loadingCustomPreview}
-              disabled={!hasValidMapping}
+              disabled={!hasTimeMapping}
               width="30%"
               colorPalette="teal"
               variant="outline"
@@ -985,7 +990,7 @@ export default function CustomStyleMenu({
               </HStack>
             </Button>
             <Button
-              disabled={!hasValidMapping}
+              disabled={!hasTimeMapping}
               width="30%"
               colorPalette="teal"
               onClick={() => handleApply()}

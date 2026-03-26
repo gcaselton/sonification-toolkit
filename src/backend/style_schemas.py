@@ -38,7 +38,7 @@ class ParameterMapping(BaseModel):
     @classmethod
     def validate_output(cls, value: str):
 
-        if value not in param_lim_dict.keys():
+        if value not in param_lim_dict.keys() and value != 'pan':
             raise ValueError(f'Parameter "{value}" is not a valid parameter.')
         
         return value
