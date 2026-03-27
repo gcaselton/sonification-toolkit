@@ -63,7 +63,6 @@ export default function CustomStyleMenu({
   userUpload,
   onStyleCreated,
 }: CustomStyleMenuProps) {
-
   interface BaseSound {
     name: string;
     composable: boolean;
@@ -222,14 +221,14 @@ export default function CustomStyleMenu({
           label: input.name,
           value: input.name,
           description: input.desc,
-          key: input.key
+          key: input.key,
         }));
 
         const outputItems = outputs.map((output) => ({
           label: output.name,
           value: output.name,
           description: output.desc,
-          key: output.key
+          key: output.key,
         }));
 
         setInputOptions(createListCollection({ items: inputItems }));
@@ -279,8 +278,13 @@ export default function CustomStyleMenu({
         }
         const soundsData: BaseSound[] = await response.json();
 
+        const filteredSounds =
+          soniType === "light_curves"
+            ? soundsData
+            : soundsData.filter((sound) => sound.composable);
+
         const collection = createListCollection({
-          items: soundsData.map((sound) => ({
+          items: filteredSounds.map((sound) => ({
             ...sound,
             label: `${sound.name}${sound.composable ? " 🎹" : ""}`, // Add piano emoji for composable sounds
             value: sound.name,
@@ -307,7 +311,6 @@ export default function CustomStyleMenu({
       setAutoMappedTime(false);
     }
   }, [parameterMappings]);
-  
 
   const addMapping = () => {
     setParameterMappings((prev) => [
@@ -360,28 +363,49 @@ export default function CustomStyleMenu({
     return response.file_ref;
   };
 
+  const previewRef = useRef<HTMLAudioElement | null>(null);
+
   const handlePreviewStyle = async () => {
     try {
       setLoadingCustomPreview(true);
 
-      // Wait for sound settings to save and get filepath
+      // Stop any previous audio
+      if (previewRef.current) {
+        previewRef.current.pause();
+        previewRef.current.currentTime = 0;
+      }
+
+      // Save sound settings and get filepath
       const fileRef = await saveSoundSettings();
       console.log(fileRef);
 
       const preview_endpoint = `${coreAPI}/preview-style-settings/${soniType}`;
-
       const response = await apiRequest(preview_endpoint, {
         file_ref: fileRef,
       });
 
       const audioUrl = `${coreAPI}/audio/${response.file_ref}`;
       const preview = new Audio(audioUrl);
+
+      // Save this audio instance so we can stop it next time
+      previewRef.current = preview;
       preview.play();
-      setLoadingCustomPreview(false);
     } catch (err) {
       console.error("Error previewing style settings:", err);
+    } finally {
+      setLoadingCustomPreview(false);
     }
   };
+
+  // Stop any previews playing if menu is closed
+  useEffect(() => {
+    if (!open && previewRef.current) {
+      previewRef.current.pause();
+      previewRef.current.currentTime = 0;
+      previewRef.current = null; 
+    }
+  }, [open]);
+  
 
   const handleStyleUpload = async (files: File[]) => {
     const file = files[0];
@@ -410,12 +434,21 @@ export default function CustomStyleMenu({
     setApplyLoading(true);
 
     const styleRef = await saveSoundSettings();
+
+    // Stop any preview audio
+    if (previewRef.current) {
+      previewRef.current.pause();
+      previewRef.current.currentTime = 0;
+      previewRef.current = null;
+    }
     
     onStyleCreated(styleRef);
     setApplyLoading(false);
-  };
+  };;
 
-  
+  const staccatoWarning = ["Glockenspiel", "Mallets", "Harp"].includes(
+    sound.name,
+  ) && soniType === 'light_curves'
 
   return (
     <Dialog.Root
@@ -495,6 +528,32 @@ export default function CustomStyleMenu({
                   </Select.Positioner>
                 </Portal>
               </Select.Root>
+
+              {staccatoWarning && (
+                <Alert.Root
+                  status="warning"
+                  size="sm"
+                  variant="subtle"
+                  alignItems="center"
+                  pb={1}
+                  pt={1}
+                >
+                  <Alert.Indicator />
+                  <Alert.Content>
+                    <Alert.Description>
+                      This sound plays individual notes rather than a continuous
+                      tone. For best results, map an input to Pitch and
+                      select a scale in Musical Settings.
+                    </Alert.Description>
+                  </Alert.Content>
+                  <CloseButton
+                    variant="subtle"
+                    size="2xs"
+                    my="auto"
+                    onClick={() => setAutoMappedTime(false)}
+                  />
+                </Alert.Root>
+              )}
 
               <VStack gap={4} align="stretch">
                 <HStack>

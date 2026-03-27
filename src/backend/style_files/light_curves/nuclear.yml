@@ -2,12 +2,7 @@ name: "Nuclear"
 
 description: "A flickering synth gets louder/brighter as the star's brightness increases."
 
-sound: "Deep Crackle"
-
-mods:
-  looping: 'forwardback'
-  loop_start: 0
-  loop_end: 5.
+sound: "Nuclear Crackle"
 
 parameters:
   - input: "flux"

@@ -179,6 +179,27 @@ def correct_ra(ra):
     return ra
 
 
+def get_const_from_df(df: pd.DataFrame):
+
+    best_const = None
+    best_match_count = 0
+
+    star_ids = set(df.index)
+
+    for const, edges in CONST_SHAPES.items():
+        match_count = sum(
+            1 for a, b in edges
+            if a in star_ids and b in star_ids
+        )
+
+        if match_count > best_match_count:
+            best_match_count = match_count
+            best_const = const
+
+    return best_const
+
+
+
 def plot_and_format_constellation(df: pd.DataFrame, lines: bool):
 
     if df.empty:
@@ -223,7 +244,10 @@ def plot_and_format_constellation(df: pd.DataFrame, lines: bool):
     # Add connecting lines if plotting shapes
     if lines:
 
-        const = df['con'].iloc[0]
+        const = get_const_from_df(df)
+        
+        print("DF CONST:", df['con'].unique())
+
 
         for hip_a, hip_b in CONST_SHAPES[const]:
 

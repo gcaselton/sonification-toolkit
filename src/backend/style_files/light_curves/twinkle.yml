@@ -2,13 +2,7 @@ name: 'Twinkle'
 
 description: 'Twinkling mallets become brighter as the starlight increases.'
 
-sound: 'Bright Mallets'
-
-mods:
-  looping: 'forward'
-  loop_start: 0.3
-  loop_end: 5
-
+sound: 'Twinkle Mallets'
 
 parameters:
   - input: 'flux'

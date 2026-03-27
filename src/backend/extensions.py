@@ -30,13 +30,19 @@ BASIC_LOOP = {
 }
 
 LOOPING_MODS = {
-      'Space Strings': BASIC_LOOP,
-      'Deep Crackle': BASIC_LOOP,
-      'Dark Drone': BASIC_LOOP,
-      'Bright Mallets': {
+      'Sci-Fi Strings': BASIC_LOOP,
+      'Nuclear Crackle': BASIC_LOOP,
+      'Power Hum': BASIC_LOOP,
+      'Twinkle Mallets': {
             'looping': 'forward',
             'loop_start': 0.3,
             'loop_end': 5
+      },
+      'Orchestra': {
+            'looping': 'forwardback',
+            'note_length': 120,
+            'loop_start': 0.8,
+            'loop_end': 3.
       }
 }
 
@@ -223,16 +229,17 @@ def parse_harmony(harmony: str, sound_folder, sound_path):
             quality = 'hijaroshi' if quality == 'hirajoshi' else quality
             notes = parse_scale(starting_note=root, mode=quality, octaves=2) # 3 octave range as default, could give users the option?
             notes = [str(note) for note in notes]
-            if sound_folder == 'samples':
-                  notes = constrain_notes(notes, sound_path)
-            notes = [notes]
             
       else:
             # Likely a chord e.g. 'Cmaj7'
             is_chord = True
             notes = voice_chord(harmony, sound_folder, sound_path)
+            
+      if sound_folder == 'samples':
+            notes = constrain_notes(notes, sound_path)
 
-      return notes, is_chord
+
+      return [notes], is_chord
 
 def constrain_notes(desired_notes, sound_path):
     
@@ -305,6 +312,11 @@ def constellation_sources(data: Path | str , style: BaseStyle, length):
 
             input = mapping.input
             output = mapping.output
+            
+            if output == 'pitch' and style.harmony is None:
+                  output = 'pitch_shift'
+                  # Rescale 0-1 to 0-12 semitones for pitch shift
+                  mapping.output_range = tuple(12 * x for x in mapping.output_range) if mapping.output_range else (0,12)
             
             # Swap out pan for azimuth and rescale the range
             if output == 'pan':
@@ -504,9 +516,8 @@ def light_curve_sources(data, style: BaseStyle, length):
                         # Change pitch for pitch_shift if we want Objects type
                         mapping.output = 'pitch_shift'
                         
-                        if not mapping.output_range:
-                              # Enforce a one octave range for pitch_shift mappings
-                              mapping.output_range = (0,12)
+                        # Rescale 0-1 to 0-12 semitones for pitch shift
+                        mapping.output_range = tuple(12 * x for x in mapping.output_range) if mapping.output_range else (0,12)
             
             if mapping.function == 'invert':
                   funcs[mapping.output] = lambda x: np.negative(x)
@@ -565,15 +576,14 @@ def voice_chord(chord_name: str, sound_folder: str, sound_path: str):
       chord = Chord(chord_name)
       notes = chord.components()
       root = chord.root
-      fifth = transpose_note(root, 7)
+      fifth = transpose_note(root, 7, root)
     
 
       # Chord needs a fifth to be voiced pleasantly
       if not fifth in notes:
             raise ValueError('Chord must have a perfect fifth')
       else:
-            root_and_fifth = [root, fifth]
-            remaining_notes = [note for note in notes if note not in root_and_fifth]
+            remaining_notes = [note for note in notes if note not in [root, fifth]]
       
       # Voice the chord depending on which notes it has
       if len(remaining_notes) == 1:
@@ -596,17 +606,7 @@ def voice_chord(chord_name: str, sound_folder: str, sound_path: str):
       
       notes = [root + '2', fifth + '3', third_note + '4', fourth_note + '5']
 
-      # Check that the desired octaves are present in the desired sound samples
-      if sound_folder == 'samples':
-            sample_folder = Path(sound_path)
-            available_notes = [p.stem for p in sample_folder.iterdir() if p.is_file()]
-
-            # Move lowest note up an octave and highest note down if not available in the sound folder
-            notes[0] = f'{root}3' if f'{root}2' not in available_notes else f'{root}2'
-            notes[3] = f'{fourth_note}4' if f'{fourth_note}5' not in available_notes else f'{fourth_note}5'
-
-
-      return [notes]
+      return notes
 
       
 

@@ -2,12 +2,7 @@ name: "Sci-Fi"
 
 description: "Spacey strings get brighter as the star gets brighter."
 
-sound: "Space Strings"
-
-mods:
-  looping: 'forwardback'
-  loop_start: 0
-  loop_end: 5.
+sound: "Sci-Fi Strings"
 
 parameters:
   - input: "flux"

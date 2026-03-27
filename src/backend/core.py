@@ -522,15 +522,27 @@ def get_sound_info():
 def preview_style_settings(request: DataRequest, category: str):
 
     style = resolve_file(request.file_ref)
+    
+    duration = 5
 
-    # Generate simple ramp to sonify
-    x = np.arange(0, 100) 
-    y = x.copy()
+    if category == 'light_curves':
+        
+        n_samples = 100
+        cycles = 2
 
-    data = (x, y)
+        x = np.linspace(0, duration, n_samples, endpoint=False)
+        freq = cycles / duration
+
+        # Generate sine wave for light curve-like data
+        y = np.sin(2 * np.pi * freq * x)
+        
+        data = (x, y)
+    else:
+        data = SUGGESTED_DATA_DIR / category / 'preview.csv'
+    
 
     try:
-        soni = sonify(data, style, category, length=5,  system='stereo')
+        soni = sonify(data, style, category, length=5,  system='mono')
 
         id = str(uuid.uuid4().hex)
         ext = '.wav'
