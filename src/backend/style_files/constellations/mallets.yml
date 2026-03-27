@@ -10,7 +10,7 @@ parameters:
     
   - input: 'magnitude'
     output: 'volume'
-    output_range: [0.1, 1]
+    output_range: [0.05, 1]
     function: 'invert'
 
   - input: 'ra_corrected'

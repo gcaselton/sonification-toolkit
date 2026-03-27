@@ -1,12 +1,8 @@
-name: 'Orchestra'
+name: 'Night Harp'
 
-description: 'An orchestra plays the night sky from brightest to dimmest stars, where higher notes signify bluer/hotter stars.'
+description: 'A harp plays the night sky from brightest to dimmest stars, where higher notes signify bluer/hotter stars.'
 
-sound: 'Orchestra'
-preset: 'staccato'
-mods: 
-  volume_envelope: 
-    R: 4
+sound: 'Harp'
 
 parameters:
   
