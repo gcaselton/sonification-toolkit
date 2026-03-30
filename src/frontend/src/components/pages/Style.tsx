@@ -135,7 +135,10 @@ export default function Style() {
             return (
               <Box
                 key={style.name}
-                onClick={() => handleClick(style)}
+                onClick={(e) => 
+                {
+                  handleClick(style);
+                }}
                 style={{ cursor: "pointer", width: 200 }}
                 tabIndex={0}
                 role="button"

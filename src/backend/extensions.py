@@ -532,7 +532,7 @@ def light_curve_sources(data, style: BaseStyle, length):
                         
             if isinstance(mapping.input, float):
                   # Is a constant spatial param, e.g. azimuth or polar
-                  data_dict[mapping.output] = [mapping.input]
+                  data_dict[mapping.output] = [mapping.input]*len(pitches)
             else:
                   # Every other type of param
                   data_dict[mapping.output] = [labelled_data[mapping.input]]*len(pitches)

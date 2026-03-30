@@ -42,12 +42,12 @@ INPUTS = {
         'pmra': 
             {
             'name': 'Proper Motion (RA)',
-            'desc': 'How fast the star is moving across the sky (east to west)'
+            'desc': 'How fast the star is moving in proper motion (in RA)'
             },
         'pmdec': 
             {
             'name': 'Proper Motion (Dec)',
-            'desc': 'How fast the star is moving across the sky (north to south)'
+            'desc': 'How fast the star is moving in proper motion (in Dec)'
             },
         'magnitude': _MAGNITUDE,
         'absmag':

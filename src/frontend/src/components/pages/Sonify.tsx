@@ -4,6 +4,7 @@ import LoadingMessage from "../ui/LoadingMessage";
 import { BackButton } from "../ui/Buttons";
 import PageContainer from "../ui/PageContainer";
 import ErrorMsg from "../ui/ErrorMsg";
+import { InfoTip } from "../ui/ToggleTip";
 import {
   apiUrl,
   lightCurvesAPI,
@@ -37,9 +38,18 @@ import {
   Select,
   HStack,
 } from "@chakra-ui/react";
-import { LuAudioLines, LuDownload, LuLocateFixed, LuDatabase } from "react-icons/lu";
+import {
+  LuAudioLines,
+  LuDownload,
+  LuLocateFixed,
+  LuDatabase,
+} from "react-icons/lu";
 import { plotData } from "../../utils/plot";
-import ObserverSetup, { ObserverValues, ORIENTATIONS } from "../utils/ObserverSetup";
+import ObserverSetup, {
+  ObserverValues,
+  ORIENTATIONS,
+} from "../utils/ObserverSetup";
+import { Tooltip } from "../ui/Tooltip";
 
 export default function Sonify() {
   // Route states
@@ -121,7 +131,7 @@ export default function Sonify() {
 
   // Auto-switch to spectrogram for light curves when it's ready
   useEffect(() => {
-    if (specImage && soniType === 'light_curves') setActivePlot("spectrogram");
+    if (specImage && soniType === "light_curves") setActivePlot("spectrogram");
   }, [specImage]);
 
   // Fetch data range once on load for lightcurves
@@ -292,7 +302,14 @@ export default function Sonify() {
               <VStack align="start" justify="center" w="80%" gap={8}>
                 <HStack gap={10}>
                   <Field.Root invalid={invalidLength} width="auto">
-                    <Field.Label>Duration (seconds)</Field.Label>
+                    <HStack>
+                      <Field.Label>Duration (seconds)</Field.Label>
+                      <InfoTip
+                        content="The total length of the sonification. The sonification will compress or stretch to this length without distorting the aduio."
+                        positioning={{ placement: "right" }}
+                        contentProps={{ maxW: "300px" }}
+                      />
+                    </HStack>
                     <NumberInput.Root
                       value={length}
                       onValueChange={(e) => handleLengthChange(e.value)}
@@ -314,7 +331,15 @@ export default function Sonify() {
                         =
                       </Text>
                       <Field.Root width="auto">
-                        <Field.Label>Days per Second</Field.Label>
+                        <HStack>
+                          <Field.Label>Days per Second</Field.Label>
+                          <InfoTip
+                            content="Alternatively, enter how many days in the dataset you want to transpire per second. This will then calculate a new sonification duration."
+                            positioning={{ placement: "right" }}
+                            contentProps={{ maxW: "300px" }}
+                          />
+                        </HStack>
+
                         <NumberInput.Root
                           value={String(daysPerSec)}
                           onValueChange={(e) => {
@@ -341,7 +366,14 @@ export default function Sonify() {
                     minW="50%"
                   >
                     <Select.HiddenSelect />
-                    <Select.Label>Audio System</Select.Label>
+                    <HStack>
+                      <Select.Label>Audio System</Select.Label>
+                      <InfoTip
+                        content="Choose your planetarium's audio setup. Note that using Azimuth as an output parameter requires a 5.1 or 7.1 system, and using Pan requires a stereo system at minimum."
+                        positioning={{ placement: "right" }}
+                        contentProps={{ maxW: "300px" }}
+                      />
+                    </HStack>
                     <Select.Control>
                       <Select.Trigger>
                         <Select.ValueText placeholder="Select audio system" />
@@ -364,15 +396,28 @@ export default function Sonify() {
                     </Portal>
                   </Select.Root>
                   {soniType !== "night_sky" && ra && dec && (
-                    <Button
-                      colorPalette="teal"
-                      variant={observerValues ? "solid" : "subtle"}
-                      disabled={audioSystem[0] == "mono"}
-                      onClick={() => setObserverOpen(true)}
-                    >
-                      <LuLocateFixed />
-                      Place on Dome
-                    </Button>
+                    <HStack>
+                      <Tooltip 
+                      content='Unavailable for Mono audio systems'
+                      disabled={audioSystem[0] !== 'mono'}
+                      openDelay={100}
+                      >
+                        <Button
+                          colorPalette="teal"
+                          variant={observerValues ? "solid" : "subtle"}
+                          disabled={audioSystem[0] === "mono"}
+                          onClick={() => setObserverOpen(true)}
+                        >
+                          <LuLocateFixed />
+                          Place on Dome
+                        </Button>
+                      </Tooltip>
+                      <InfoTip
+                        content="Positions the audio in space to match where this object would appear in the sky from your location. Note: if your chosen style already maps data to Azimuth or Pan, those mappings will be overridden."
+                        positioning={{ placement: "right" }}
+                        contentProps={{ maxW: "300px" }}
+                      />
+                    </HStack>
                   )}
                 </HStack>
 

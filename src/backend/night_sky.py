@@ -84,6 +84,9 @@ def handle_observer(observer: dict, style: dict):
     observed_star = position.observe(star)
     alt, az, dist = observed_star.apparent().altaz()
     
+    print('az: ' + str(az.degrees))
+    print('alt: ' + str(alt.degrees))
+    
     # Convert observing direction to radians
     direction = COMPASS_MAP[observer['orientation']]
     
@@ -96,7 +99,7 @@ def handle_observer(observer: dict, style: dict):
     
     params = style['parameters']
     
-    params = [p for p in params if p['output'] not in ('azimuth', 'polar')]
+    params = [p for p in params if p['output'] not in ('azimuth', 'polar', 'pan')]
     
     params.append({
         'input': azimuth,

@@ -127,11 +127,12 @@ export default function StyleCard({
       <Dialog.Root
         open={infoOpen}
         onOpenChange={(e) => setInfoOpen(e.open)}
+        closeOnInteractOutside={false}
         placement="center"
         size="md"
       >
-        <Dialog.Backdrop />
-        <Dialog.Positioner>
+        <Dialog.Backdrop onClick={(e) => e.stopPropagation()} />
+        <Dialog.Positioner onClick={(e) => e.stopPropagation()}>
           <Dialog.Content maxH="80vh">
             <Dialog.Header>
               <Dialog.Title>{title}</Dialog.Title>
