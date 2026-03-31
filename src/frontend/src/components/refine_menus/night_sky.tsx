@@ -1,36 +1,22 @@
 import {
   Box,
   Button,
-  createListCollection,
-  Checkbox,
-  Code,
   Field,
-  Heading,
   Image,
-  Input,
-  Text,
-  Flex,
   NumberInput,
   VStack,
-  Select,
-  Slider,
-  Skeleton,
-  HStack,
 } from "@chakra-ui/react";
 import { RefineMenuProps } from "./RefineMenu";
-import React, { useState, useEffect } from "react";
-import { useLocation } from 'react-router-dom';
+import { useState, useEffect } from "react";
 import LoadingMessage from "../ui/LoadingMessage";
 import ErrorMsg from "../ui/ErrorMsg";
-import { apiUrl, nightSkyAPI, coreAPI } from "../../apiConfig";
+import { nightSkyAPI } from "../../apiConfig";
 import { apiRequest } from "../../utils/requests";
 import { plotData } from "../../utils/plot";
-import { InfoTip } from "../ui/ToggleTip";
-import { Tooltip } from "../ui/Tooltip";
 import { LuArrowRight } from "react-icons/lu";
 
 
-export default function Constellations({ dataRef, dataName, onApply }: RefineMenuProps) {
+export default function NightSky({ dataRef, dataName, onApply }: RefineMenuProps) {
 
   const [imageSrc, setImageSrc] = useState<string | null>(null);
   const [imageLoading, setImageLoading] = useState(true);
@@ -93,7 +79,7 @@ export default function Constellations({ dataRef, dataName, onApply }: RefineMen
         <Field.Root width='auto'>
           <Field.Label>Magnitude less than</Field.Label>
           <NumberInput.Root
-            min={-1.5}
+            min={0}
             max={6}
             value={magnitude}
             onValueChange={(e) => {

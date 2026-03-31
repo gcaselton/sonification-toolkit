@@ -7,7 +7,7 @@ sound: "Power Hum"
 parameters:
   - input: "flux"
     output: "pitch"
-    output_range: [3, 15]
+    output_range: [0.1, 0.6]
 
   - input: 'time'
     output: 'time'

@@ -1,51 +1,62 @@
-# Data Sonification Toolkit
+# Sonification Suite for Planetaria (Alpha)
 
-An application to communicate astronomical data through sound and music. Powered by the STRAUSS python package!
+![Landing Page](docs/landing-page.png)
 
-## Pre-requisites
+## Live Demo
 
-- React v19.1.0
-- Vite v6.1.1
-- Node v20.9.0
-- npm v10.2.2
-- FastAPI v0.0.7
-- Python v3.11.0
+Try the Alpha version online: [https://sonificationsuite.ncl.ac.uk](https://sonificationsuite.ncl.ac.uk)  
 
-## Instructions to run the app
+## Tech Stack
 
-Open a terminal from the location you cloned the repo.
+- **Frontend:** React, TypeScript, Vite  
+- **Backend:** Python, FastAPI  
+- **Astronomy Data:** `astroquery`, `lightkurve`, `skyfield`  
+- **Sonification:** `STRAUSS`
 
-Install the required python packages:
+## Getting Started (Local Setup)
 
-`pip install .`
+### Prerequisites
 
-### Run fastapi
+- Node.js >= 20  
+- Python >= 3.11  
+- `pip` package manager  
 
-Go into the backend directory
+### Installation
 
-`cd .\src\backend\`
+1. **Clone the repository**
 
-Run fastAPI using uvicorn:
+```bash
+git clone https://github.com/gcaselton/sonification-toolkit.git
+```
 
-`uvicorn main:app --reload`
+2. **Setup and run the backend**
 
-The fastapi should be running at http://127.0.0.1:8000
+Navigate to the location you cloned the repo, then
+
+```bash
+pip install .
+
+cd src/backend
+
+uvicorn main:app
+```
+
+The FastAPI server should be running at http://127.0.0.1:8000
 
 You can find the documentation of the API available at http://127.0.0.1:8000/docs
 
-### Run the React app
+3. **Setup and run the frontend**
 
-Open a new terminal, and go into the frontend directory
+Open a new terminal and navigate to the project root, then
 
-`cd .\src\frontend\`
+```bash
+cd src/frontend
 
-Install the required node packages
+npm install
 
-`npm install`
-
-Run the React app
-
-`npm run dev`
+npm run dev
+```
 
 Open a web browser window and navigate to http://localhost:5173/
+
 

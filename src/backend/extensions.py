@@ -97,8 +97,8 @@ def validate_input_params(style: dict, data: Path | str | tuple):
                   input_param = mapping['input'].lower()
                   in_min, in_max = mapping.get('input_range', ('0%','100%'))
 
-                  if input_param not in col_headers_lower:
-                        raise ValueError(f'Input parameter "{input_param}" not found in data columns: {col_headers}')
+                  # if input_param not in col_headers_lower:
+                  #       raise ValueError(f'Input parameter "{input_param}" not found in data columns: {col_headers}')
                   
                   if isinstance(in_min, str) and in_min.endswith('%'):
                         # might need to catch if one is % and the other isn't
@@ -474,9 +474,14 @@ def light_curve_sources(data, style: BaseStyle, length):
                   df = df.dropna()
 
                   col1, col2 = df.columns[:2]
+                  
+                  col1 = col1.replace('Time (days)', 'time')
+                  col2 = col2.replace('Flux (electrons per second)', 'flux')
 
                   labelled_data[col1] = df.iloc[:, 0].to_numpy()
                   labelled_data[col2] = df.iloc[:, 1].to_numpy()
+                  
+      print(labelled_data)
 
       is_scale = ((style.harmony and ' ' in style.harmony) or (style.preset == 'staccato'))
 
@@ -501,7 +506,7 @@ def light_curve_sources(data, style: BaseStyle, length):
                         mapping.output = 'pitch_shift'
                         
                         # Rescale 0-1 to 0-12 semitones for pitch shift
-                        mapping.output_range = tuple(12 * x for x in mapping.output_range) if mapping.output_range else (0,12)
+                        mapping.output_range = tuple(24 * x for x in mapping.output_range) if mapping.output_range else (0,24)
             
             if mapping.function == 'invert':
                   funcs[mapping.output] = lambda x: np.negative(x)

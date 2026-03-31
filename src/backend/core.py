@@ -3,16 +3,13 @@ from fastapi.responses import FileResponse
 from extensions import sonify
 from pathlib import Path
 from paths import TMP_DIR, STYLE_FILES_DIR, SUGGESTED_DATA_DIR, SAMPLES_DIR, HYG_DATA
-from strauss.sources import param_lim_dict
 from sounds import all_sounds, online_sounds, local_sounds, asset_cache, format_name
 from config import GITHUB_USER, GITHUB_REPO
 from context import session_id_var
 from utils import resolve_file, is_number
 from request_models import DataRequest, SoundRequest, CustomStyleSettings, SonificationRequest
-import logging, httpx, yaml, os, uuid, aiofiles, zipfile, traceback, filetype, numbers, base64, gc
-import lightkurve as lk
+import logging, httpx, yaml, os, uuid, aiofiles, zipfile, traceback, base64, gc
 from param_descriptions import INPUTS, OUTPUTS
-from strauss.sources import param_lim_dict
 
 import numpy as np
 import pandas as pd
@@ -24,7 +21,6 @@ from scipy.signal import spectrogram
 from io import BytesIO
 from astropy.io import fits
 from astropy.table import Table
-
 
 
 router = APIRouter(prefix='/core')

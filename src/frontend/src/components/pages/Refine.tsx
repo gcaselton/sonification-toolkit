@@ -18,6 +18,7 @@ export default function Refine() {
     const dec = location.state.dec ?? null;
     const userUpload = location.state.userUpload ?? false;
 
+
     // Dynamically import the menu component
     const Menu = lazy(() => import(`../refine_menus/${soniType}.tsx`));
 
@@ -33,7 +34,7 @@ export default function Refine() {
                 <Suspense>
                     <Menu 
                         dataRef={dataRef}
-                        dataName={dataName} 
+                        dataName={dataName}
                         onApply={(newRef: string, newRa?: number, newDec?: number) => {
                             // Navigate with refined data
                             
