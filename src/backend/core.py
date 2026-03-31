@@ -597,15 +597,11 @@ def format_settings(settings: CustomStyleSettings):
     else:
         if settings.scale != 'None':
             style['harmony'] = f"{settings.rootNote} {settings.scale}"
-            
-    print(style)
     
     return style
 
 
 async def download_online_asset(target_name: str):
-
-    print(target_name)
 
     target_asset = None
 
@@ -631,8 +627,6 @@ async def download_online_asset(target_name: str):
     # Define local path
     session_id = session_id_var.get()
     write_path = TMP_DIR / session_id / file_name
-
-    print(write_path)
     
     # Download the file
     async with httpx.AsyncClient() as client:

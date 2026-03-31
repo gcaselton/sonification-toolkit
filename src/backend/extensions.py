@@ -6,6 +6,7 @@ from strauss.notes import notesharps
 from musical_scales import scale as parse_scale
 from style_schemas import BaseStyle, ParameterMapping
 from settings import load_settings_from_file
+from generator_mods import GENERATOR_MODS
 from pychord import Chord
 from pychord.utils import transpose_note
 from paths import *
@@ -23,28 +24,9 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-BASIC_LOOP = {
-      'looping': 'forwardback',
-      'loop_start': 0,
-      'loop_end': 5.
-}
 
-LOOPING_MODS = {
-      'Sci-Fi Strings': BASIC_LOOP,
-      'Nuclear Crackle': BASIC_LOOP,
-      'Power Hum': BASIC_LOOP,
-      'Twinkle Mallets': {
-            'looping': 'forward',
-            'loop_start': 0.3,
-            'loop_end': 5
-      },
-      'Orchestra': {
-            'looping': 'forwardback',
-            'note_length': 120,
-            'loop_start': 0.8,
-            'loop_end': 3.
-      }
-}
+
+
 
 def read_YAML_file(filepath):
     
@@ -72,8 +54,6 @@ def sonify(data: Path | str | tuple, style_file: Path | str | dict, sonify_type:
             
       # Validate entire style file
       validated_style = BaseStyle.model_validate(style_dict)
-      
-      print(validated_style.parameters)
         
       # Set up Sonification elements
       score, sources, generator = setup_strauss(data, validated_style, sonify_type, length)
@@ -182,8 +162,9 @@ def setup_strauss(data: Path | str | tuple, style: BaseStyle, sonify_type, lengt
 
             if style.mods:
                   generator.modify_preset(style.mods)
-            elif style.sound in LOOPING_MODS:
-                  generator.modify_preset(LOOPING_MODS[style.sound])
+            elif style.sound in GENERATOR_MODS[sonify_type]:
+                  generator.modify_preset(GENERATOR_MODS[sonify_type][style.sound])
+                  
 
       mappings = style.parameters
 
@@ -227,7 +208,8 @@ def parse_harmony(harmony: str, sound_folder, sound_path):
             # Likely a scale e.g 'C major'
             is_chord = False 
             root, quality = harmony.split(' ', 1)
-       
+
+            # Enforce 'hijaroshi' typo from scales library
             quality = 'hijaroshi' if quality == 'hirajoshi' else quality
             notes = parse_scale(starting_note=root, mode=quality, octaves=2) # 3 octave range as default, could give users the option?
             notes = [str(note) for note in notes]

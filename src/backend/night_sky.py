@@ -84,9 +84,6 @@ def handle_observer(observer: dict, style: dict):
     observed_star = position.observe(star)
     alt, az, dist = observed_star.apparent().altaz()
     
-    print('az: ' + str(az.degrees))
-    print('alt: ' + str(alt.degrees))
-    
     # Convert observing direction to radians
     direction = COMPASS_MAP[observer['orientation']]
     
@@ -114,8 +111,6 @@ def handle_observer(observer: dict, style: dict):
     })
     
     style['parameters'] = params
-    
-    print(style)
     
     return style, [alt.degrees, az.degrees]
     

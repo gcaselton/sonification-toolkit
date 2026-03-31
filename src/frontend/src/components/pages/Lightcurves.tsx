@@ -332,7 +332,7 @@ export default function Lightcurves() {
       plotTitle = item.name
     }
 
-    setTitle(`Light Curve Graph for ${plotTitle}`);
+    setTitle(`Light Curve for ${plotTitle}`);
     setLoadingPlot(true);
     setPlotOpen(true);
 
