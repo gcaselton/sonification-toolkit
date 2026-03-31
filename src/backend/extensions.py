@@ -66,7 +66,9 @@ def sonify(data: Path | str | tuple, style_file: Path | str | dict, sonify_type:
       validate_input_params(style_dict, data)
       
       if observer:
-            style_dict = handle_observer(observer, style_dict)
+            style_dict, alt_az = handle_observer(observer, style_dict)
+      else:
+            alt_az = None
             
       # Validate entire style file
       validated_style = BaseStyle.model_validate(style_dict)
@@ -81,7 +83,7 @@ def sonify(data: Path | str | tuple, style_file: Path | str | dict, sonify_type:
 
       sonification.render()
 
-      return sonification
+      return sonification, alt_az
 
 def validate_input_params(style: dict, data: Path | str | tuple):
 

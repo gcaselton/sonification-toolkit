@@ -92,7 +92,7 @@ def generate_sonification(request: SonificationRequest):
 
     try:
         
-        soni = sonify(data_filepath, style_filepath, request.category, request.duration, request.system, request.observer)
+        soni, alt_az = sonify(data_filepath, style_filepath, request.category, request.duration, request.system, request.observer)
 
         session_id = session_id_var.get()
 
@@ -107,7 +107,7 @@ def generate_sonification(request: SonificationRequest):
 
         file_ref = f'session:{filename}'
 
-        return {'file_ref': file_ref}
+        return {'file_ref': file_ref, 'alt_az': alt_az}
     
     except HTTPException:
         raise
@@ -542,7 +542,8 @@ def preview_style_settings(request: DataRequest, category: str):
     
 
     try:
-        soni = sonify(data, style, category, length=5,  system='mono')
+    
+        soni, alt_az = sonify(data, style, category, length=5,  system='mono')
 
         id = str(uuid.uuid4().hex)
         ext = '.wav'

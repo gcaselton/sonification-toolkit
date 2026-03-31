@@ -117,7 +117,7 @@ def handle_observer(observer: dict, style: dict):
     
     print(style)
     
-    return style
+    return style, [alt.degrees, az.degrees]
     
     
 def position_observer(lat, lon, date_time):

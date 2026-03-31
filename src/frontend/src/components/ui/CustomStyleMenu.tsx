@@ -13,6 +13,7 @@ import { ToggleTip, InfoTip } from "../ui/ToggleTip";
 import { Tooltip } from "../ui/Tooltip";
 import { apiUrl, lightCurvesAPI, coreAPI } from "../../apiConfig";
 import { LuUpload, LuX, LuPlus, LuVolume2 } from "react-icons/lu";
+import ErrorMsg from "./ErrorMsg";
 
 import {
   Alert,
@@ -368,6 +369,7 @@ export default function CustomStyleMenu({
   const handlePreviewStyle = async () => {
     try {
       setLoadingCustomPreview(true);
+      setErrorMessage("");
 
       // Stop any previous audio
       if (previewRef.current) {
@@ -391,6 +393,7 @@ export default function CustomStyleMenu({
       previewRef.current = preview;
       preview.play();
     } catch (err) {
+      setErrorMessage("Error generating preview. Please try different style settings.")
       console.error("Error previewing style settings:", err);
     } finally {
       setLoadingCustomPreview(false);
@@ -503,8 +506,9 @@ export default function CustomStyleMenu({
                 <HStack>
                   <Select.Label>Base Sound</Select.Label>
                   <InfoTip
-                    content="This is the underlying sound (or instrument) that is used as a basis for the sonification"
+                    content="This is the underlying sound (or instrument) that is used as a basis for the sonification. Sounds with a 🎹 icon next to them are composable, meaning you can apply musical settings like chords and scales."
                     positioning={{ placement: "right" }}
+                    contentProps={{ maxW: "300px" }}
                   />
                 </HStack>
                 <Select.Control>
@@ -542,8 +546,8 @@ export default function CustomStyleMenu({
                   <Alert.Content>
                     <Alert.Description>
                       This sound plays individual notes rather than a continuous
-                      tone. For best results, map an input to Pitch and
-                      select a scale in Musical Settings.
+                      tone. For best results, map an input to Pitch and select a
+                      scale in Musical Settings.
                     </Alert.Description>
                   </Alert.Content>
                   <CloseButton
@@ -1025,6 +1029,11 @@ export default function CustomStyleMenu({
             <Text pb={2} fontSize="sm" color="fg.muted" textAlign="center">
               One parameter must be mapped to <strong>Time</strong> to continue.
             </Text>
+          )}
+          {errorMessage && (
+            <HStack px="5">
+              <ErrorMsg message={errorMessage} />
+            </HStack>
           )}
           <Dialog.Footer display="flex" justifyContent="center">
             <Button

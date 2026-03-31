@@ -113,6 +113,8 @@ export default function Sonify() {
     null,
   );
 
+  const [altAz, setAltAz] = useState<string[] | null>(null);
+
   // Generate the plot once when component mounts
   useEffect(() => {
     async function fetchPlot() {
@@ -197,6 +199,11 @@ export default function Sonify() {
     try {
       const response = await apiRequest(url, data);
       console.log("Sonification result:", response);
+
+      if (response.alt_az) {
+        setAltAz(response.alt_az)
+      }
+
       return response.file_ref;
     } catch (error: any) {
       setErrorMessage(
@@ -212,6 +219,7 @@ export default function Sonify() {
     setSoniReady(false);
     setSpecReady(false);
     setLoading(true);
+    setAltAz(null);
 
     requestSonification().then((fileRef) => {
       setLoading(false);
@@ -275,6 +283,10 @@ export default function Sonify() {
       .replace(/s$/, "");
   }
 
+  function formatCoord(coord: string) {
+    return Number(coord).toFixed(2);
+  }
+
   const summaryItems = [
     { label: "Description", value: styleDescription, downloadable: false },
     { label: "Data", value: dataName, downloadable: true, fileRef: dataRef },
@@ -299,7 +311,7 @@ export default function Sonify() {
         <HStack gap="4" align="start" justify="center">
           <Box width="50%">
             <form onSubmit={handleSubmit}>
-              <VStack align="start" justify="center" w="80%" gap={8}>
+              <VStack align="start" justify="center" w="80%" gap={5}>
                 <HStack gap={10}>
                   <Field.Root invalid={invalidLength} width="auto">
                     <HStack>
@@ -397,10 +409,10 @@ export default function Sonify() {
                   </Select.Root>
                   {soniType !== "night_sky" && ra && dec && (
                     <HStack>
-                      <Tooltip 
-                      content='Unavailable for Mono audio systems'
-                      disabled={audioSystem[0] !== 'mono'}
-                      openDelay={100}
+                      <Tooltip
+                        content="Unavailable for Mono audio systems"
+                        disabled={audioSystem[0] !== "mono"}
+                        openDelay={100}
                       >
                         <Button
                           colorPalette="teal"
@@ -422,17 +434,30 @@ export default function Sonify() {
                 </HStack>
 
                 {observerValues && (
-                  <Tag.Root colorPalette="teal" size="md">
-                    <Tag.Label>
-                      {observerValues.locationName}, facing{" "}
-                      {COMPASS[observerValues.orientation]}
-                    </Tag.Label>
-                    <Tag.EndElement>
-                      <Tag.CloseTrigger
-                        onClick={() => setObserverValues(null)}
-                      />
-                    </Tag.EndElement>
-                  </Tag.Root>
+                  <HStack
+                    bg="teal.subtle"
+                    color="teal.fg"
+                    borderRadius="md"
+                    px={2}
+                    py={1}
+                    fontSize="xs"
+                    flexWrap="wrap"
+                    align="center"
+                  >
+                    <Text flex="1" whiteSpace="normal">
+                      {observerValues.locationName} (
+                      {formatCoord(observerValues.latitude)},{" "}
+                      {formatCoord(observerValues.longitude)}), facing{" "}
+                      {COMPASS[observerValues.orientation]},{" "}
+                      {observerValues.dateTime}
+                    </Text>
+                    <CloseButton
+                      size="xs"
+                      variant='subtle'
+                      colorPalette='teal'
+                      onClick={() => setObserverValues(null)}
+                    />
+                  </HStack>
                 )}
 
                 <Dialog.Root
@@ -448,11 +473,15 @@ export default function Sonify() {
                         <Dialog.Title>Place on Dome</Dialog.Title>
                       </Dialog.Header>
                       <Dialog.Body>
-                        <VStack gap={5}>
+                        <VStack gap={4}>
                           <Text>
                             Set your location, orientation, and the date and
                             time of your observation to position the audio at
                             this object's location.
+                          </Text>
+                          <Text textStyle="xs" color="fg.muted">
+                            This feature will override any spatial audio
+                            mappings (e.g. Azimuth, Pan) in your chosen style.
                           </Text>
                           <ObserverSetup
                             onSubmit={handlePlaceOnDome}
@@ -515,6 +544,26 @@ export default function Sonify() {
                       )}
                     </DataList.Item>
                   ))}
+                  {altAz && (
+                    <>
+                      <DataList.Item key="altitude" pt="4">
+                        <DataList.ItemLabel fontWeight="bold">
+                          Altitude
+                        </DataList.ItemLabel>
+                        <DataList.ItemValue>
+                          {formatCoord(altAz[0])}°
+                        </DataList.ItemValue>
+                      </DataList.Item>
+                      <DataList.Item key="azimuth" pt="4">
+                        <DataList.ItemLabel fontWeight="bold">
+                          Azimuth
+                        </DataList.ItemLabel>
+                        <DataList.ItemValue>
+                          {formatCoord(altAz[1])}°
+                        </DataList.ItemValue>
+                      </DataList.Item>
+                    </>
+                  )}
                 </DataList.Root>
               </VStack>
             </form>
