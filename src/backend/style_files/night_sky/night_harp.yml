@@ -21,6 +21,5 @@ parameters:
 
   - input: 'relative_az'
     output: 'azimuth'
-    output_range: [0.25, 0.75]
 
 harmony: ['F2', 'C2', 'F3', 'A3', 'E4', 'G4']
