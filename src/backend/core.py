@@ -147,13 +147,17 @@ def generate_spectrogram(request: DataRequest):
             sr = target_sr
             
         freq_max = sr // 2
+        
+        duration = len(data) / sr
+        nperseg = 2048 if duration < 30 else 1024
+        noverlap = nperseg // 2
 
         freqs, times, Sxx = spectrogram(
             data,
             fs=sr,
             window='hann',
-            nperseg=2048,
-            noverlap=1024,
+            nperseg=nperseg,
+            noverlap=noverlap,
             scaling='spectrum'
         )
 
