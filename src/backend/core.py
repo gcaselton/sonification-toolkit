@@ -17,7 +17,7 @@ import matplotlib
 matplotlib.use("Agg") 
 from matplotlib.figure import Figure
 from scipy.io import wavfile
-from scipy.signal import spectrogram
+from scipy.signal import spectrogram, resample_poly
 from io import BytesIO
 from astropy.io import fits
 from astropy.table import Table
@@ -133,6 +133,20 @@ def generate_spectrogram(request: DataRequest):
 
         # Normalise to float
         data = data.astype(np.float32) / np.iinfo(np.int32).max
+        
+        target_sr = 22050
+
+        # Downsample
+        if sr != target_sr:
+            
+            gcd = np.gcd(sr, target_sr)
+            up = target_sr // gcd
+            down = sr // gcd
+
+            data = resample_poly(data, up, down)
+            sr = target_sr
+            
+        freq_max = sr // 2
 
         freqs, times, Sxx = spectrogram(
             data,
