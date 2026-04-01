@@ -473,10 +473,15 @@ export default function CustomStyleMenu({
                   Have a Style File?
                 </Text>
                 <FileUpload.Root
-                  accept={{ "application/yaml": [".yaml", ".yml"] }}
+                  accept={{ "*/*": [".yaml", ".yml"] }}
                   maxFiles={1}
                   maxFileSize={1 * 1024 * 1024} // 1MB file limit
                   onFileAccept={({ files }) => handleStyleUpload(files)}
+                  onFileReject={(details) => {
+                    setErrorMessage(
+                      `File rejected: ${details.files[0].errors.join(", ")}`,
+                    );
+                  }}
                 >
                   <FileUpload.HiddenInput />
                   <FileUpload.Trigger asChild>

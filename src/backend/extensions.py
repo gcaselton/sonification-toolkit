@@ -477,11 +477,15 @@ def light_curve_sources(data, style: BaseStyle, length):
                   
                   col1 = col1.replace('Time (days)', 'time')
                   col2 = col2.replace('Flux (electrons per second)', 'flux')
-
+                  
+                  style_inputs = [mapping.input for mapping in style.parameters]
+                  
+                  # Auto-assign time and flux if there is a style/data input mismatch
+                  col1 = col1 if col1 in style_inputs else 'time'
+                  col2 = col2 if col2 in style_inputs else 'flux'
+            
                   labelled_data[col1] = df.iloc[:, 0].to_numpy()
                   labelled_data[col2] = df.iloc[:, 1].to_numpy()
-                  
-      print(labelled_data)
 
       is_scale = ((style.harmony and ' ' in style.harmony) or (style.preset == 'staccato'))
 
