@@ -245,8 +245,6 @@ def plot_and_format_constellation(df: pd.DataFrame, lines: bool):
     if lines:
 
         const = get_const_from_df(df)
-        
-        print("DF CONST:", df['con'].unique())
 
 
         for hip_a, hip_b in CONST_SHAPES[const]:
@@ -388,6 +386,5 @@ async def save_refined(request: ConstellationRequest):
     refined_stars.to_csv(filepath, index=False)
 
     file_ref = f'session:{filename}'
-    print(file_ref)
-
+    
     return {'file_ref': file_ref, 'ra': ra, 'dec': dec}

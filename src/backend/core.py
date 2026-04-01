@@ -121,7 +121,7 @@ def generate_spectrogram(request: DataRequest):
 
     try:
   
-        sr, data = wavfile.read(str(filepath), mmap=True)
+        sr, data = wavfile.read(str(filepath))
         
         #Frequency parameters
         freq_min = 20
