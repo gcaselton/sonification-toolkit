@@ -333,6 +333,12 @@ export default function Sonify() {
                       <NumberInput.Control />
                       <NumberInput.Input />
                     </NumberInput.Root>
+                    {Number(length) > 30 && Number(length) <= 120 && (
+                      <Field.HelperText>
+                        Warning: Longer sonifications take more time to
+                        generate, including the spectrogram.
+                      </Field.HelperText>
+                    )}
                     <Field.ErrorText>
                       Please enter a number up to {defaults.max_length} seconds.
                     </Field.ErrorText>
@@ -453,8 +459,8 @@ export default function Sonify() {
                     </Text>
                     <CloseButton
                       size="xs"
-                      variant='subtle'
-                      colorPalette='teal'
+                      variant="subtle"
+                      colorPalette="teal"
                       onClick={() => setObserverValues(null)}
                     />
                   </HStack>
