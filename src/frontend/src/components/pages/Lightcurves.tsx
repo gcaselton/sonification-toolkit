@@ -233,10 +233,18 @@ export default function Lightcurves() {
 
   const handleFileAccept = async (files: FileList | File[]) => {
 
+    setUploading(true);
+
     const file = files[0];
 
     if (!file) {
       setUploading(false);
+      return;
+    }
+
+    if (file.size > 1e7) {
+      setUploading(false);
+      setErrorMessage("File too large. Maximum size is 10MB.");
       return;
     }
 
@@ -261,7 +269,8 @@ export default function Lightcurves() {
         // response was not JSON (ignore)
       }
       setUploading(false);
-      throw new Error(message);
+      setErrorMessage(message)
+      console.error(message);
     }
 
     const result = await res.json()
@@ -610,29 +619,24 @@ export default function Lightcurves() {
               ))}
               <FileUpload.Root
                 disabled={uploadDisabled}
-                accept={{
-                  "text/csv": [".csv"],
-                  "application/fits": [".fits"],
-                  "image/fits": [".fits"],
-                }}
+                accept={{ "*/*": [".csv", ".fits"] }}
                 key={uploadKey}
                 maxFiles={1}
                 maxFileSize={1e7}
                 w="200px"
                 onFileAccept={({ files }) => handleFileAccept(files)}
+                onFileReject={(details) => {
+                  setErrorMessage(
+                    `File rejected: ${details.files[0].errors.join(", ")}`,
+                  );
+                }}
                 _hover={{ transform: "scale(1.05)" }}
                 transition="transform 0.2s ease"
                 cursor={uploadDisabled ? "disabled" : "pointer"}
                 role="button"
                 aria-label="Upload your data"
               >
-                <FileUpload.HiddenInput
-                  onChange={(e) => {
-                    if (e.target.files && e.target.files.length > 0) {
-                      setUploading(true);
-                    }
-                  }}
-                />
+                <FileUpload.HiddenInput />
                 <FileUpload.Dropzone>
                   <Icon size="lg" color="fg.muted">
                     {uploading ? <Spinner /> : <LuUpload />}
