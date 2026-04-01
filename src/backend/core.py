@@ -30,7 +30,7 @@ LOG = logging.getLogger(__name__)
 
 # Useful constants for '/upload-data/' endpoint
 ACCEPTED_UPLOAD_FORMATS = ['.csv', '.fits']
-SESSION_QUOTA_MB = 50
+SESSION_QUOTA_MB = 100
 SESSION_QUOTA_BYTES = SESSION_QUOTA_MB * 1024 * 1024
 
 FORMATTED_FILENAMES = {
@@ -121,7 +121,7 @@ def generate_spectrogram(request: DataRequest):
 
     try:
   
-        sr, data = wavfile.read(str(filepath))
+        sr, data = wavfile.read(str(filepath), mmap=True)
         
         #Frequency parameters
         freq_min = 20
