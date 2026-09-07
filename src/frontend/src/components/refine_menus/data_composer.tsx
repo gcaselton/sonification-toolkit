@@ -48,7 +48,7 @@ export default function DataComposer({
   const [columnsLoading, setColumnsLoading] = useState(true);
   const [columnsError, setColumnsError] = useState("");
 
-  const [idColumn, setIdColumn] = useState<string | null>(prevIdColumn ?? null);
+  const [idColumn, setIdColumn] = useState(prevIdColumn ?? "none");
 
   // Missing-value handling
   const [nanStrategy, setNanStrategy] = useState<NanStrategy>("silence");
@@ -120,6 +120,7 @@ export default function DataComposer({
               label: col.name,
               value: col.name,
             })),
+          { label: "None", value: "none" },
         ],
       }),
     [columns, selectedColumns],
@@ -127,8 +128,12 @@ export default function DataComposer({
 
   // Clear the Identifier column select if the chosen column gets deselected
   useEffect(() => {
-    if (!columnsLoading && idColumn && !selectedColumns.has(idColumn)) {
-      setIdColumn(null);
+    if (
+      !columnsLoading &&
+      idColumn !== "none" &&
+      !selectedColumns.has(idColumn)
+    ) {
+      setIdColumn("none");
     }
   }, [columnsLoading, selectedColumns, idColumn]);
 
@@ -217,7 +222,10 @@ export default function DataComposer({
     try {
       const result = await apiRequest(endpoint, payload, "POST");
       if (onApply) {
-        onApply({newRef: result.file_ref, idColumn: idColumn});
+        onApply({
+          newRef: result.file_ref,
+          idColumn: idColumn === "none" ? null : idColumn,
+        });
       }
     } catch (err) {
       console.error("Error saving refined data:", err);
@@ -301,7 +309,7 @@ export default function DataComposer({
 
               <Select.Control>
                 <Select.Trigger>
-                  <Select.ValueText placeholder="None" />
+                  <Select.ValueText />
                 </Select.Trigger>
                 <Select.IndicatorGroup>
                   <Select.Indicator />

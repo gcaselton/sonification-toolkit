@@ -398,11 +398,11 @@ def convert_to_mp3(wav_file: str) -> str:
     return str(mp3_path)
     
 
-@router.get("/download")
-def download_file(file_ref: str):
+@router.get("/download/{file_ref}")
+def download_file(file_ref: str, name: str | None = None):
 
     file_path = str(resolve_file(file_ref))
-    file_name = file_ref.split(':')[-1]
+    file_name = name or file_ref.split(':')[-1]
  
     response = FileResponse(
         path=file_path,

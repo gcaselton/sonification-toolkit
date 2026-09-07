@@ -618,6 +618,11 @@ export default function CustomStyleMenu({
             ...mapping,
             input: response.metadata.mappingParams[index].input,
             output: response.metadata.mappingParams[index].output,
+            output_range:
+              mapping.output === "pitch_shift" && mapping.output_range
+              // convert pitch_shift range back from 0-24 to 0-1
+                ? mapping.output_range.map((lim) => Math.round((lim / 24) * 100) / 100)
+                : mapping.output_range,
           }),
         );
 
@@ -818,7 +823,9 @@ export default function CustomStyleMenu({
                     autoMappedTime;
 
                   // Used to disable output range for Azimuth and Polar (not allowed in STRAUSS)
-                  const isSpatial = ["Azimuth", "Polar Angle"].includes(mapping.output);
+                  const isSpatial = ["Azimuth", "Polar Angle"].includes(
+                    mapping.output,
+                  );
 
                   return (
                     <Card.Root key={index} variant="elevated" size="sm">
@@ -1043,7 +1050,10 @@ export default function CustomStyleMenu({
                                     />
                                   </HStack>
                                   <HStack gap={8}>
-                                    <Tooltip content='Range is not supported for spatial parameters' disabled={!isSpatial}>
+                                    <Tooltip
+                                      content="Range is not supported for spatial parameters"
+                                      disabled={!isSpatial}
+                                    >
                                       <HStack>
                                         <NumberInput.Root
                                           disabled={isSpatial}

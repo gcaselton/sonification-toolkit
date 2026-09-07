@@ -54,10 +54,12 @@ interface SummaryListProps {
 const DownloadButton = ({
   label,
   fileRef,
+  fileName,
   tooltip,
 }: {
   label: string;
   fileRef: string | null;
+  fileName: string;
   tooltip: string;
 }) => {
   if (!fileRef) return null;
@@ -66,8 +68,7 @@ const DownloadButton = ({
     <Tooltip content={tooltip}>
       <Button asChild size="sm" colorPalette="teal" variant="subtle">
         <a
-          href={`${coreAPI}/download?file_ref=${encodeURIComponent(fileRef)}`}
-          style={{ color: "inherit" }}
+          href={`${coreAPI}/download/${encodeURIComponent(fileRef)}?name=${encodeURIComponent(fileName)}`}
         >
           <LuDownload />
           {label}
@@ -96,10 +97,9 @@ export const LayerDownloads = ({
     >
       {soniReady ? (
         <a
-          href={`${coreAPI}/download?file_ref=${encodeURIComponent(
+          href={`${coreAPI}/download/${encodeURIComponent(
             `session:mapping_table_${String(i + 1)}.csv`,
-          )}`}
-          style={{ color: "inherit" }}
+          )}?name=${encodeURIComponent(`Mapping Table${layerLabel ? ` (${layerLabel})` : ""}.csv`)}`}
         >
           <LuDownload />
           Mapping table
@@ -123,12 +123,14 @@ export const LayerDownloads = ({
         <DownloadButton
           label="Data"
           fileRef={summary.dataRef}
+          fileName={`${summary.dataName}.csv`}
           tooltip="Download data"
         />
 
         <DownloadButton
           label="Style"
           fileRef={summary.styleRef}
+          fileName={`${summary.styleName}.yml`}
           tooltip="Download style file"
         />
 

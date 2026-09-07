@@ -51,6 +51,7 @@ export default function AudioDownloadButton({
           <Button
             colorPalette="teal"
             variant={layer ? "subtle" : "solid"}
+            size={layer ? "sm" : "md"}
             disabled={layer && !soniReady}
           >
             <LuDownload /> {layer ? "Layer audio" : "Download"}
