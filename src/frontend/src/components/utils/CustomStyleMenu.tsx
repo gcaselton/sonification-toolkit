@@ -400,12 +400,7 @@ export default function CustomStyleMenu({
         }));
 
         // Disable inputs with non-numeric data
-        setInputOptions(
-          createListCollection({
-            items: inputItems,
-            isItemDisabled: (item) => item.numeric === false,
-          }),
-        );
+        setInputOptions(createListCollection({ items: inputItems }));
         setOutputOptions(createListCollection({ items: outputItems }));
 
         // Auto-map time → time if both exist (case-insensitive)
@@ -620,8 +615,10 @@ export default function CustomStyleMenu({
             output: response.metadata.mappingParams[index].output,
             output_range:
               mapping.output === "pitch_shift" && mapping.output_range
-              // convert pitch_shift range back from 0-24 to 0-1
-                ? mapping.output_range.map((lim) => Math.round((lim / 24) * 100) / 100)
+                ? // convert pitch_shift range back from 0-24 to 0-1
+                  mapping.output_range.map(
+                    (lim) => Math.round((lim / 24) * 100) / 100,
+                  )
                 : mapping.output_range,
           }),
         );
@@ -868,33 +865,6 @@ export default function CustomStyleMenu({
                                   <Select.Content maxH="200px" overflowY="auto">
                                     {inputOptions.items.map((option) => {
                                       const disabled = option.numeric === false;
-                                      const item = (
-                                        <Select.Item
-                                          item={option}
-                                          key={option.value}
-                                          _disabled={{
-                                            opacity: 0.4,
-                                            cursor: "not-allowed",
-                                            pointerEvents: "auto",
-                                          }}
-                                        >
-                                          <Stack>
-                                            <Select.ItemText>
-                                              {option.label}
-                                            </Select.ItemText>
-                                            {option.description && (
-                                              <Span
-                                                color="fg.muted"
-                                                textStyle="xs"
-                                              >
-                                                {option.description}
-                                              </Span>
-                                            )}
-                                          </Stack>
-                                          <Select.ItemIndicator />
-                                        </Select.Item>
-                                      );
-
                                       return (
                                         <Tooltip
                                           openDelay={200}
@@ -902,7 +872,33 @@ export default function CustomStyleMenu({
                                           disabled={!disabled}
                                           content="This column contains non-numeric data"
                                         >
-                                          {item}
+                                          <Select.Item
+                                            item={{
+                                              ...option,
+                                              disabled: disabled,
+                                            }}
+                                            key={option.value}
+                                            _disabled={{
+                                              opacity: 0.4,
+                                              cursor: "not-allowed",
+                                              pointerEvents: "auto",
+                                            }}
+                                          >
+                                            <Stack>
+                                              <Select.ItemText>
+                                                {option.label}
+                                              </Select.ItemText>
+                                              {option.description && (
+                                                <Span
+                                                  color="fg.muted"
+                                                  textStyle="xs"
+                                                >
+                                                  {option.description}
+                                                </Span>
+                                              )}
+                                            </Stack>
+                                            <Select.ItemIndicator />
+                                          </Select.Item>
                                         </Tooltip>
                                       );
                                     })}
@@ -966,31 +962,48 @@ export default function CustomStyleMenu({
                                         (option.value === "Azimuth" &&
                                           selectedOutputs.includes("Pan"));
 
+                                      const disabled =
+                                        isUsedElsewhere || isSpatialConflict;
+
                                       return (
-                                        <Select.Item
-                                          item={{
-                                            ...option,
-                                            disabled:
-                                              isUsedElsewhere ||
-                                              isSpatialConflict,
-                                          }}
+                                        <Tooltip
+                                          openDelay={200}
                                           key={option.value}
+                                          disabled={!disabled}
+                                          content={
+                                            isSpatialConflict
+                                              ? "Can't use both Azimuth and Pan"
+                                              : "Already mapped"
+                                          }
                                         >
-                                          <Stack gap="0">
-                                            <Select.ItemText>
-                                              {option.label}
-                                            </Select.ItemText>
-                                            {option.description && (
-                                              <Span
-                                                color="fg.muted"
-                                                textStyle="xs"
-                                              >
-                                                {option.description}
-                                              </Span>
-                                            )}
-                                          </Stack>
-                                          <Select.ItemIndicator />
-                                        </Select.Item>
+                                          <Select.Item
+                                            item={{
+                                              ...option,
+                                              disabled: disabled,
+                                            }}
+                                            key={option.value}
+                                            _disabled={{
+                                              opacity: 0.4,
+                                              cursor: "not-allowed",
+                                              pointerEvents: "auto",
+                                            }}
+                                          >
+                                            <Stack gap="0">
+                                              <Select.ItemText>
+                                                {option.label}
+                                              </Select.ItemText>
+                                              {option.description && (
+                                                <Span
+                                                  color="fg.muted"
+                                                  textStyle="xs"
+                                                >
+                                                  {option.description}
+                                                </Span>
+                                              )}
+                                            </Stack>
+                                            <Select.ItemIndicator />
+                                          </Select.Item>
+                                        </Tooltip>
                                       );
                                     })}
                                   </Select.Content>

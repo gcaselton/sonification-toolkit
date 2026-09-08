@@ -125,9 +125,6 @@ def generate_sonification(request: SonificationRequest, connection: Request):
                         m['input'] = 'custom_order'
                         m['function'] = None # Remove any previous invert functions
                         break
-                    
-            # TODO Swap azimuth for pan if not using 5.1/7.1 ???
-            
                         
             # Build dict with keyword arguments for sonification function
             kwargs = {

@@ -22,11 +22,12 @@ def get_columns(request: DataRequest):
     
     col_info = []
     
-    for i, col in enumerate(df.columns):
+    for col in df.columns:
         col_info.append(
             {
                 'name': str(col),
-                'NaNs': int(df[col].isna().sum())
+                'NaNs': int(df[col].isna().sum()),
+                'unique': df[col].is_unique
             }
         )
         

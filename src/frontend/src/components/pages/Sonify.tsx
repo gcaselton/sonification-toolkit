@@ -1,4 +1,10 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, {
+  useState,
+  useEffect,
+  useRef,
+  useMemo,
+  useCallback,
+} from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import LoadingMessage from "../ui/LoadingMessage";
 import { BackButton } from "../ui/Buttons";
@@ -47,6 +53,7 @@ import {
   LuDatabase,
   LuSettings2,
   LuCircleHelp,
+  LuSlidersVertical,
 } from "react-icons/lu";
 import { plotData } from "../../utils/plot";
 import ObserverSetup, {
@@ -60,6 +67,8 @@ import AudioDownloadButton from "../ui/AudioDownloadButton";
 import { SummaryList, LayerSummary } from "../ui/sonify/SummaryComponents";
 import { formatCoord, formatSoniType } from "../../utils/formatting";
 import { Toaster, toaster } from "../ui/toaster";
+import VolumeMixer, { LayerVolume } from "../ui/sonify/VolumeMixer";
+import { debounce } from "es-toolkit";
 
 export default function Sonify() {
   const navigate = useNavigate();
@@ -79,7 +88,11 @@ export default function Sonify() {
 
   // Define length limits based on sonification type
   const defaultsDict = {
-    light_curves: { max_length: 60, default_length: 15, audio_system: "stereo" },
+    light_curves: {
+      max_length: 60,
+      default_length: 15,
+      audio_system: "stereo",
+    },
     constellations: {
       max_length: 120,
       default_length: 15,
@@ -118,9 +131,9 @@ export default function Sonify() {
   // States to control data plot
   const [imageSrc, setImageSrc] = useState<string | null>(null);
   const [imageLoading, setImageLoading] = useState(true);
-  const [activePlot, setActivePlot] = useState<"data" | "spectrogram">(
-    soniType === "data_composer" ? "spectrogram" : "data",
-  );
+  const [activePanel, setActivePanel] = useState<
+    "mixer" | "data" | "spectrogram"
+  >(soniType === "data_composer" ? "mixer" : "data");
 
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string>("");
@@ -139,6 +152,20 @@ export default function Sonify() {
   const [altAz, setAltAz] = useState<string[] | null>(null);
 
   const audioRef = useRef<HTMLAudioElement>(null);
+
+  const [layerVolumes, setLayerVolumes] = useState<LayerVolume[]>([]);
+
+  useEffect(() => {
+    if (layers) {
+      setLayerVolumes(
+        layers.map((layer, index) => ({
+          index: index,
+          label: layer.label,
+          volume: 1,
+        })),
+      );
+    }
+  }, [layers]);
 
   // Focus keyboard navigation onto audio player once sonification generated
   useEffect(() => {
@@ -168,7 +195,7 @@ export default function Sonify() {
 
   // Auto-switch to spectrogram for light curves when it's ready
   useEffect(() => {
-    if (specImage && soniType === "light_curves") setActivePlot("spectrogram");
+    if (specImage && soniType === "light_curves") setActivePanel("spectrogram");
   }, [specImage]);
 
   // Fetch data range once on load for lightcurves
@@ -330,8 +357,52 @@ export default function Sonify() {
     navigate("../style", { state });
   };
 
+  const handleLayerVolumeChange = (index: number, volume: number) => {
+    const updatedLayers = layerVolumes.map((layer) =>
+      layer.index === index ? { ...layer, volume } : layer,
+    );
+
+    const targetLayer = layerVolumes.filter((layer) => layer.index === index)
+
+    setLayerVolumes(updatedLayers);
+    debouncedMix(targetLayer);
+  };
+
+  const mixVolume = useCallback(
+    async (layer: LayerVolume) => {
+      try {
+        const response = await apiRequest(`${coreAPI}/mix-layers/`, {
+          layers: volumes.map((layer) => ({
+            id: layer.id,
+            volume: layer.volume,
+          })),
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to mix layers");
+        }
+
+        const data = await response.json();
+
+        setAudioFilename(data.file_ref);
+        setAudioKey((prev) => prev + 1);
+      } catch (error) {
+        console.error("Error mixing layers:", error);
+      }
+    },
+    [coreAPI],
+  );
+
+  const debouncedMix = useMemo(() => debounce(mixVolume, 300), [mixVolume]);
+
+  useEffect(() => {
+    return () => {
+      debouncedMix.cancel();
+    };
+  }, [debouncedMix]);
+
+  
   const askForFeedback = () => {
-    
     if (sessionStorage.getItem("feedbackShown")) {
       return;
     }
@@ -679,21 +750,35 @@ export default function Sonify() {
           </form>
           <br />
         </Box>
+
+        {/* Right hand side of the screen */}
+
         <VStack width={{ base: "100%", lg: "50%" }}>
           {soniReady && soniType !== "data_composer" && (
             <Flex justify="center" mb={2}>
               <SegmentGroup.Root
-                value={activePlot}
+                value={activePanel}
                 onValueChange={(e) =>
-                  setActivePlot(e.value as "data" | "spectrogram")
+                  setActivePanel(e.value as "mixer" | "data" | "spectrogram")
                 }
                 size="sm"
               >
                 <SegmentGroup.Indicator />
-                <SegmentGroup.Item value="data" cursor="pointer">
+                <SegmentGroup.Item
+                  value={soniType === "data_composer" ? "mixer" : "data"}
+                  cursor="pointer"
+                >
                   <SegmentGroup.ItemText>
                     <HStack>
-                      <LuDatabase /> Data
+                      {soniType === "data_composer" ? (
+                        <>
+                          <LuSlidersVertical /> Volume
+                        </>
+                      ) : (
+                        <>
+                          <LuDatabase /> Data
+                        </>
+                      )}
                     </HStack>
                   </SegmentGroup.ItemText>
                   <SegmentGroup.ItemHiddenInput />
@@ -722,64 +807,41 @@ export default function Sonify() {
             alignItems="center"
             justifyContent="center"
           >
-            {soniType === "data_composer" ? (
-              !soniReady ? (
-                <Box px={20} textAlign="center">
-                  <VStack gap={3}>
-                    <LuAudioLines size={40} />
-                    <Text color="fg.muted" maxW="350px">
-                      Generate your sonification to view its spectrogram.
-                    </Text>
-                  </VStack>
-                </Box>
-              ) : specLoading ? (
+            {activePanel === "mixer" && (
+              <VolumeMixer
+                layers={layerVolumes}
+                onLayerVolumeChange={handleLayerVolumeChange}
+              />
+            )}
+            {activePanel === "data" &&
+              (imageLoading ? (
+                <LoadingMessage msg="" icon="pulsar" />
+              ) : imageSrc ? (
+                <Image
+                  src={imageSrc}
+                  alt={`A plot of the ${dataName} ${formatSoniType(soniType)}`}
+                  rounded="md"
+                  animation="fade-in 300ms ease-out"
+                />
+              ) : (
+                <ErrorMsg message="Unable to plot data." />
+              ))}
+
+            {activePanel === "spectrogram" &&
+              (specLoading ? (
                 <LoadingMessage msg="Generating spectrogram..." icon="pulsar" />
               ) : specImage ? (
                 <Image
                   src={`data:image/png;base64,${specImage}`}
-                  alt="Spectrogram of the generated sonification"
+                  alt="Spectrogram"
                   rounded="md"
                   animation="fade-in 300ms ease-out"
                 />
               ) : (
                 <ErrorMsg message="Unable to generate spectrogram." />
-              )
-            ) : (
-              <>
-                {activePlot === "data" &&
-                  (imageLoading ? (
-                    <LoadingMessage msg="" icon="pulsar" />
-                  ) : imageSrc ? (
-                    <Image
-                      src={imageSrc}
-                      alt={`A plot of the ${dataName} ${formatSoniType(soniType)}`}
-                      rounded="md"
-                      animation="fade-in 300ms ease-out"
-                    />
-                  ) : (
-                    <ErrorMsg message="Unable to plot data." />
-                  ))}
-
-                {activePlot === "spectrogram" &&
-                  (specLoading ? (
-                    <LoadingMessage
-                      msg="Generating spectrogram..."
-                      icon="pulsar"
-                    />
-                  ) : specImage ? (
-                    <Image
-                      src={`data:image/png;base64,${specImage}`}
-                      alt="Spectrogram"
-                      rounded="md"
-                      animation="fade-in 300ms ease-out"
-                    />
-                  ) : (
-                    <ErrorMsg message="Unable to generate spectrogram." />
-                  ))}
-              </>
-            )}
+              ))}
           </Box>
-          {activePlot === "spectrogram" && specImage && (
+          {activePanel === "spectrogram" && specImage && (
             <Link
               onClick={() => setSpecHelperOpen(true)}
               color="teal.500"

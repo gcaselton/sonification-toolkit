@@ -27,10 +27,13 @@ import { InfoTip } from "../ui/ToggleTip";
 import { LuArrowRight, LuTriangleAlert } from "react-icons/lu";
 import { debounce } from "es-toolkit";
 import NaNHandler, { NanStrategy } from "../ui/NaNHandler";
+import { DiscAlbum } from "lucide-react";
+import { Tooltip } from "../ui/Tooltip";
 
 interface ColumnInfo {
   name: string;
   NaNs: number;
+  unique: boolean;
 }
 
 export default function DataComposer({
@@ -119,8 +122,9 @@ export default function DataComposer({
             .map((col) => ({
               label: col.name,
               value: col.name,
+              unique: col.unique,
             })),
-          { label: "None", value: "none" },
+          { label: "None", value: "none", unique: true },
         ],
       }),
     [columns, selectedColumns],
@@ -318,12 +322,29 @@ export default function DataComposer({
               <Portal>
                 <Select.Positioner>
                   <Select.Content>
-                    {idColumnOptions.items.map((item, i) => (
-                      <Select.Item item={item} key={i}>
-                        {item.label}
-                        <Select.ItemIndicator />
-                      </Select.Item>
-                    ))}
+                    {idColumnOptions.items.map((item, i) => {
+                      return (
+                        <Tooltip
+                          openDelay={200}
+                          key={item.value}
+                          disabled={item.unique}
+                          content="Only columns with unique values can be used as the identifier"
+                        >
+                          <Select.Item
+                            item={{ ...item, disabled: !item.unique }}
+                            key={i}
+                            _disabled={{
+                              opacity: 0.4,
+                              cursor: "not-allowed",
+                              pointerEvents: "auto",
+                            }}
+                          >
+                            {item.label}
+                            <Select.ItemIndicator />
+                          </Select.Item>
+                        </Tooltip>
+                      );
+                    })}
                   </Select.Content>
                 </Select.Positioner>
               </Portal>
