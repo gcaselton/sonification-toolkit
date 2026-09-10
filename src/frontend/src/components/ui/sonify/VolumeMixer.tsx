@@ -1,5 +1,14 @@
-import { Box, HStack, Slider, Stack, Text, VStack } from "@chakra-ui/react";
+import {
+  Box,
+  HStack,
+  Slider,
+  Text,
+  VStack,
+  Separator,
+  ScrollArea,
+} from "@chakra-ui/react";
 import { Layer } from "../../../types/layers";
+import { Fragment } from "react";
 
 interface VolumeMixerProps {
   layers: Layer[];
@@ -13,48 +22,78 @@ export default function VolumeMixer({
   onLayerVolumeChange,
 }: VolumeMixerProps) {
   return (
-    <Box width="100%">
-      <VStack align="stretch" gap={5}>
-        {/* Layer volumes */}
-        <Stack gap={4}>
-          {layers.map((layer) => (
-            <HStack key={layer.id} gap={4}>
-              <Text minWidth="120px" fontSize="sm">
-                {layer.label}
-              </Text>
+    <Box py={4} width="100%" minW={0}>
+      <ScrollArea.Root width="100%" minW={0}>
+        <ScrollArea.Viewport>
+          <ScrollArea.Content py={10}>
+            <HStack
+              gap={5}
+              align="stretch"
+              width="max-content"
+              px={6}
+              mx='auto'
+            >
+              {layers.map((layer, index) => (
+                <Fragment key={layer.id}>
+                  {index > 0 && <Separator orientation="vertical" />}
+                  <VStack
+                    gap={3}
+                    borderRadius="lg"
+                    py={5}
+                    width="90px"
+                    flexShrink={0}
+                  >
+                    <Text
+                      fontSize="sm"
+                      fontWeight="medium"
+                      color="fg.muted"
+                      maxW="90px"
+                      overflow="hidden"
+                      textOverflow="ellipsis"
+                      whiteSpace="nowrap"
+                    >
+                      {layer.label}
+                    </Text>
 
-              <Slider.Root
-                colorPalette="teal"
-                value={[layer.volume * 100]}
-                min={0}
-                max={100}
-                step={1}
-                onValueChangeEnd={(details) => {
-                  onLayerVolumeChange(layer, details.value[0] / 100);
-                }}
-                flex={1}
-              >
-                <Slider.Control>
-                  <Slider.Track>
-                    <Slider.Range />
-                  </Slider.Track>
+                    <Slider.Root
+                      aria-label={[layer.label + " volume"]}
+                      orientation="vertical"
+                      height="180px"
+                      colorPalette="teal"
+                      value={[Math.round(layer.volume * 100)]}
+                      min={0}
+                      max={100}
+                      step={1}
+                      onValueChange={(details) =>
+                        onLayerVolumeChange(layer, details.value[0] / 100)
+                      }
+                    >
+                      <Slider.Control>
+                        <Slider.Track width="6px">
+                          <Slider.Range />
+                        </Slider.Track>
+                        <Slider.Thumb index={0} shadow="sm" />
+                      </Slider.Control>
+                    </Slider.Root>
 
-                  <Slider.Thumb index={0} />
-                </Slider.Control>
-              </Slider.Root>
-
-              <Text
-                width="45px"
-                textAlign="right"
-                fontSize="sm"
-                fontVariantNumeric="tabular-nums"
-              >
-                {formatVolume(layer.volume)}
-              </Text>
+                    <Text
+                      fontSize="sm"
+                      fontWeight="semibold"
+                      fontVariantNumeric="tabular-nums"
+                      minW="3ch"
+                      textAlign="center"
+                    >
+                      {formatVolume(layer.volume)}
+                    </Text>
+                  </VStack>
+                </Fragment>
+              ))}
             </HStack>
-          ))}
-        </Stack>
-      </VStack>
+          </ScrollArea.Content>
+        </ScrollArea.Viewport>
+        <ScrollArea.Scrollbar orientation="horizontal" />
+        <ScrollArea.Corner />
+      </ScrollArea.Root>
     </Box>
   );
 }

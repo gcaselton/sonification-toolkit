@@ -34,6 +34,7 @@ class LayerRequest(BaseModel):
     data_ref: str
     style_ref: str
     id_column: Optional[str] = None
+    volume: float = 1.0
 
 class SonificationRequest(BaseModel):
     category: str
@@ -42,6 +43,9 @@ class SonificationRequest(BaseModel):
     system: Literal['mono', 'stereo', '5.1', '7.1']
     data_name: str
     observer: Optional[dict]
+    
+class VolumeRequest(BaseModel):
+    volumes: list[float]
     
 #---------- Constellations ----------#
     

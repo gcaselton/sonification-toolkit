@@ -7,17 +7,13 @@ import React, {
 } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import LoadingMessage from "../ui/LoadingMessage";
-import { BackButton } from "../ui/Buttons";
 import PageContainer from "../ui/PageContainer";
 import ErrorMsg from "../ui/ErrorMsg";
 import { InfoTip } from "../ui/ToggleTip";
 import SpecHelper from "../ui/sonify/SpecHelper";
 import {
-  apiUrl,
   lightCurvesAPI,
   coreAPI,
-  constellationsAPI,
-  nightSkyAPI,
 } from "../../apiConfig";
 import { apiRequest } from "../../utils/requests";
 import {
@@ -25,23 +21,18 @@ import {
   ActionBar,
   Button,
   createListCollection,
-  Checkbox,
   CloseButton,
   Dialog,
   Field,
   Heading,
   Image,
-  Tag,
-  Input,
   Text,
   Flex,
   Portal,
   SegmentGroup,
   NumberInput,
-  Separator,
   VStack,
   Stack,
-  Toast,
   Select,
   HStack,
   VisuallyHidden,
@@ -51,9 +42,9 @@ import {
   LuAudioLines,
   LuLocateFixed,
   LuDatabase,
-  LuSettings2,
   LuCircleHelp,
   LuSlidersVertical,
+  LuRotateCcw,
 } from "react-icons/lu";
 import { plotData } from "../../utils/plot";
 import ObserverSetup, {
@@ -69,12 +60,11 @@ import { formatCoord, formatSoniType } from "../../utils/formatting";
 import { Toaster, toaster } from "../ui/toaster";
 import VolumeMixer from "../ui/sonify/VolumeMixer";
 import { debounce } from "es-toolkit";
-import { Volume } from "lucide-react";
 import { useOptionalComposer } from "../../context/ComposerContext";
 
 export default function Sonify() {
   const navigate = useNavigate();
-  const composer = useOptionalComposer()
+  const composer = useOptionalComposer();
 
   const MAX_DURATION = 60;
 
@@ -89,7 +79,6 @@ export default function Sonify() {
   const userUpload = location.state.userUpload;
   const ra = location.state.ra ?? null;
   const dec = location.state.dec ?? null;
-  const layers = composer?.layers ?? null;
 
   /*---------- States ----------*/
 
@@ -100,7 +89,7 @@ export default function Sonify() {
   // Track the audio system used for the most recently generated sonification.
   // This is used to disable mp3 downloads if system has more channels than mono or stereo.
   const [generatedAudioSystem, setGeneratedAudioSystem] = useState(audioSystem);
-  const [audioFilename, setAudioFilename] = useState("");
+  const [masterAudioFileRef, setMasterAudioFileRef] = useState("");
 
   const [soniReady, setSoniReady] = useState(false);
   const [soniClicked, setSoniClicked] = useState(false);
@@ -109,6 +98,7 @@ export default function Sonify() {
   const [specLoading, setSpecLoading] = useState(false);
   const [specImage, setSpecImage] = useState<string | null>(null);
   const [specHelperOpen, setSpecHelperOpen] = useState(false);
+  const [specNeedsRefresh, setSpecNeedsRefresh] = useState(false);
 
   // States to control data plot
   const [imageSrc, setImageSrc] = useState<string | null>(null);
@@ -130,10 +120,11 @@ export default function Sonify() {
   const [observerValues, setObserverValues] = useState<ObserverValues | null>(
     null,
   );
-
   const [altAz, setAltAz] = useState<string[] | null>(null);
 
   const audioRef = useRef<HTMLAudioElement>(null);
+
+  const [layers, setLayers] = useState<Layer[]>(location.state.layers ?? []);
 
   // Focus keyboard navigation onto audio player once sonification generated
   useEffect(() => {
@@ -205,12 +196,13 @@ export default function Sonify() {
 
     const url = `${coreAPI}/generate-sonification/`;
 
-    const soniLayers = layers
+    const soniLayers = soniType === 'data_composer'
       ? // Send an array of data/style refs if using Data Composer
         layers.map((l) => ({
           data_ref: l.dataRef,
           style_ref: l.styleRef,
           id_column: l.idColumn,
+          volume: l.volume
         }))
       : [
           // Otherwise, send just the one wrapped in an array
@@ -225,7 +217,7 @@ export default function Sonify() {
       layers: soniLayers,
       duration: length,
       system: audioSystem,
-      data_name: layers ? "Layers" : dataName,
+      data_name: soniType === "data_composer" ? "Layers" : dataName,
       observer: observerValues
         ? {
             latitude: observerValues.latitude,
@@ -266,26 +258,27 @@ export default function Sonify() {
       if (fileRef) {
         setGeneratedAudioSystem(audioSystem);
         setAudioKey(Date.now().toString());
-        setAudioFilename(fileRef);
+        setMasterAudioFileRef(fileRef);
         setSoniReady(true);
 
         // Request spectrogram
-        setSpecLoading(true);
-        requestSpectrogram(fileRef).then((image) => {
-          setSpecImage(image);
-          setSpecLoading(false);
-        });
+        getSpectrogram(fileRef)
       } else {
         console.error("No sonification file returned.");
       }
     });
   };
 
-  const requestSpectrogram = async (fileRef: string) => {
+  const getSpectrogram = async (fileRef: string) => {
+    setSpecLoading(true);
+
     const response = await apiRequest(`${coreAPI}/generate-spectrogram/`, {
       file_ref: fileRef,
     });
-    return response.image;
+
+    setSpecImage(response.image);
+    setSpecLoading(false);
+    setSpecNeedsRefresh(false);
   };
 
   const handleLengthChange = (value: string) => {
@@ -326,8 +319,15 @@ export default function Sonify() {
   };
 
   const handleLayerVolumeChange = (layer: Layer, volume: number) => {
-    composer?.updateLayer(layer.id, { volume })
-    debouncedMix(layers!);
+    const updatedLayers = layers.map((l) =>
+      l.id === layer.id ? { ...l, volume } : l,
+    );
+    setLayers(updatedLayers);
+
+    if (soniClicked){
+      debouncedMix(updatedLayers);
+      setSpecNeedsRefresh(true);
+    }
   };
 
   const mixVolume = useCallback(
@@ -336,22 +336,16 @@ export default function Sonify() {
       setSoniReady(false);
       try {
         const response = await apiRequest(`${coreAPI}/mix-layer-volumes/`, {
-          volumes: layers.map((l) => l.volume)
+          volumes: layers.map((l) => l.volume),
         });
 
-        if (!response.ok) {
-          throw new Error("Failed to mix volume");
-        }
-
-        const data = await response.json();
-
-        setAudioFilename(data.master_audio_ref);
-        setAudioKey((prev) => prev + 1);
+        setMasterAudioFileRef(response.file_ref);
+        setAudioKey(Date.now().toString());
       } catch (error) {
         console.error("Error mixing volume:", error);
       } finally {
-        setSoniReady(true)
-        setLoading(false)
+        setSoniReady(true);
+        setLoading(false);
       }
     },
     [coreAPI],
@@ -399,7 +393,7 @@ export default function Sonify() {
   const invalidLength =
     Number(length) > MAX_DURATION || length === "0" || length.includes("-");
 
-  const summaries: LayerSummary[] = layers
+  const summaries: LayerSummary[] = soniType === 'data_composer'
     ? layers.map((l) => ({
         layerLabel: l.label,
         description: l.styleDescription!,
@@ -407,7 +401,7 @@ export default function Sonify() {
         styleName: l.styleName!,
         dataRef: l.dataRef,
         styleRef: l.styleRef,
-        volume: l.volume
+        volume: l.volume,
       }))
     : [
         {
@@ -416,7 +410,7 @@ export default function Sonify() {
           styleName: styleName,
           dataRef,
           styleRef,
-          volume: 1
+          volume: 1,
         },
       ];
 
@@ -452,7 +446,7 @@ export default function Sonify() {
       <Heading as="h1">Sonify</Heading>
       <br />
       <Text textStyle="lg">
-        Set the length of the sonification and specify the audio system you
+        Set the length of the sonification and choose the audio system you
         intend to play it on
       </Text>
       <br />
@@ -462,14 +456,17 @@ export default function Sonify() {
         gap="4"
         align="start"
         justify="center"
+        width="100%"
+        minW={0}
       >
-        <Box width={{ base: "100%", lg: "50%" }}>
+        <Box width={{ base: "100%", lg: "50%" }} minW={0}>
           <form onSubmit={handleSubmit}>
             <VStack
               align="start"
               justify="center"
               w={{ base: "100%", lg: "80%" }}
               gap={5}
+              minW={0}
             >
               <HStack gap={10}>
                 <Field.Root invalid={invalidLength} width="auto">
@@ -716,36 +713,39 @@ export default function Sonify() {
 
         {/* Right hand side of the screen */}
 
-        <VStack width={{ base: "100%", lg: "50%" }}>
-          {soniReady && soniType !== "data_composer" && (
-            <Flex justify="center" mb={2}>
-              <SegmentGroup.Root
-                value={activePanel}
-                onValueChange={(e) =>
-                  setActivePanel(e.value as "mixer" | "data" | "spectrogram")
-                }
-                size="sm"
+        <VStack width={{ base: "100%", lg: "50%" }} minW={0}>
+          <Flex justify="center" mb={0}>
+            <SegmentGroup.Root
+              value={activePanel}
+              onValueChange={(e) =>
+                setActivePanel(e.value as "mixer" | "data" | "spectrogram")
+              }
+              size="sm"
+            >
+              <SegmentGroup.Indicator />
+              <SegmentGroup.Item
+                value={soniType === "data_composer" ? "mixer" : "data"}
+                cursor="pointer"
               >
-                <SegmentGroup.Indicator />
-                <SegmentGroup.Item
-                  value={soniType === "data_composer" ? "mixer" : "data"}
-                  cursor="pointer"
-                >
-                  <SegmentGroup.ItemText>
-                    <HStack>
-                      {soniType === "data_composer" ? (
-                        <>
-                          <LuSlidersVertical /> Volume
-                        </>
-                      ) : (
-                        <>
-                          <LuDatabase /> Data
-                        </>
-                      )}
-                    </HStack>
-                  </SegmentGroup.ItemText>
-                  <SegmentGroup.ItemHiddenInput />
-                </SegmentGroup.Item>
+                <SegmentGroup.ItemText>
+                  <HStack>
+                    {soniType === "data_composer" ? (
+                      <>
+                        <LuSlidersVertical /> Volume
+                      </>
+                    ) : (
+                      <>
+                        <LuDatabase /> Data
+                      </>
+                    )}
+                  </HStack>
+                </SegmentGroup.ItemText>
+                <SegmentGroup.ItemHiddenInput />
+              </SegmentGroup.Item>
+              <Tooltip
+                content="Generate the sonification to view its spectrogram"
+                disabled={specLoading || specImage !== null}
+              >
                 <SegmentGroup.Item
                   value="spectrogram"
                   cursor="pointer"
@@ -758,21 +758,25 @@ export default function Sonify() {
                   </SegmentGroup.ItemText>
                   <SegmentGroup.ItemHiddenInput />
                 </SegmentGroup.Item>
-              </SegmentGroup.Root>
-            </Flex>
-          )}
+              </Tooltip>
+            </SegmentGroup.Root>
+          </Flex>
+
           <Box
             borderWidth="1px"
             borderRadius="md"
             minH="400px"
-            minW="400px"
+            width="100%"
+            minW={0}
+            overflow="hidden"
             display="flex"
             alignItems="center"
             justifyContent="center"
+            bg={activePanel === "mixer" ? "bg.subtle" : "bg"}
           >
             {activePanel === "mixer" && (
               <VolumeMixer
-                layers={layers!}
+                layers={layers}
                 onLayerVolumeChange={handleLayerVolumeChange}
               />
             )}
@@ -794,12 +798,29 @@ export default function Sonify() {
               (specLoading ? (
                 <LoadingMessage msg="Generating spectrogram..." icon="pulsar" />
               ) : specImage ? (
-                <Image
-                  src={`data:image/png;base64,${specImage}`}
-                  alt="Spectrogram"
-                  rounded="md"
-                  animation="fade-in 300ms ease-out"
-                />
+                <Box position="relative">
+                  <Image
+                    src={`data:image/png;base64,${specImage}`}
+                    alt="Spectrogram"
+                    rounded="md"
+                    animation="fade-in 300ms ease-out"
+                  />
+                  {specNeedsRefresh && (
+                    <Tooltip content="Update spectrogram with volume changes">
+                      <Button
+                        colorPalette="teal"
+                        position="absolute"
+                        top="4"
+                        right="4"
+                        size="sm"
+                        variant="surface"
+                        onClick={() => getSpectrogram(masterAudioFileRef)}
+                      >
+                        <LuRotateCcw /> Refresh
+                      </Button>
+                    </Tooltip>
+                  )}
+                </Box>
               ) : (
                 <ErrorMsg message="Unable to generate spectrogram." />
               ))}
@@ -837,13 +858,13 @@ export default function Sonify() {
                 <audio
                   ref={audioRef}
                   key={audioKey}
-                  src={`${coreAPI}/audio/${audioFilename}?name=${encodeURIComponent(masterAudioName)}&audio_format=wav&v=${audioKey}`}
+                  src={`${coreAPI}/audio/${masterAudioFileRef}?name=${encodeURIComponent(masterAudioName)}&audio_format=wav&v=${audioKey}`}
                   controls
                   style={{ flex: 1 }}
                 />
 
                 <AudioDownloadButton
-                  audioFileRef={audioFilename}
+                  audioFileRef={masterAudioFileRef}
                   fileName={masterAudioName}
                   audioKey={audioKey}
                   audioSystem={generatedAudioSystem}

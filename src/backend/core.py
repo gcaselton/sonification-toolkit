@@ -5,8 +5,8 @@ from paths import TMP_DIR, STYLE_FILES_DIR, SUGGESTED_DATA_DIR, SYNTHS_DIR, SAMP
 from context import session_id_var
 from utils import resolve_file, read_YAML_file, write_YAML_file, is_synth, write_sound_to_style, is_time_series, cleanup_old_layers
 from generator_mods import GENERATOR_MODS
-from request_models import DataRequest, CustomStyleSettings, LayerRequest, SonificationRequest, SoundInfo
-import logging, yaml, os, uuid, traceback, base64, gc, re, csv, shutil, math, tempfile
+from request_models import DataRequest, CustomStyleSettings, LayerRequest, SonificationRequest, SoundInfo, VolumeRequest
+import logging, yaml, os, uuid, traceback, base64, gc, re, csv, shutil, math, tempfile, pickle
 from param_descriptions import INPUTS, OUTPUTS
 from night_sky import handle_observer
 from analytics import log_event
@@ -84,6 +84,10 @@ def get_uploads_dir_size(uploads_dir: str) -> int:
 def generate_sonification(request: SonificationRequest, connection: Request):
     
     session_id = session_id_var.get()
+    
+    if not session_id:
+        raise HTTPException(status_code=400, detail="No session cookie found")
+    
     session_dir = TMP_DIR / session_id
     
     if request.duration > 60:
@@ -172,6 +176,10 @@ def generate_sonification(request: SonificationRequest, connection: Request):
             # Add layer to the AudioFigure and sonify
             soni = fig.sonify(df, **kwargs)
             
+            if layer.volume != 1:
+                # Set initial volume if not 1 (default)
+                fig.set_level(name=f'sonification_{i}', level=layer.volume)
+            
             # Get the mapping table(s)
             source_name = 'source_0' if style_dict['sources'].lower() == 'objects' else None
             table: pd.DataFrame = fig.get_table(name=f'sonification_{i}', source=source_name)
@@ -221,9 +229,6 @@ def generate_sonification(request: SonificationRequest, connection: Request):
                 status_code=500,
                 detail=f"{type(e).__name__}: {str(e)}"
             )
-        
-    if not session_id:
-        raise HTTPException(status_code=400, detail="No session cookie found")
     
     filename = 'audio_figure.wav'
     filepath = session_dir / filename
@@ -377,8 +382,39 @@ def get_audio(
                         media_type="audio/mpeg" if audio_format == "mp3" else "audio/wav")
     
 @router.post('/mix-layer-volumes/')
-def mix_layer_volumes(request: list[float]):
-    pass
+def mix_layer_volumes(request: VolumeRequest):
+    
+    if all(vol == 1 for vol in request.volumes):
+        # return original master if volumes all reset to 1
+        return {'file_ref': 'session:audio_figure.wav'}
+    
+    session_id = session_id_var.get()
+    session_dir = TMP_DIR / session_id
+    audio_figure_path = session_dir / 'audio_figure.wav'
+    
+    audio_figure = AudioSegment.from_wav(audio_figure_path)
+    
+    # Create blank audio segment with same attributes as audio figure
+    master = AudioSegment.silent(duration=len(audio_figure), frame_rate=audio_figure.frame_rate)
+    
+    for i, vol in enumerate(request.volumes, start=1):
+        
+        if vol == 0:
+            # Don't add silent layers
+            continue
+        
+        layer_path = session_dir / f"layer_{i}.wav"
+        layer_audio = AudioSegment.from_wav(layer_path)
+        
+        gain_db = 20 * math.log10(vol)
+        adjusted = layer_audio + gain_db -5.0 # Add 5db headroom to avoid clipping
+        
+        master = master.overlay(adjusted)
+
+    master_path = session_dir / "audio_figure_mixed.wav"
+    master.export(master_path, format='wav')
+    
+    return {'file_ref': 'session:audio_figure_mixed.wav'}
     
 def apply_volume(wav_path: str, volume: float, output_path: str) -> None:
     if not 0 <= volume <= 1:
@@ -390,7 +426,7 @@ def apply_volume(wav_path: str, volume: float, output_path: str) -> None:
         audio = AudioSegment.silent(duration=len(audio), frame_rate=audio.frame_rate)
     else:
         gain_db = 20 * math.log10(volume)
-        audio = audio.apply_gain(gain_db)
+        audio = audio + gain_db
 
     audio.export(output_path, format="wav")
 
