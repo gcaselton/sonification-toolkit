@@ -25,6 +25,7 @@ export interface LayerSummary {
   styleName: string;
   dataRef: string | null;
   styleRef: string | null;
+  volume: number;
 }
 
 interface LayerContentProps {
@@ -149,8 +150,9 @@ export const LayerDownloads = ({
             fileName={layerLabel ?? `Layer ${layerIndex + 1}`}
             audioKey={audioKey}
             audioSystem={audioSystem}
-            layer
+            isLayer
             soniReady={soniReady}
+            volume={summary.volume}
           />
         )}
       </HStack>

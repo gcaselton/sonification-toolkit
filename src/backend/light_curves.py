@@ -147,10 +147,6 @@ async def search_lightcurves(query: StarQuery, request: Request):
     """
     
     idents, ra, dec = get_identifiers(query)
-    
-    print('ra: ' + str(ra))
-    print('dec: ' + str(dec))
-    print('idents: ' + str(idents))
 
     mission_filters = query.filters['mission']
     missions = [k for k in mission_filters.keys() if mission_filters[k] == True]

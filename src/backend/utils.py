@@ -109,6 +109,10 @@ def write_sound_to_style(style_filepath: Path | str, write_to_yml=True):
 
 def is_time_series(df: pd.DataFrame, style: dict):
     
+    if len(df) < 2:
+        # Need more than 1 value to compare against
+        return False 
+    
     # Find time axis in the style
     time_axis = get_time_axis(style)
         

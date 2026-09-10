@@ -396,7 +396,7 @@ async def get_n_stars(request: NStarsRequest):
     return {'n_stars': n_stars}
 
 
-def constellation_center(df):
+def constellation_center(df: pd.DataFrame):
 
     ra = df["ra"].copy()
     dec = df["dec"]
@@ -404,9 +404,14 @@ def constellation_center(df):
     # unwrap RA if needed
     if ra.max() - ra.min() > 12:
         ra[ra < 12] += 24
-
-    ra_center = (ra.min() + ra.max()) / 2
-    dec_center = (dec.min() + dec.max()) / 2
+        
+    if len(df) == 1:
+        # If only one star, return its position
+        ra_center = ra.iloc[0]
+        dec_center = dec.iloc[0]
+    else:
+        ra_center = (ra.min() + ra.max()) / 2
+        dec_center = (dec.min() + dec.max()) / 2
 
     ra_center = ra_center % 24
 

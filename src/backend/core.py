@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, UploadFile, File, Cookie, Response, Request
+from fastapi import APIRouter, HTTPException, UploadFile, File, Cookie, Response, Request, BackgroundTasks
 from fastapi.responses import FileResponse
 from pathlib import Path
 from paths import TMP_DIR, STYLE_FILES_DIR, SUGGESTED_DATA_DIR, SYNTHS_DIR, SAMPLES_DIR
@@ -6,7 +6,7 @@ from context import session_id_var
 from utils import resolve_file, read_YAML_file, write_YAML_file, is_synth, write_sound_to_style, is_time_series, cleanup_old_layers
 from generator_mods import GENERATOR_MODS
 from request_models import DataRequest, CustomStyleSettings, LayerRequest, SonificationRequest, SoundInfo
-import logging, yaml, os, uuid, traceback, base64, gc, re, csv, shutil
+import logging, yaml, os, uuid, traceback, base64, gc, re, csv, shutil, math, tempfile
 from param_descriptions import INPUTS, OUTPUTS
 from night_sky import handle_observer
 from analytics import log_event
@@ -86,8 +86,8 @@ def generate_sonification(request: SonificationRequest, connection: Request):
     session_id = session_id_var.get()
     session_dir = TMP_DIR / session_id
     
-    if int(request.duration) > 300:
-        raise HTTPException(status_code=400, detail="Sonification too long, maximum length = 5 minutes.")
+    if request.duration > 60:
+        raise HTTPException(status_code=400, detail="Sonification too long, maximum length is 1 minute.")
     
     # Check if we are sonifying star data (we use this to label the mapping table)
     is_stars = request.category in ['constellations', 'night_sky']
@@ -322,20 +322,77 @@ def generate_spectrogram(request: DataRequest):
     return {'image': img_base64}
 
 @router.get('/audio/{file_ref}')
-def get_audio(connection: Request, file_ref: str, name: str, audio_format: str = 'wav'):
+def get_audio(
+    connection: Request, 
+    background_tasks: BackgroundTasks, 
+    file_ref: str, 
+    name: str, 
+    audio_format: str = 'wav', 
+    volume: float = 1
+    ):
     
+    audio_format = audio_format.lower()
+    
+    if audio_format not in {"wav", "mp3"}:
+        raise HTTPException(
+            status_code=400,
+            detail="Audio format must be 'wav' or 'mp3'"
+        )
+    
+    if not 0 <= volume <= 1:
+        raise HTTPException(status_code=400, detail="Volume must be between 0 and 1")
+
     wav_path = str(resolve_file(file_ref))
 
-    if audio_format == 'mp3':
-        file_path = convert_to_mp3(wav_path)
-    else:
+    # Original file can be returned directly when volume is unchanged
+    if volume == 1:
         file_path = wav_path
+
+    else:
+        # Create temporary volume-adjusted WAV
+        temp_file = tempfile.NamedTemporaryFile(
+            suffix=".wav",
+            delete=False,
+        )
+        temp_file.close()
+
+        volume_path = temp_file.name
+        apply_volume(wav_path, volume, volume_path)
         
+        # Delete temporary audio file once it's served
+        background_tasks.add_task(Path(volume_path).unlink, missing_ok=True)
+        file_path = volume_path
+    
+    # Convert to MP3 if requested        
+    if audio_format == "mp3":
+        mp3_path = convert_to_mp3(file_path)
+        background_tasks.add_task(Path(mp3_path).unlink, missing_ok=True) # Delete temp mp3 after serving
+        file_path = mp3_path
+    
+    # Log download event in analytics
     log_event(session_id=session_id_var.get(), ip=connection.client.host, event='audio_download')
 
     return FileResponse(path=file_path, 
                         filename=f'{name}.{audio_format}',
                         media_type="audio/mpeg" if audio_format == "mp3" else "audio/wav")
+    
+@router.post('/mix-layer-volumes/')
+def mix_layer_volumes(request: list[float]):
+    pass
+    
+def apply_volume(wav_path: str, volume: float, output_path: str) -> None:
+    if not 0 <= volume <= 1:
+        raise ValueError("Volume must be between 0 and 1")
+
+    audio = AudioSegment.from_wav(wav_path)
+
+    if volume == 0:
+        audio = AudioSegment.silent(duration=len(audio), frame_rate=audio.frame_rate)
+    else:
+        gain_db = 20 * math.log10(volume)
+        audio = audio.apply_gain(gain_db)
+
+    audio.export(output_path, format="wav")
 
 def convert_to_mp3(wav_file: str) -> str:
     """
@@ -345,7 +402,7 @@ def convert_to_mp3(wav_file: str) -> str:
         wav_file: Path to the WAV file.
 
     Returns:
-        Path to the generated MP3 file.
+        Path to the temporary MP3 file.
 
     Raises:
         FileNotFoundError: If the WAV file does not exist.
@@ -377,7 +434,14 @@ def convert_to_mp3(wav_file: str) -> str:
 
         AudioSegment.converter = local_ffmpeg
 
-    mp3_path = wav_path.with_suffix(".mp3")
+    temp_file = tempfile.NamedTemporaryFile(
+                suffix=".mp3",
+                delete=False,
+            )
+    temp_file.close()
+
+    mp3_path = temp_file.name
+    
     audio = AudioSegment.from_wav(wav_path)
 
     try:

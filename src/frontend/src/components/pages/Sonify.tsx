@@ -67,11 +67,16 @@ import AudioDownloadButton from "../ui/AudioDownloadButton";
 import { SummaryList, LayerSummary } from "../ui/sonify/SummaryComponents";
 import { formatCoord, formatSoniType } from "../../utils/formatting";
 import { Toaster, toaster } from "../ui/toaster";
-import VolumeMixer, { LayerVolume } from "../ui/sonify/VolumeMixer";
+import VolumeMixer from "../ui/sonify/VolumeMixer";
 import { debounce } from "es-toolkit";
+import { Volume } from "lucide-react";
+import { useOptionalComposer } from "../../context/ComposerContext";
 
 export default function Sonify() {
   const navigate = useNavigate();
+  const composer = useOptionalComposer()
+
+  const MAX_DURATION = 60;
 
   // Route states
   const location = useLocation();
@@ -84,40 +89,17 @@ export default function Sonify() {
   const userUpload = location.state.userUpload;
   const ra = location.state.ra ?? null;
   const dec = location.state.dec ?? null;
-  const layers: Layer[] | null = location.state.layers ?? null;
+  const layers = composer?.layers ?? null;
 
-  // Define length limits based on sonification type
-  const defaultsDict = {
-    light_curves: {
-      max_length: 60,
-      default_length: 15,
-      audio_system: "stereo",
-    },
-    constellations: {
-      max_length: 120,
-      default_length: 15,
-      audio_system: "stereo",
-    },
-    night_sky: { max_length: 120, default_length: 45, audio_system: "stereo" },
-    data_composer: {
-      max_length: 120,
-      default_length: 15,
-      audio_system: "stereo",
-    },
-  };
+  /*---------- States ----------*/
 
-  const defaults = defaultsDict[soniType as keyof typeof defaultsDict];
+  // Default duration of 45 sec for night sky, 15 sec for everything else
+  const [length, setLength] = useState(soniType === "night_sky" ? "45" : "15");
+  const [audioSystem, setAudioSystem] = useState("stereo");
 
-  // states
-  const [length, setLength] = useState(defaults.default_length.toString());
-  const [audioSystem, setAudioSystem] = useState<string[]>([
-    defaults.audio_system,
-  ]);
   // Track the audio system used for the most recently generated sonification.
   // This is used to disable mp3 downloads if system has more channels than mono or stereo.
-  const [generatedAudioSystem, setGeneratedAudioSystem] = useState(
-    defaults.audio_system[0],
-  );
+  const [generatedAudioSystem, setGeneratedAudioSystem] = useState(audioSystem);
   const [audioFilename, setAudioFilename] = useState("");
 
   const [soniReady, setSoniReady] = useState(false);
@@ -152,20 +134,6 @@ export default function Sonify() {
   const [altAz, setAltAz] = useState<string[] | null>(null);
 
   const audioRef = useRef<HTMLAudioElement>(null);
-
-  const [layerVolumes, setLayerVolumes] = useState<LayerVolume[]>([]);
-
-  useEffect(() => {
-    if (layers) {
-      setLayerVolumes(
-        layers.map((layer, index) => ({
-          index: index,
-          label: layer.label,
-          volume: 1,
-        })),
-      );
-    }
-  }, [layers]);
 
   // Focus keyboard navigation onto audio player once sonification generated
   useEffect(() => {
@@ -256,7 +224,7 @@ export default function Sonify() {
       category: soniType,
       layers: soniLayers,
       duration: length,
-      system: audioSystem[0],
+      system: audioSystem,
       data_name: layers ? "Layers" : dataName,
       observer: observerValues
         ? {
@@ -296,9 +264,9 @@ export default function Sonify() {
     requestSonification().then((fileRef) => {
       setLoading(false);
       if (fileRef) {
-        setGeneratedAudioSystem(audioSystem[0]);
+        setGeneratedAudioSystem(audioSystem);
         setAudioKey(Date.now().toString());
-        setAudioFilename(`${fileRef}`);
+        setAudioFilename(fileRef);
         setSoniReady(true);
 
         // Request spectrogram
@@ -357,37 +325,33 @@ export default function Sonify() {
     navigate("../style", { state });
   };
 
-  const handleLayerVolumeChange = (index: number, volume: number) => {
-    const updatedLayers = layerVolumes.map((layer) =>
-      layer.index === index ? { ...layer, volume } : layer,
-    );
-
-    const targetLayer = layerVolumes.filter((layer) => layer.index === index)
-
-    setLayerVolumes(updatedLayers);
-    debouncedMix(targetLayer);
+  const handleLayerVolumeChange = (layer: Layer, volume: number) => {
+    composer?.updateLayer(layer.id, { volume })
+    debouncedMix(layers!);
   };
 
   const mixVolume = useCallback(
-    async (layer: LayerVolume) => {
+    async (layers: Layer[]) => {
+      setLoading(true);
+      setSoniReady(false);
       try {
-        const response = await apiRequest(`${coreAPI}/mix-layers/`, {
-          layers: volumes.map((layer) => ({
-            id: layer.id,
-            volume: layer.volume,
-          })),
+        const response = await apiRequest(`${coreAPI}/mix-layer-volumes/`, {
+          volumes: layers.map((l) => l.volume)
         });
 
         if (!response.ok) {
-          throw new Error("Failed to mix layers");
+          throw new Error("Failed to mix volume");
         }
 
         const data = await response.json();
 
-        setAudioFilename(data.file_ref);
+        setAudioFilename(data.master_audio_ref);
         setAudioKey((prev) => prev + 1);
       } catch (error) {
-        console.error("Error mixing layers:", error);
+        console.error("Error mixing volume:", error);
+      } finally {
+        setSoniReady(true)
+        setLoading(false)
       }
     },
     [coreAPI],
@@ -401,7 +365,6 @@ export default function Sonify() {
     };
   }, [debouncedMix]);
 
-  
   const askForFeedback = () => {
     if (sessionStorage.getItem("feedbackShown")) {
       return;
@@ -434,9 +397,7 @@ export default function Sonify() {
   };
 
   const invalidLength =
-    Number(length) > defaults.max_length ||
-    length === "0" ||
-    length.includes("-");
+    Number(length) > MAX_DURATION || length === "0" || length.includes("-");
 
   const summaries: LayerSummary[] = layers
     ? layers.map((l) => ({
@@ -446,6 +407,7 @@ export default function Sonify() {
         styleName: l.styleName!,
         dataRef: l.dataRef,
         styleRef: l.styleRef,
+        volume: l.volume
       }))
     : [
         {
@@ -454,6 +416,7 @@ export default function Sonify() {
           styleName: styleName,
           dataRef,
           styleRef,
+          volume: 1
         },
       ];
 
@@ -526,18 +489,18 @@ export default function Sonify() {
                     inputMode="decimal"
                     step={1}
                     min={1}
-                    max={defaults.max_length}
+                    max={MAX_DURATION}
                   >
                     <NumberInput.Input aria-valuetext={`${length} seconds`} />
                   </NumberInput.Root>
-                  {Number(length) > 30 && Number(length) <= 120 && (
+                  {Number(length) > 30 && Number(length) <= MAX_DURATION && (
                     <Field.HelperText>
-                      Warning: Longer sonifications take more time to generate,
-                      including the spectrogram.
+                      Longer sonifications take more time to generate, including
+                      the spectrogram.
                     </Field.HelperText>
                   )}
                   <Field.ErrorText>
-                    Please enter a number up to {defaults.max_length} seconds.
+                    Please enter a number up to {MAX_DURATION} seconds.
                   </Field.ErrorText>
                 </Field.Root>
                 {soniType === "light_curves" && (
@@ -584,8 +547,8 @@ export default function Sonify() {
               >
                 <Select.Root
                   collection={audioSystemOptions}
-                  value={audioSystem}
-                  onValueChange={(e) => setAudioSystem(e.value)}
+                  value={[audioSystem]}
+                  onValueChange={(e) => setAudioSystem(e.value[0])}
                   minW="50%"
                 >
                   <Select.HiddenSelect />
@@ -624,13 +587,13 @@ export default function Sonify() {
                   <HStack>
                     <Tooltip
                       content="Unavailable for Mono audio systems"
-                      disabled={audioSystem[0] !== "mono"}
+                      disabled={audioSystem !== "mono"}
                       openDelay={100}
                     >
                       <Button
                         colorPalette="teal"
                         variant={observerValues ? "solid" : "subtle"}
-                        disabled={audioSystem[0] === "mono"}
+                        disabled={audioSystem === "mono"}
                         onClick={() => setObserverOpen(true)}
                       >
                         <LuLocateFixed />
@@ -809,7 +772,7 @@ export default function Sonify() {
           >
             {activePanel === "mixer" && (
               <VolumeMixer
-                layers={layerVolumes}
+                layers={layers!}
                 onLayerVolumeChange={handleLayerVolumeChange}
               />
             )}
@@ -884,8 +847,9 @@ export default function Sonify() {
                   fileName={masterAudioName}
                   audioKey={audioKey}
                   audioSystem={generatedAudioSystem}
-                  layer={false}
+                  isLayer={false}
                   soniReady={soniReady}
+                  volume={1}
                   onDownload={askForFeedback}
                 />
               </HStack>

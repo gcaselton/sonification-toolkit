@@ -1,14 +1,9 @@
 import { Box, HStack, Slider, Stack, Text, VStack } from "@chakra-ui/react";
-
-export type LayerVolume = {
-  index: number;
-  label: string;
-  volume: number; // 0–1
-};
+import { Layer } from "../../../types/layers";
 
 interface VolumeMixerProps {
-  layers: LayerVolume[];
-  onLayerVolumeChange: (index: number, volume: number) => void;
+  layers: Layer[];
+  onLayerVolumeChange: (layer: Layer, volume: number) => void;
 }
 
 const formatVolume = (volume: number) => `${Math.round(volume * 100)}%`;
@@ -23,7 +18,7 @@ export default function VolumeMixer({
         {/* Layer volumes */}
         <Stack gap={4}>
           {layers.map((layer) => (
-            <HStack key={layer.index} gap={4}>
+            <HStack key={layer.id} gap={4}>
               <Text minWidth="120px" fontSize="sm">
                 {layer.label}
               </Text>
@@ -35,7 +30,7 @@ export default function VolumeMixer({
                 max={100}
                 step={1}
                 onValueChangeEnd={(details) => {
-                  onLayerVolumeChange(layer.index, details.value[0] / 100);
+                  onLayerVolumeChange(layer, details.value[0] / 100);
                 }}
                 flex={1}
               >

@@ -16,8 +16,9 @@ interface AudioDownloadButtonProps {
   fileName: string;
   audioKey: string | number;
   audioSystem: string;
-  layer: boolean;
+  isLayer: boolean;
   soniReady: boolean;
+  volume: number;
   onDownload?: () => void;
 }
 
@@ -28,8 +29,9 @@ export default function AudioDownloadButton({
   fileName,
   audioKey,
   audioSystem,
-  layer,
+  isLayer,
   soniReady,
+  volume,
   onDownload,
 }: AudioDownloadButtonProps) {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -45,16 +47,16 @@ export default function AudioDownloadButton({
             ? "Download layer audio"
             : "Generate the sonification to download this layer's audio."
         }
-        disabled={!layer || menuOpen}
+        disabled={!isLayer || menuOpen}
       >
         <Menu.Trigger asChild>
           <Button
             colorPalette="teal"
-            variant={layer ? "subtle" : "solid"}
-            size={layer ? "sm" : "md"}
-            disabled={layer && !soniReady}
+            variant={isLayer ? "subtle" : "solid"}
+            size={isLayer ? "sm" : "md"}
+            disabled={isLayer && !soniReady}
           >
-            <LuDownload /> {layer ? "Layer audio" : "Download"}
+            <LuDownload /> {isLayer ? "Layer audio" : "Download"}
           </Button>
         </Menu.Trigger>
       </Tooltip>
@@ -78,7 +80,7 @@ export default function AudioDownloadButton({
                     onClick={onDownload}
                   >
                     <a
-                      href={`${coreAPI}/audio/${audioFileRef}?name=${encodeURIComponent(fileName)}&audio_format=${format}&v=${audioKey}`}
+                      href={`${coreAPI}/audio/${audioFileRef}?name=${encodeURIComponent(fileName)}&audio_format=${format}&v=${encodeURIComponent(audioKey)}&volume=${volume}`}
                     >
                       Download {format.toUpperCase()}
                     </a>

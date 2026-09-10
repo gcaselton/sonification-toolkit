@@ -18,6 +18,9 @@ export interface Layer {
   missingColumns: string[]; // columns mapped in Style but not present in data
   nonNumericColumns: string[]; // columns mapped in Style but contain non-numeric data
   insufficientColumns: InsufficientColumns | null;
+
+  // Volume level for the mixer on Sonify page
+  volume: number;
 }
 
 // Used if there are more (unnnamed) columns in the Style than there are in the data

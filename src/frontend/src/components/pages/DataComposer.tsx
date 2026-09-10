@@ -75,6 +75,7 @@ function makeEmptyLayer(index: number): Layer {
     missingColumns: [],
     nonNumericColumns: [],
     insufficientColumns: null,
+    volume: 1
   };
 }
 
