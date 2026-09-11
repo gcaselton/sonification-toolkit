@@ -9,7 +9,7 @@ generator:
 map:
   - input: "flux"
     output: "cutoff"
-    output_range: [0.3, 0.75]
+    output_range: [0.4, 0.75]
 
   - input: 'time'
     output: 'time'

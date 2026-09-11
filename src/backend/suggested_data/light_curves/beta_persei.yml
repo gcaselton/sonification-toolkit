@@ -1,6 +1,8 @@
-name: 'Beta Persei'
+name: "Beta Persei"
 
-description: 'Eclipsing Binary Star with periodic dips in brightness from one star passing another.'
+description: "Eclipsing Binary Star with periodic dips in brightness from one star passing another."
 
 ra: 47.04221855625
 dec: 40.95564667027778
+
+category: "Eclipsing"

@@ -7,7 +7,7 @@ nav:
   - Getting Started: getting-started.md
   - User Guide:
     - User Guide: user-guide/user-guide.md
-    - 'Step 1: Data': user-guide/data.md
+    - 'Step 1: Data': user-guide/user-guide.md
     - 'Step 2: Refine': user-guide/refine.md
     - 'Step 3: Style': user-guide/style.md
     - 'Step 4: Sonify': user-guide/sonify.md
