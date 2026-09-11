@@ -25,8 +25,23 @@ nav:
     - License: about/license.md
     - Credits: about/credits.md
 
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - attr_list
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+
 theme:
   name: material
+
+  # icon:
+  #   admonition:
+  #     info: octicons/info-16
+  #     tip: octicons/squirrel-16
+  #     warning: octicons/alert-16
 
   palette:
 

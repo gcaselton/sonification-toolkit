@@ -1,6 +1,6 @@
 name: "Glockenspiel Stars"
 
-description: "A glockenspiel plays the brightest stars first, with pitch mapped to colour."
+description: "A glockenspiel plays the brightest stars first, with bluer stars playing higher notes, and redder stars playing lower."
 
 generator:
   type: "sampler"
