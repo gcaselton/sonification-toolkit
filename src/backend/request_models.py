@@ -37,7 +37,7 @@ class LayerRequest(BaseModel):
     volume: float = 1.0
 
 class SonificationRequest(BaseModel):
-    category: str
+    soni_type: str
     layers: list[LayerRequest]
     duration: float
     system: Literal['mono', 'stereo', '5.1', '7.1']

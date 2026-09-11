@@ -2185,11 +2185,6 @@
       "lines": [[102098, 100453, 95947], [102488, 100453, 97165]]
     },
     {
-      "id": "AST western WAs",
-      "common_name": {"english": "W"},
-      "lines": [[8886, 6686, 4427, 3179, 746]]
-    },
-    {
       "id": "AST western KSt",
       "common_name": {"english": "Keystone"},
       "lines": [[83207, 81693, 81833, 84380, 83207]]

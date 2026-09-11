@@ -52,6 +52,8 @@ export default function LightCurves({
 
   const [applyLoading, setApplyLoading] = useState(false);
 
+  
+
   // fetch plot
   useEffect(() => {
     let mounted = true;

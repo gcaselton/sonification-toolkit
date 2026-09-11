@@ -1,0 +1,56 @@
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 200 200"
+  role="img"
+  aria-labelledby="title desc"
+>
+  <title id="title">Pulsating Variable Star</title>
+  <desc id="desc">
+    A central star surrounded by progressively larger and fainter pulsation rings.
+  </desc>
+
+  <!-- Outer pulsation -->
+  <circle
+    class="pulse pulse-outer"
+    cx="100"
+    cy="100"
+    r="82"
+    fill="none"
+    stroke="white"
+    stroke-width="3"
+    opacity="0.05"
+  />
+
+  <!-- Middle pulsation -->
+  <circle
+    class="pulse pulse-middle"
+    cx="100"
+    cy="100"
+    r="62"
+    fill="none"
+    stroke="white"
+    stroke-width="3"
+    opacity="0.1"
+  />
+
+  <!-- Inner pulsation -->
+  <circle
+    class="pulse pulse-inner"
+    cx="100"
+    cy="100"
+    r="44"
+    fill="none"
+    stroke="white"
+    stroke-width="3"
+    opacity="0.2"
+  />
+
+  <!-- Star -->
+  <circle
+    class="star"
+    cx="100"
+    cy="100"
+    r="25"
+    fill="white"
+  />
+</svg>

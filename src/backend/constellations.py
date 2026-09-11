@@ -18,10 +18,10 @@ from request_models import DataRequest, NStarsRequest, ConstellationRequest
 
 router = APIRouter(prefix='/constellations')
 
-CATEGORY = 'constellations'
+SONI_TYPE = 'constellations'
 
-STYLES_DIR = STYLE_FILES_DIR / CATEGORY
-SUGGESTED_DIR = SUGGESTED_DATA_DIR / CATEGORY
+STYLES_DIR = STYLE_FILES_DIR / SONI_TYPE
+SUGGESTED_DIR = SUGGESTED_DATA_DIR / SONI_TYPE
 HYG_DATA = SUGGESTED_DIR / 'hyg.csv'
 
 # Load Stellarium data file 

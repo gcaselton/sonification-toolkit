@@ -26,10 +26,10 @@ router = APIRouter(prefix='/light-curves')
 
 executor = ThreadPoolExecutor(max_workers=4)
 
-CATEGORY = 'light_curves'
+SONI_TYPE = 'light_curves'
 
-STYLES_DIR = STYLE_FILES_DIR / CATEGORY
-STARS_DIR = SUGGESTED_DATA_DIR / CATEGORY
+STYLES_DIR = STYLE_FILES_DIR / SONI_TYPE
+STARS_DIR = SUGGESTED_DATA_DIR / SONI_TYPE
 
 # Rankings to sort light curve search results
 MISSION_RANK = {

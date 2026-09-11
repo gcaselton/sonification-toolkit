@@ -27,7 +27,7 @@ logging.basicConfig(level=logging.DEBUG)
 
 router = APIRouter(prefix='/night-sky')
 
-CATEGORY = 'night_sky'
+SONI_TYPE = 'night_sky'
 
 COMPASS_KEYS = ['N','NNE','NE','ENE','E','ESE','SE',
                 'SSE','S','SSW','SW','WSW','W','WNW','NW','NNW']
@@ -178,7 +178,7 @@ def get_star_data(request: NightSkyRequest):
 
     # save to tmp directory (overwriting any existing dataset)
     session_id = session_id_var.get()
-    filename = f'{CATEGORY}_full.csv'
+    filename = f'{SONI_TYPE}_full.csv'
     filepath = TMP_DIR / session_id / filename
     star_data.to_csv(filepath, index=False)
 
@@ -197,7 +197,7 @@ def refine_stars(request: MagRequest):
     filtered = df[df['magnitude'] < request.maglim].copy()
 
     session_id = session_id_var.get()
-    filename = f'{CATEGORY}_refined.csv'
+    filename = f'{SONI_TYPE}_refined.csv'
     filepath = TMP_DIR / session_id / filename
 
     filtered.to_csv(filepath, index=False)

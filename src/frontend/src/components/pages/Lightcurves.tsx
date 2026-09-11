@@ -43,6 +43,8 @@ import {
   VStack,
   Spinner,
   Table,
+  Tabs,
+  For,
   Text,
   IconButton,
   chakra,
@@ -72,6 +74,7 @@ export interface SuggestedData {
   ra: number;
   dec: number;
   fileRef: string;
+  category: string;
 }
 
 export default function Lightcurves() {
@@ -107,6 +110,13 @@ export default function Lightcurves() {
 
   const searchResultsRef = useRef<HTMLHeadingElement>(null);
 
+  const categoryNames: Record<string, string> = {
+    "exoplanet": "Exoplanet Transit",
+    "binary": "Binary Stars",
+    "pulsating": "Pulsating Variables",
+    "other": "Other"
+  }
+
   // Focus search results for screen readers & scroll into view when ready
   useEffect(() => {
     if (resultsReady && searchResultsRef.current) {
@@ -138,6 +148,7 @@ export default function Lightcurves() {
           ra: item.ra,
           dec: item.dec,
           fileRef: item.file_ref,
+          category: item.category
         }));
 
         setSuggested(mapped);
@@ -154,7 +165,6 @@ export default function Lightcurves() {
     };
   }, []);
 
-  
   // Displays extra message if search takes a while
   useEffect(() => {
     if (!loading) {
@@ -461,85 +471,109 @@ export default function Lightcurves() {
       />
       {!searched && (
         <Box animation="fade-in 300ms ease-out">
-          <Heading size="2xl" as="h2">
-            Suggested
-          </Heading>
-          <br />
-          <Stack
-            gap="4"
-            direction="row"
-            wrap="wrap"
-            justify={{ base: "center", md: "flex-start" }}
-          >
-            {suggested.map((star) => (
-              <Card.Root
-                width="200px"
-                key={star.name}
-                variant="elevated"
-                _hover={{ transform: "scale(1.05)" }}
-                transition="transform 0.2s ease"
-                cursor="pointer"
-                onClick={() => handleClickSuggested(star)}
-              >
-                <Box position="relative" bg="black" borderRadius="8px">
-                  <img
-                    src={getImage("star", ".svg")}
-                    alt={`${star.name} star`}
-                    style={{
-                      width: "100%",
-                      borderRadius: "8px",
-                      display: "block",
-                      animation: `twinkle ${randomRange(2, 3)}s infinite alternate`,
-                    }}
-                  />
+          <Tabs.Root variant="outline" defaultValue="exoplanet">
+            <HStack gap={5}>
+              <Heading size="2xl" as="h2">
+                Suggested
+              </Heading>
 
-                  <Box
-                    position="absolute"
-                    top="0.5rem"
-                    left="0.5rem"
-                    zIndex={10}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleClickPlot(star);
-                    }}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" || e.key === " ") {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        handleClickPlot(star);
-                      }
-                    }}
-                  >
-                    <Tooltip content="View plot">
-                      <Button
-                        size="xs"
-                        tabIndex={0}
-                        aria-label={`View plot for ${star.name}`}
-                      >
-                        <LuChartSpline />
-                      </Button>
-                    </Tooltip>
-                  </Box>
-                </Box>
-
-                <Card.Body
-                  tabIndex={0}
-                  role="button"
-                  aria-label={`Sonify ${star.name}: ${star.description}`}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" || e.key === " ") {
-                      e.preventDefault();
-                      handleClickSuggested(star);
-                    }
-                  }}
-                  mb="2"
+              <Tabs.List>
+                {Object.keys(categoryNames).map((category) => (
+                  <Tabs.Trigger value={category} key={category} fontWeight='bold'>
+                    {categoryNames[category]}
+                  </Tabs.Trigger>
+                ))}
+              </Tabs.List>
+            </HStack>
+            {Object.keys(categoryNames).map((category) => (
+              <Tabs.Content value={category} key={category}>
+                <Stack
+                  gap="4"
+                  direction="row"
+                  wrap="wrap"
+                  justify={{ base: "center", md: "flex-start" }}
                 >
-                  <Card.Title mb="2">{star.name}</Card.Title>
-                  <Card.Description>{star.description}</Card.Description>
-                </Card.Body>
-              </Card.Root>
+                  {suggested.map(
+                    (star) =>
+                      star.category === category && (
+                        <Card.Root
+                          width="200px"
+                          key={star.name}
+                          variant="elevated"
+                          _hover={{ transform: "scale(1.05)" }}
+                          transition="transform 0.2s ease"
+                          cursor="pointer"
+                          onClick={() => handleClickSuggested(star)}
+                        >
+                          <Box
+                            position="relative"
+                            bg="black"
+                            borderRadius="8px"
+                          >
+                            <img
+                              src={getImage(category, ".svg")}
+                              alt={`${star.name} star`}
+                              style={{
+                                width: "100%",
+                                borderRadius: "8px",
+                                display: "block",
+                                animation: `twinkle ${randomRange(2, 3)}s infinite alternate`,
+                              }}
+                            />
+
+                            <Box
+                              position="absolute"
+                              top="0.5rem"
+                              left="0.5rem"
+                              zIndex={10}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleClickPlot(star);
+                              }}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter" || e.key === " ") {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  handleClickPlot(star);
+                                }
+                              }}
+                            >
+                              <Tooltip content="View plot">
+                                <Button
+                                  size="xs"
+                                  tabIndex={0}
+                                  aria-label={`View plot for ${star.name}`}
+                                >
+                                  <LuChartSpline />
+                                </Button>
+                              </Tooltip>
+                            </Box>
+                          </Box>
+
+                          <Card.Body
+                            tabIndex={0}
+                            role="button"
+                            aria-label={`Sonify ${star.name}: ${star.description}`}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter" || e.key === " ") {
+                                e.preventDefault();
+                                handleClickSuggested(star);
+                              }
+                            }}
+                            mb="2"
+                          >
+                            <Card.Title mb="2">{star.name}</Card.Title>
+                            <Card.Description>
+                              {star.description}
+                            </Card.Description>
+                          </Card.Body>
+                        </Card.Root>
+                      ),
+                  )}
+                </Stack>
+              </Tabs.Content>
             ))}
-          </Stack>
+          </Tabs.Root>
           <br />
         </Box>
       )}

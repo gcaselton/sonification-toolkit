@@ -4,3 +4,5 @@ description: This light curve contains dips in brightness as orbiting planet Kep
 
 ra: 286.24342526404
 dec: 50.04035326724
+
+category: "exoplanet"

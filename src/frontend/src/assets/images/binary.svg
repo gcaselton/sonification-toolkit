@@ -1,0 +1,31 @@
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 200 200"
+  role="img"
+  aria-labelledby="title desc"
+>
+  <title id="title">Binary Stars</title>
+  <desc id="desc">
+    Two stars orbiting around a shared centre of mass.
+  </desc>
+
+  <!-- Star 1 -->
+  <circle
+    class="star star-primary"
+    fill='white'
+    cx="70"
+    cy="100"
+    r="28"
+  />
+
+  <!-- Star 2 -->
+  <circle
+    class="star star-secondary"
+    fill='white'
+    opacity='0.5'
+    cx="130"
+    cy="100"
+    r="20"
+  />
+
+</svg>

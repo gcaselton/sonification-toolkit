@@ -43,11 +43,11 @@ interface PatternListResponse {
 interface PatternItem {
   label: string;
   value: string;
-  group: "Constellations" | "Asterisms";
+  category: "Constellations" | "Asterisms";
 }
 
 interface SuggestedPattern extends SuggestedData {
-  group: "Constellations" | "Asterisms";
+  category: "Constellations" | "Asterisms";
 }
 
 export default function Constellations() {
@@ -80,12 +80,12 @@ export default function Constellations() {
           ...list.constellations.map((name) => ({
             label: name,
             value: name,
-            group: "Constellations" as const,
+            category: "Constellations" as const,
           })),
           ...list.asterisms.map((name) => ({
             label: name,
             value: name,
-            group: "Asterisms" as const,
+            category: "Asterisms" as const,
           })),
         ]);
       })
@@ -100,7 +100,7 @@ export default function Constellations() {
     const state: NavigationState = {
       dataName: item.value,
       soniType,
-      isAsterism: item.group === 'Asterisms',
+      isAsterism: item.category === 'Asterisms',
     };
 
     navigate("../refine", { state });
@@ -166,13 +166,13 @@ export default function Constellations() {
             <Combobox.Positioner>
               <Combobox.Content>
                 <Combobox.Empty>No items found</Combobox.Empty>
-                {(["Constellations", "Asterisms"] as const).map((group) => {
-                  const itemsInGroup = collection.items.filter(
-                    (item) => item.group === group,
+                {(["Constellations", "Asterisms"] as const).map((category) => {
+                  const itemsInCategory = collection.items.filter(
+                    (item) => item.category === category,
                   );
-                  if (itemsInGroup.length === 0) return null;
+                  if (itemsInCategory.length === 0) return null;
                   return (
-                    <Combobox.ItemGroup key={group}>
+                    <Combobox.ItemGroup key={category}>
                       <Combobox.ItemGroupLabel
                         fontWeight="bold"
                         fontSize="xs"
@@ -182,9 +182,9 @@ export default function Constellations() {
                         pt={2}
                         pb={1}
                       >
-                        {group}
+                        {category}
                       </Combobox.ItemGroupLabel>
-                      {itemsInGroup.map((item) => (
+                      {itemsInCategory.map((item) => (
                         <Combobox.Item item={item} key={item.value}>
                           {item.label}
                           <Combobox.ItemIndicator />
@@ -222,7 +222,7 @@ export default function Constellations() {
               cursor="pointer"
               as="button"
               aria-label={`Sonify ${suggestion.name}`}
-              onClick={() => handleSelectPattern({label: suggestion.name, value: suggestion.name, group: suggestion.group})}
+              onClick={() => handleSelectPattern({label: suggestion.name, value: suggestion.name, category: suggestion.category})}
             >
               <Box
                 position="relative"

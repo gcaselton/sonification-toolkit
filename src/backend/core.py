@@ -94,7 +94,7 @@ def generate_sonification(request: SonificationRequest, connection: Request):
         raise HTTPException(status_code=400, detail="Sonification too long, maximum length is 1 minute.")
     
     # Check if we are sonifying star data (we use this to label the mapping table)
-    is_stars = request.category in ['constellations', 'night_sky']
+    is_stars = request.soni_type in ['constellations', 'night_sky']
     
     # Initialise AudioFigure
     fig = AudioFigure(system=request.system)
@@ -123,7 +123,7 @@ def generate_sonification(request: SonificationRequest, connection: Request):
                  style_dict['max_notes_per_sec'] = style_dict.get('max_notes_per_sec') or 10
             
             # Overwrite any time mappings if using a custom star order for constellations
-            if request.category == 'constellations' and 'custom_order' in df.columns:
+            if request.soni_type == 'constellations' and 'custom_order' in df.columns:
                 for m in style_dict['map']:
                     if m['output'] == 'time':
                         m['input'] = 'custom_order'
@@ -161,7 +161,7 @@ def generate_sonification(request: SonificationRequest, connection: Request):
                 alt_az = None
 
             # Add identifier column for mapping table if necessary
-            if request.category == 'data_composer' and layer.id_column:
+            if request.soni_type == 'data_composer' and layer.id_column:
                 source_names = df[layer.id_column].to_list()
             elif is_stars:
                 source_names = df['display_name'].to_list()
@@ -234,7 +234,7 @@ def generate_sonification(request: SonificationRequest, connection: Request):
     filepath = session_dir / filename
     fig.save(filepath)
     
-    log_event(session_id=session_id, ip=connection.client.host, event='sonification_generated', sonification_type=request.category)
+    log_event(session_id=session_id, ip=connection.client.host, event='sonification_generated', sonification_type=request.soni_type)
     cleanup_old_layers(session_id, n_layers)
 
     file_ref = f'session:{filename}'
@@ -693,15 +693,14 @@ def get_outputs():
         for k, v in OUTPUTS.items()
     ]
         
-    
 
-@router.get('/suggested-data/{category}/')
-def get_suggested(category: str):
+@router.get('/suggested-data/{soni_type}/')
+def get_suggested(soni_type: str):
 
-    data_dir = SUGGESTED_DATA_DIR / category
+    data_dir = SUGGESTED_DATA_DIR / soni_type
     
     if not data_dir.exists():
-        raise HTTPException(status_code=404, detail=f'Suggested data directory for {category} not found')
+        raise HTTPException(status_code=404, detail=f'Suggested data directory for {soni_type} not found')
     
     data_list = []
 
@@ -713,6 +712,7 @@ def get_suggested(category: str):
             desc = data.get('description')
             ra = data.get('ra', None)
             dec = data.get('dec', None)
+            category = data.get('category', None)
         except Exception as e:
             print(f'Failed to read or parse {file}: {e}')
             continue
@@ -722,24 +722,24 @@ def get_suggested(category: str):
             'constellations': 'hyg.csv'
         }
 
-        file_ref = f'suggested_data:{category}:{filenames[category]}'
+        file_ref = f'suggested_data:{soni_type}:{filenames[soni_type]}'
 
         data = {'name': name,
                 'description': desc,
-                'file_ref': file_ref}
-        
-        if ra is not None and dec is not None:
-            data['ra'] = ra
-            data['dec'] = dec
+                'ra': ra,
+                'dec': dec,
+                'file_ref': file_ref,
+                'category': category
+                }
 
         data_list.append(data)
         
     return data_list
 
-@router.get('/styles/{category}')
-def get_styles(category: str):
+@router.get('/styles/{soni_type}')
+def get_styles(soni_type: str):
 
-    styles_dir = STYLE_FILES_DIR / category
+    styles_dir = STYLE_FILES_DIR / soni_type
     if not styles_dir.exists():
         raise HTTPException(status_code=404, detail="Style directory not found")
     
@@ -755,7 +755,7 @@ def get_styles(category: str):
             print(f"Failed to read or parse {file}: {e}")
             continue
 
-        file_ref = f'style_files:{category}:{file.name}'
+        file_ref = f'style_files:{soni_type}:{file.name}'
 
         style = {'name': style_name, 'description': style_description, 'file_ref': file_ref}
 
